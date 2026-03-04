@@ -1,65 +1,85 @@
 "use client";
-import React from "react";
-import { Plus, Image as ImageIcon } from "lucide-react";
+import React from "react"
+import { motion } from "framer-motion"
+import { Heart, ShoppingBag } from "lucide-react"
+import { useApp, Product } from "@/store/AppContext"
 
-interface Props {
- id: number;
- name: string;
- weight: string;
- price: number;
- oldPrice?: number;
- discount?: string;
- image?: string;
- onAdd: () => void;
+interface ProductCardProps extends Product {
+ onAdd: () => void
+ index?: number
 }
 
-const ProductCard: React.FC<Props> = ({ name, weight, price, oldPrice, discount, image, onAdd }) => (
- <div
-  onClick={onAdd}
-  className="group relative flex flex-col bg-white p-4 transition-all duration-500 ease-premium cursor-pointer rounded-[1.75rem] hover:shadow-wow-hover shadow-subtle border border-black/[0.04] min-h-[120px] justify-between overflow-hidden"
- >
-  {/* ── Status Label ── */}
-  {discount && (
-   <div className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded-full bg-meren-black text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm">
-    {discount}
-   </div>
-  )}
+const ProductCard: React.FC<ProductCardProps> = (props) => {
+ const { onAdd, index = 0, ...product } = props
+ const { id, name, weight, price, image } = product
+ const { setSelectedProduct } = useApp()
 
-  {/* ── Minimalist Info ── */}
-  <div className="flex flex-col font-manrope pr-6 mb-2">
-   <p className="text-[14px] font-[1000] leading-[1.2] text-meren-black tracking-[-0.03em] mb-1 line-clamp-2 min-h-[2.4em]">
-    {name}
-   </p>
-   <div className="flex items-center gap-1.5">
-    <span className="text-[10px] font-black text-meren-gray/40 uppercase tracking-widest leading-none">
-     {weight}
-    </span>
-   </div>
-  </div>
+ const handleOpenModal = () => {
+  setSelectedProduct(product)
+ }
 
-  <div className="flex items-end justify-between mt-auto">
-   <div className="flex flex-col">
-    {oldPrice && (
-     <p className="text-[11px] font-black text-meren-gray/30 line-through leading-none mb-1">
-      {oldPrice} ₽
-     </p>
-    )}
-    <div className="flex items-baseline gap-0.5">
-     <p className="text-[17px] font-[1000] text-meren-black tracking-tighter leading-none">
-      {price}
-     </p>
-     <span className="text-[12px] font-black text-meren-black/20 uppercase leading-none">₽</span>
+ return (
+  <motion.div
+   initial={{ opacity: 0, y: 15 }}
+   animate={{ opacity: 1, y: 0 }}
+   transition={{ duration: 0.5, delay: index * 0.05 }}
+   onClick={handleOpenModal}
+   className="bg-[#FAF7F5] rounded-[2rem] border border-[#F2F2F2] h-full transition-all duration-500 cursor-pointer group flex flex-col p-2.5 font-montserrat shadow-sm hover:shadow-xl hover:shadow-[#CF8F73]/5"
+  >
+   {/* Image Container */}
+   <div className="relative aspect-[4/3] w-full rounded-[1.5rem] bg-[#F3ECE4] overflow-hidden mb-2.5 flex items-center justify-center">
+    <motion.img
+     layoutId={`img-${id}`}
+     src={image}
+     alt={name}
+     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+    />
+    <motion.button
+     whileHover={{ scale: 1.15 }}
+     whileTap={{ scale: 0.85, rotate: -10 }}
+     onClick={(e) => {
+      e.stopPropagation()
+     }}
+     className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center text-[#D8D8D8] hover:text-[#CF8F73] transition-colors"
+    >
+     <Heart className="w-5 h-5 fill-current" />
+    </motion.button>
+   </div>
+
+   {/* Info Container */}
+   <div className="flex-1 flex flex-col gap-3 px-1.5 pb-1">
+    <div>
+     <div className="flex items-start justify-between gap-2 mb-1">
+      <motion.h3 layoutId={`title-${id}`} className="text-[13px] font-bold text-[#5B5047] leading-[1.2] w-[65%]">
+       {name}
+      </motion.h3>
+      <div className="text-[14px] font-black text-[#5B5047] shrink-0">
+       {price} ₽<span className="text-[12px] font-medium">/шт</span>
+      </div>
+     </div>
+     <div className="flex items-center justify-between">
+      <p className="text-[11px] font-medium text-[#5B5047]/50 uppercase">
+       {weight}
+      </p>
+      <p className="text-[11px] font-medium text-[#5B5047]/50 uppercase">
+       в наличии 10 шт
+      </p>
+     </div>
     </div>
+
+    <button
+     onClick={(e) => {
+      e.stopPropagation()
+      onAdd()
+     }}
+     className="w-full h-[54px] mt-auto bg-[#CD8B70] rounded-[1rem] flex items-center justify-center gap-3 text-white hover:bg-[#b87a60] transition-all active:scale-[0.96] shadow-md shadow-[#CD8B70]/20"
+    >
+     <ShoppingBag className="w-5 h-5" />
+     <span className="text-[14px] font-bold uppercase tracking-wide">Добавить в корзину</span>
+    </button>
    </div>
+  </motion.div>
+ )
+}
 
-   <button
-    onClick={(e) => { e.stopPropagation(); onAdd(); }}
-    className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F7] text-meren-black transition-all duration-500 hover:bg-meren-black hover:text-white hover:scale-110 active:scale-95 shadow-sm border-none group-hover:bg-meren-black group-hover:text-white"
-   >
-    <Plus className="w-5 h-5" strokeWidth={3} />
-   </button>
-  </div>
- </div>
-);
-
-export default ProductCard;
+export default ProductCard

@@ -1,185 +1,213 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Header from "@/components/Header"
+import Footer from "@/components/Footer"
 import ProductCard from "@/components/ProductCard"
 import CartSidebar from "@/components/CartSidebar"
-import FiltersSidebar from "@/components/FiltersSidebar"
-import PromoBanners from "@/components/PromoBanners"
-import {
- Sparkles,
- Leaf,
- Star,
- Cookie,
- CakeSlice,
- Croissant,
- RotateCcw,
- Search,
- Truck
-} from "lucide-react"
+import CheckoutModal from "@/components/CheckoutModal"
+import ProductDetailsModal from "../../components/ProductDetailsModal"
+import AddressModal from "@/components/AddressModal"
+import { Search, ShoppingCart, X } from "lucide-react"
 import { products } from "@/components/data"
-
-
-
-export interface CartItem {
- id: number
- name: string
- image: string
- price: number
- oldPrice?: number
- quantity: number
-}
-
-const CATEGORIES = [
- "постное меню",
- "23 февраля",
- "новинки",
- "эклеры",
- "пирожные",
- "торты",
- "хлеб",
- "слойка",
- "кексы и печенье",
- "случайный выбор",
-]
+import { useApp } from "@/store/AppContext"
+import { ProductCardSkeleton } from "@/components/Skeleton"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function Home() {
- const [cart, setCart] = useState<CartItem[]>([])
- const [activeCategory, setActiveCategory] = useState("новинки")
- const [onlyDelivery, setOnlyDelivery] = useState(false)
+ const { addToCart, isCartOpen, setCartOpen, cart } = useApp()
+ const [activeCategory, setActiveCategory] = useState("Десерты")
+ const [searchQuery, setSearchQuery] = useState("")
+ const [isLoading, setIsLoading] = useState(true)
 
- const addToCart = (product: typeof products[0]) => {
-  setCart((prev) => {
-   const found = prev.find((i) => i.id === product.id)
-   if (found) return prev.map((i) => (i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i))
-   return [
-    ...prev,
-    {
-     id: product.id,
-     name: product.name,
-     image: product.image ?? "",
-     price: product.price,
-     oldPrice: product.oldPrice,
-     quantity: 1,
-    },
-   ]
-  })
- }
+ useEffect(() => {
+  setIsLoading(true)
+  const timer = setTimeout(() => setIsLoading(false), 800)
+  return () => clearTimeout(timer)
+ }, [activeCategory])
 
- const updateQty = (id: number, delta: number) => {
-  setCart((prev) =>
-   prev
-    .map((i) => (i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i))
-    .filter((i) => i.quantity > 0)
-  )
- }
+ const filteredProducts = products.filter((p) => {
+  const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  if (!matchesSearch) return false
 
- const total = cart.reduce((s, i) => s + i.price * i.quantity, 0)
+  const cat = activeCategory.toLowerCase()
+  const pCat = p.category.toLowerCase()
+  if (cat === "десерты") return pCat === "пирожные" || pCat === "торты"
+  if (cat === "хлеб") return pCat === "хлеб"
+  if (cat === "выпечка") return pCat === "слойка" || pCat === "эклеры"
+  if (cat === "снеки") return pCat === "кексы и печенье"
+  return false
+ })
 
  return (
-  <div className="min-h-screen bg-white font-manrope selection:bg-meren-black/10 selection:text-meren-black">
+  <div className="min-h-screen bg-smusl-beige font-montserrat flex flex-col">
    <Header />
 
-   <main className="mx-auto w-full max-w-[2400px] px-8 py-6">
+   <main className="flex-1 w-full px-4 sm:px-6 lg:px-10 pb-20 pt-2 lg:pt-6">
 
-    {/* ── Promo stories section ── */}
-    <PromoBanners />
-
-    {/* ── Category Chips & Controls (Sticky) ── */}
-    <div className="sticky top-20 z-20 flex flex-col gap-4 bg-white/95 pb-4 pt-2 backdrop-blur-md border-b border-black/[0.03] mb-8">
-     <div className="flex items-center justify-between gap-6">
-
-      {/* Horizontal Category Scroll */}
-      <div className="smooth-scroll flex h-16 flex-1 items-center gap-2 overflow-x-auto">
-       {CATEGORIES.map((cat) => (
-        <button
-         key={cat}
-         onClick={() => setActiveCategory(cat)}
-         className={`flex items-center px-8 h-12 rounded-full transition-all duration-500 ease-premium whitespace-nowrap ${activeCategory === cat
-          ? "bg-meren-black text-white shadow-wow scale-105"
-          : "bg-meren-light-gray text-meren-black/60 hover:bg-[#EBEBF0] hover:text-meren-black"
-          }`}
-        >
-         <span className="text-[15px] font-[1000] tracking-tight lowercase">
-          {cat}
-         </span>
-        </button>
-       ))}
-      </div>
-
-      {/* Right side controls */}
-      <div className="flex items-center gap-3 pr-4">
-       <div className="hidden md:flex h-12 items-center gap-4 rounded-full bg-[#F5F5F7] px-6 border border-black/5 hover:bg-[#EBEBF0] transition-all cursor-pointer group shadow-sm">
-        <Truck className="w-5 h-5 text-meren-black/40 group-hover:text-meren-black transition-colors" />
-        <span className="text-[12px] font-black uppercase text-meren-black/60 group-hover:text-meren-black tracking-widest">Только доставка</span>
-        <button
-         onClick={() => setOnlyDelivery(!onlyDelivery)}
-         className={`relative h-6 w-11 shrink-0 rounded-full transition-all duration-700 cursor-pointer border-none shadow-inner ${onlyDelivery ? "bg-meren-black" : "bg-black/10"
-          }`}
-        >
-         <div
-          className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-700 ease-premium ${onlyDelivery ? "left-[22px]" : "left-1"
-           }`}
-         />
-        </button>
-       </div>
-      </div>
+    {/* ── Filter Bar ── */}
+    <motion.div
+     initial={{ opacity: 0, y: -20 }}
+     animate={{ opacity: 1, y: 0 }}
+     transition={{ duration: 0.6, ease: "easeOut" }}
+     className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 mb-12"
+    >
+     {/* Categories */}
+     <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide shrink-0">
+      {["Десерты", "Хлеб", "Снеки", "Выпечка"].map((cat) => (
+       <button
+        key={cat}
+        onClick={() => setActiveCategory(cat)}
+        className={`
+         px-6 py-3.5 rounded-2xl text-[14px] font-bold border-2 whitespace-nowrap transition-all duration-300
+         ${activeCategory === cat
+          ? "bg-white border-smusl-terracotta text-smusl-terracotta shadow-lg shadow-smusl-terracotta/10"
+          : "bg-white/50 border-transparent text-smusl-gray hover:bg-white hover:border-smusl-light-gray"
+         }
+        `}
+       >
+        {cat}
+       </button>
+      ))}
      </div>
+
+     {/* Search */}
+     <div className="relative w-full md:w-[320px] lg:w-[400px] group">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A403A]/20 group-focus-within:text-smusl-terracotta transition-colors" />
+      <input
+       type="text"
+       value={searchQuery}
+       onChange={(e) => setSearchQuery(e.target.value)}
+       placeholder="Поиск по товарам..."
+       className="w-full bg-white/70 backdrop-blur-md border border-[#E8E8E8] rounded-2xl py-3.5 pl-11 pr-5 text-[14px] font-medium focus:outline-none focus:border-smusl-terracotta focus:bg-white transition-all shadow-sm placeholder:text-[#4A403A]/20"
+      />
+     </div>
+    </motion.div>
+
+    <div className="flex items-center justify-between mb-8">
+     <motion.h2
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="text-[20px] font-black text-[#4A403A]"
+     >
+      {activeCategory}
+     </motion.h2>
+     <p className="text-[13px] font-bold text-[#4A403A]/30 uppercase tracking-widest">
+      {filteredProducts.length} товаров
+     </p>
     </div>
 
-    {/* ═══ 3-COLUMN LAYOUT ═══ */}
-    <div className="flex gap-10 items-start">
+    {/* ── Main Layout Grid ── */}
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] xl:grid-cols-[1fr_500px] gap-4 items-start">
 
-     {/* ── Left Sidebar (Filters) ── */}
-     <aside className="hidden xl:block sticky top-32 w-[300px] shrink-0 h-[calc(100vh-160px)] pr-8">
-      <FiltersSidebar
-       categories={CATEGORIES}
-       activeCategory={activeCategory}
-       onCategorySelect={setActiveCategory}
-       onlyDelivery={onlyDelivery}
-       onDeliveryToggle={() => setOnlyDelivery(!onlyDelivery)}
-      />
-     </aside>
-
-     {/* ── Main Product Grid (Center) ── */}
-     <section className="flex-1 min-w-0">
-      <div className="mb-8 flex items-baseline gap-4 px-4 anim-slide-up">
-       <h1 className="text-[48px] font-[1000] tracking-[-0.07em] text-meren-black lowercase leading-none">
-        {activeCategory}
-       </h1>
-       <div className="flex items-center gap-2 text-[13px] font-black text-[#AEAEB2] uppercase tracking-widest whitespace-nowrap">
-        <div className="h-1.5 w-1.5 rounded-full bg-meren-black/10" />
-        {products.length} позиций
-       </div>
-      </div>
-
-      {/* Premium Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4">
-       {products
-        .filter(p => activeCategory === "случайный выбор" || p.category.toLowerCase() === activeCategory.toLowerCase())
-        .map((p) => (
-         <ProductCard key={p.id} {...p} onAdd={() => addToCart(p)} />
-        ))}
-
-       {/* Explorer Tile */}
-       <button className="flex min-h-[120px] items-center justify-center rounded-[1.75rem] bg-[#F5F5F7] border-2 border-dashed border-black/[0.05] transition-all duration-500 hover:bg-[#EBEBF0] hover:border-black/10 cursor-pointer group shadow-subtle">
-        <div className="flex flex-col items-center gap-3">
-         <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-          <Sparkles className="w-6 h-6 text-meren-black" strokeWidth={2.5} />
-         </div>
-         <span className="text-[11px] font-black text-[#AEAEB2] uppercase tracking-[0.2em] group-hover:text-meren-black transition-colors">Смотреть всё</span>
-        </div>
-       </button>
-      </div>
+     {/* Products Grid */}
+     <section>
+      <AnimatePresence mode="wait">
+       <motion.div
+        key={activeCategory + searchQuery}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.4 }}
+        className="grid grid-cols-2 gap-2"
+       >
+        {isLoading
+         ? Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)
+         : filteredProducts.length > 0 ? (
+          filteredProducts.map((p, i) => (
+           <ProductCard key={p.id} {...p} onAdd={() => addToCart(p)} index={i} />
+          ))
+         ) : (
+          <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white/40 rounded-[3rem] border-2 border-dashed border-[#E8E8E8]">
+           <Search className="w-12 h-12 text-[#4A403A]/10 mb-4" />
+           <p className="text-[#4A403A]/40 font-bold">Ничего не найдено</p>
+          </div>
+         )
+        }
+       </motion.div>
+      </AnimatePresence>
      </section>
 
-     {/* ── Right Sidebar (Cart) ── */}
-     <aside className="hidden lg:block sticky top-32 w-[400px] shrink-0 h-[calc(100vh-160px)] pl-8">
-      <CartSidebar cart={cart} onUpdateQuantity={updateQty} total={total} />
+     {/* Sticky Cart Sidebar */}
+     <aside className="hidden lg:block lg:sticky lg:top-8">
+      <CartSidebar />
      </aside>
-
     </div>
+
+    {/* ── Mobile Cart Layer ── */}
+    <AnimatePresence>
+     {isCartOpen && (
+      <div className="fixed inset-0 z-[100] lg:hidden">
+       {/* Glass Backdrop */}
+       <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setCartOpen(false)}
+        className="absolute inset-0 bg-[#2A1F1A]/50 backdrop-blur-md"
+       />
+       {/* Drawer Panel */}
+       <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="absolute right-0 top-0 h-full w-[88%] max-w-[420px] bg-[#F5E6DA] p-6 flex flex-col shadow-2xl"
+       >
+        <div className="flex justify-between items-center mb-6">
+         <h3 className="text-[20px] font-black text-[#4A403A]">Ваша корзина</h3>
+         <button
+          onClick={() => setCartOpen(false)}
+          className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#4A403A]/60 hover:text-[#4A403A] transition-colors"
+         >
+          <X className="w-5 h-5" />
+         </button>
+        </div>
+        <div className="flex-1 overflow-y-auto scrollbar-hide -mx-6 px-6">
+         <CartSidebar />
+        </div>
+       </motion.div>
+      </div>
+     )}
+    </AnimatePresence>
+
+    {/* ── Mobile FAB ── */}
+    <AnimatePresence>
+     {cart.length > 0 && (
+      <motion.div
+       initial={{ y: 100 }}
+       animate={{ y: 0 }}
+       exit={{ y: 100 }}
+       className="fixed bottom-8 left-0 right-0 z-[90] lg:hidden px-6"
+      >
+       <button
+        onClick={() => setCartOpen(true)}
+        className="w-full h-16 bg-[#CF8F73] rounded-2xl flex items-center justify-between px-7 text-white shadow-2xl shadow-[#CF8F73]/40 active:scale-[0.98] transition-soft"
+       >
+        <div className="flex items-center gap-4">
+         <div className="relative">
+          <ShoppingCart className="w-6 h-6" />
+          <span className="absolute -top-2 -right-2 bg-white text-[#CF8F73] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-lg">
+           {cart.reduce((s, i) => s + i.quantity, 0)}
+          </span>
+         </div>
+         <span className="text-[17px] font-bold">В корзину</span>
+        </div>
+        <span className="text-[18px] font-black tracking-tighter">
+         {cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString("ru-RU")} ₽
+        </span>
+       </button>
+      </motion.div>
+     )}
+    </AnimatePresence>
+
+    {/* Modals */}
+    <CheckoutModal />
+    <ProductDetailsModal />
+    <AddressModal />
    </main>
+
+   <Footer />
   </div>
  )
 }

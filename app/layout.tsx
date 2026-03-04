@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
+import { AppProvider } from "@/store/AppContext";
 
-const inter = Inter({
+const montserrat = Montserrat({
  subsets: ["latin", "cyrillic"],
- variable: "--font-inter",
+ variable: "--font-montserrat",
  display: "swap",
-});
-
-const manrope = Manrope({
- subsets: ["latin", "cyrillic"],
- variable: "--font-manrope",
- display: "swap",
- weight: ["200", "300", "400", "500", "600", "700", "800"],
+ weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -22,8 +17,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
  return (
-  <html lang="ru" className={`${inter.variable} ${manrope.variable}`}>
-   <body className="antialiased font-manrope bg-white">{children}</body>
+  <html lang="ru" className={`${montserrat.variable}`}>
+   <body className="antialiased font-montserrat bg-[#FDF8ED]">
+    <AppProvider>
+     {children}
+    </AppProvider>
+   </body>
   </html>
  );
 }

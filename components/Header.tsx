@@ -1,51 +1,55 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { Search, Truck, User } from "lucide-react";
+import { User, ChevronDown } from "lucide-react";
+import { useApp } from "@/store/AppContext";
 
 const Header: React.FC = () => {
- const [searchFocused, setSearchFocused] = useState(false);
+ const { setAddressModalOpen, address } = useApp();
 
  return (
-  <div className="sticky top-0 z-50 flex flex-col">
-   <header className="bg-white/80 backdrop-blur-xl flex h-20 items-center justify-between gap-8 px-8 lg:px-12 border-b border-black/[0.04]">
+  <header className="w-full px-4 sm:px-6 lg:px-10 pt-6 pb-6 bg-transparent relative z-[60] font-montserrat">
+   <div className="flex items-center justify-between gap-8">
 
-    {/* ── Journal-Style Logo ── */}
-    <Link href="/" className="flex shrink-0 cursor-pointer flex-col select-none group transition-all duration-700 hover:scale-[1.02] active:scale-95 px-2 leading-none no-underline border-none bg-transparent">
-     <span className="text-journal text-[42px] text-meren-black tracking-[-0.1em] group-hover:tracking-[-0.08em] transition-all duration-700">
-      смысл есть
-     </span>
+    {/* Logo */}
+    <Link href="/" className="flex items-center cursor-pointer group shrink-0 select-none">
+     <img
+      src="/photo/logo.png"
+      alt="СМЫСЛ"
+      className="h-[60px] sm:h-[80px] w-[120px] sm:w-[140px] object-contain"
+     />
     </Link>
 
-    {/* ── Master Polished Search ── */}
-    <div className="flex-1 max-w-[700px] flex items-center bg-[#F5F5F7] rounded-2xl px-6 py-3.5 transition-all duration-500 border-2 border-transparent focus-within:border-meren-black focus-within:bg-white focus-within:shadow-wow group/search">
-     <Search className="w-5 h-5 text-meren-black/20 group-focus-within/search:text-meren-black transition-colors" strokeWidth={3} />
-     <input
-      type="text"
-      placeholder="найти свежее..."
-      onFocus={() => setSearchFocused(true)}
-      onBlur={() => setSearchFocused(false)}
-      className="w-full bg-transparent text-[16px] font-[1000] text-meren-black outline-none placeholder:text-meren-black/20 tracking-tight lowercase ml-3"
-     />
-    </div>
-
-    {/* ── Action Badges ── */}
-    <div className="flex items-center gap-3">
-     <div className="hidden md:flex h-11 items-center px-6 rounded-full bg-meren-black text-white cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-bold shadow-black/10">
-      <span className="text-[13px] font-[1000] lowercase tracking-tight">акад. янгеля</span>
+    {/* Actions Group (Address + Profile) */}
+    <div className="flex items-center gap-6 sm:gap-10">
+     {/* Address Block */}
+     <div className="hidden md:flex flex-col items-end shrink-0">
+      <span className="text-[11px] font-bold text-[#4A403A]/40 uppercase tracking-[0.1em] mb-1">
+       Самовывоз
+      </span>
+      <button
+       onClick={() => setAddressModalOpen(true)}
+       className="flex items-center gap-1.5 group"
+      >
+       <span className="text-[13px] sm:text-[15px] font-bold text-[#4A403A] group-hover:text-smusl-terracotta transition-colors line-clamp-1">
+        {address || "Россия, г. Москва, ул. Ижорская, 3"}
+       </span>
+       <ChevronDown className="w-4 h-4 text-[#4A403A]/30 group-hover:text-smusl-terracotta transition-colors shrink-0" />
+      </button>
      </div>
 
-     <div className="hidden lg:flex h-11 items-center px-6 rounded-full border border-black/[0.06] bg-white text-meren-black cursor-pointer transition-all hover:bg-[#F5F5F7] active:scale-95 shadow-sm">
-      <span className="text-[13px] font-[1000] lowercase tracking-tight">⚡ 15 мин</span>
-     </div>
-
-     <button className="h-11 w-11 shrink-0 flex items-center justify-center rounded-full border border-black/[0.06] bg-[#F5F5F7] text-meren-black transition-all hover:bg-meren-black hover:text-white hover:scale-110 active:scale-90 cursor-pointer shadow-sm">
-      <User className="w-5 h-5" strokeWidth={3} />
-     </button>
+     {/* Profile button */}
+     <Link
+      href="/profile"
+      className="flex items-center gap-2.5 px-5 sm:px-7 py-3 sm:py-3.5 rounded-full bg-white border border-[#EBEBEB] text-[13px] sm:text-[15px] font-bold text-[#4A403A] hover:shadow-xl hover:shadow-[#4A403A]/5 transition-all shrink-0 active:scale-95 shadow-sm"
+     >
+      <User className="w-4 h-4 text-[#4A403A]/40 shrink-0" />
+      <span className="hidden sm:inline">Личный кабинет</span>
+     </Link>
     </div>
 
-   </header>
-  </div>
+   </div>
+  </header>
  );
 };
 
