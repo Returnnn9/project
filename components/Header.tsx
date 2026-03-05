@@ -1,53 +1,108 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { User, ChevronDown } from "lucide-react";
+import { User, ChevronDown, UserPlus, MapPin, Search } from "lucide-react";
 import { useApp } from "@/store/AppContext";
+import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 const Header: React.FC = () => {
- const { setAddressModalOpen, address } = useApp();
+ const {
+  setAddressModalOpen,
+  address,
+  setAuthModalOpen,
+  activeCategory,
+  setActiveCategory,
+  searchQuery,
+  setSearchQuery
+ } = useApp();
+ const { data: session, status } = useSession();
+
+ const handleProfileClick = (e: React.MouseEvent) => {
+  // Allow all users to access profile
+ };
+
+ const categories = ["Десерты", "Хлеб", "Снеки", "Выпечка"];
 
  return (
-  <header className="w-full px-4 sm:px-6 lg:px-10 pt-6 pb-6 bg-transparent relative z-[60] font-montserrat">
-   <div className="flex items-center justify-between gap-8">
+  <header className="w-full z-[100] font-manrope bg-[#FDF8ED] pb-4 border-b border-[#4A403A]/5">
+   <div className="w-full px-4 sm:px-8 lg:px-12">
+    {/* Top Row: Logo, Address, Profile */}
+    <div className="flex items-center justify-between py-6">
+     {/* Logo */}
+     <Link href="/" className="flex items-center cursor-pointer group shrink-0 select-none">
+      <img
+       src="/photo/logo.png"
+       alt="СМЫСЛ ЕСТЬ"
+       className="h-[60px] sm:h-[50px] w-auto object-contain"
+      />
+     </Link>
 
-    {/* Logo */}
-    <Link href="/" className="flex items-center cursor-pointer group shrink-0 select-none">
-     <img
-      src="/photo/logo.png"
-      alt="СМЫСЛ"
-      className="h-[60px] sm:h-[80px] w-[120px] sm:w-[140px] object-contain"
-     />
-    </Link>
-
-    {/* Actions Group (Address + Profile) */}
-    <div className="flex items-center gap-6 sm:gap-10">
-     {/* Address Block */}
-     <div className="hidden md:flex flex-col items-end shrink-0">
-      <span className="text-[11px] font-bold text-[#4A403A]/40 uppercase tracking-[0.1em] mb-1">
-       Самовывоз
-      </span>
+     <div className="flex items-center gap-4 sm:gap-6">
+      {/* Address Button */}
       <button
        onClick={() => setAddressModalOpen(true)}
-       className="flex items-center gap-1.5 group"
+       className="hidden md:flex items-center gap-3 px-6 py-3.5 bg-white/50 border border-[#4A403A]/10 rounded-full hover:bg-white hover:shadow-lg transition-all group"
       >
-       <span className="text-[13px] sm:text-[15px] font-bold text-[#4A403A] group-hover:text-smusl-terracotta transition-colors line-clamp-1">
-        {address || "Россия, г. Москва, ул. Ижорская, 3"}
+       <MapPin className="w-4 h-4 text-[#4A403A]/60 group-hover:text-smusl-terracotta transition-colors" />
+       <span className="text-[14px] font-bold text-[#4A403A]/70 group-hover:text-smusl-terracotta transition-colors max-w-[200px] truncate">
+        {address || "Выберите способ и адрес получения"}
        </span>
-       <ChevronDown className="w-4 h-4 text-[#4A403A]/30 group-hover:text-smusl-terracotta transition-colors shrink-0" />
       </button>
-     </div>
 
-     {/* Profile button */}
-     <Link
-      href="/profile"
-      className="flex items-center gap-2.5 px-5 sm:px-7 py-3 sm:py-3.5 rounded-full bg-white border border-[#EBEBEB] text-[13px] sm:text-[15px] font-bold text-[#4A403A] hover:shadow-xl hover:shadow-[#4A403A]/5 transition-all shrink-0 active:scale-95 shadow-sm"
-     >
-      <User className="w-4 h-4 text-[#4A403A]/40 shrink-0" />
-      <span className="hidden sm:inline">Личный кабинет</span>
-     </Link>
+      {/* Profile Button */}
+      <Link
+       href="/profile"
+       onClick={handleProfileClick}
+       className="flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-white border border-[#F0F0F0] text-[14px] font-[800] text-[#4A403A] hover:shadow-lg transition-all shrink-0 active:scale-95 shadow-sm"
+      >
+       {status === "authenticated" ? (
+        <>
+         <User className="w-4 h-4 text-smusl-terracotta shrink-0" />
+         <span className="hidden sm:inline">Личный кабинет</span>
+        </>
+       ) : (
+        <>
+         <UserPlus className="w-4 h-4 text-[#4A403A]/40 shrink-0" />
+         <span className="hidden sm:inline">Войти</span>
+        </>
+       )}
+      </Link>
+     </div>
     </div>
 
+    {/* Bottom Row: Categories and Search */}
+    <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-2">
+     {/* Categories */}
+     <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide shrink-0 w-full md:w-auto">
+      {categories.map((cat) => (
+       <button
+        key={cat}
+        onClick={() => setActiveCategory(cat)}
+        className={cn(
+         "px-8 py-3.5 rounded-2xl text-[14px] font-bold border-2 whitespace-nowrap transition-all duration-300",
+         activeCategory === cat
+          ? "bg-white border-smusl-terracotta text-smusl-terracotta shadow-lg shadow-smusl-terracotta/10"
+          : "bg-white/50 border-transparent text-smusl-gray hover:bg-white hover:border-smusl-light-gray"
+        )}
+       >
+        {cat}
+       </button>
+      ))}
+     </div>
+
+     {/* Search Bar */}
+     <div className="relative w-full md:w-[320px] lg:w-[450px] group">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A403A]/20 group-focus-within:text-smusl-terracotta transition-colors" />
+      <input
+       type="text"
+       value={searchQuery}
+       onChange={(e) => setSearchQuery(e.target.value)}
+       placeholder="Кекс фисташковый"
+       className="w-full bg-white/70 backdrop-blur-md border border-[#E8E8E8] rounded-2xl py-3.5 pl-11 pr-5 text-[14px] font-medium focus:outline-none focus:border-smusl-terracotta focus:bg-white transition-all shadow-sm placeholder:text-[#4A403A]/20"
+      />
+     </div>
+    </div>
    </div>
   </header>
  );

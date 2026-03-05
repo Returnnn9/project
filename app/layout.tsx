@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Manrope, Great_Vibes } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/store/AppContext";
+import { Providers } from "@/components/Providers";
+import LoginModal from "@/components/LoginModal";
 
-const montserrat = Montserrat({
+const manrope = Manrope({
  subsets: ["latin", "cyrillic"],
- variable: "--font-montserrat",
+ variable: "--font-manrope",
  display: "swap",
- weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
+ weight: ["200", "300", "400", "500", "600", "700", "800"],
+});
+
+const greatVibes = Great_Vibes({
+ subsets: ["latin", "cyrillic"],
+ variable: "--font-great-vibes",
+ weight: "400",
+ display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -17,11 +26,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
  return (
-  <html lang="ru" className={`${montserrat.variable}`}>
-   <body className="antialiased font-montserrat bg-[#FDF8ED]">
-    <AppProvider>
-     {children}
-    </AppProvider>
+  <html lang="ru" className={`${manrope.variable} ${greatVibes.variable}`}>
+   <body className="antialiased font-manrope bg-[#FDF8ED]">
+
+    <Providers>
+     <AppProvider>
+      {children}
+      <LoginModal />
+     </AppProvider>
+    </Providers>
    </body>
   </html>
  );

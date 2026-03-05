@@ -42,7 +42,7 @@ const CartSidebar = () => {
         layout
         className="bg-white rounded-[1.25rem] p-3 flex gap-3"
        >
-        <div className="relative flex-shrink-0 w-[140px] h-[96px] bg-[#F9F9F9] rounded-[1rem] overflow-hidden flex items-center justify-center border border-[#F0F0F0]">
+        <div className="relative flex-shrink-0 w-[100px] sm:w-[140px] h-[70px] sm:h-[96px] bg-[#F9F9F9] rounded-[1rem] overflow-hidden flex items-center justify-center border border-[#F0F0F0]">
          <img
           src={item.image}
           alt={item.name}
@@ -54,30 +54,30 @@ const CartSidebar = () => {
         </div>
 
         {/* Text content */}
-        <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
+        <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0">
          <div>
           <p className="text-[14px] font-black text-[#4A403A] leading-[1.2] mb-1">
            {item.name}
           </p>
-          <p className="text-[11px] font-bold text-[#4A403A]/30 uppercase tracking-widest">1 шт</p>
+          <p className="text-[10px] sm:text-[11px] font-bold text-[#4A403A]/30 uppercase tracking-widest">1 шт</p>
          </div>
          <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-[#4A403A]/50">
+          <div className="flex items-center gap-2 sm:gap-4 text-[#4A403A]/50">
            <button
             onClick={() => updateQuantity(item.id, -1)}
-            className="text-[18px] font-bold leading-none hover:text-smusl-terracotta transition-colors"
+            className="text-[16px] sm:text-[18px] font-bold leading-none hover:text-smusl-terracotta transition-colors px-1"
            >
             −
            </button>
-           <span className="text-[15px] font-black text-[#4A403A]">{item.quantity}</span>
+           <span className="text-[14px] sm:text-[15px] font-black text-[#4A403A]">{item.quantity}</span>
            <button
             onClick={() => updateQuantity(item.id, 1)}
-            className="text-[18px] font-bold leading-none hover:text-smusl-terracotta transition-colors"
+            className="text-[16px] sm:text-[18px] font-bold leading-none hover:text-smusl-terracotta transition-colors px-1"
            >
             +
            </button>
           </div>
-          <span className="text-[16px] font-black text-[#4A403A] tracking-tighter">
+          <span className="text-[14px] sm:text-[16px] font-black text-[#4A403A] tracking-tighter shrink-0 ml-2">
            {item.price * item.quantity} ₽
           </span>
          </div>

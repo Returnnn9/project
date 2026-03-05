@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { products } from "@/components/data";
 
 export interface Product {
@@ -57,6 +57,19 @@ interface AppState {
  setCartOpen: (open: boolean) => void;
  isAddressModalOpen: boolean;
  setAddressModalOpen: (open: boolean) => void;
+ isAuthModalOpen: boolean;
+ setAuthModalOpen: (open: boolean) => void;
+ userName: string;
+ setUserName: (name: string) => void;
+ userPhone: string;
+ setUserPhone: (phone: string) => void;
+ favorites: number[];
+ toggleFavorite: (productId: number) => void;
+ orderHistory: any[];
+ activeCategory: string;
+ setActiveCategory: (category: string) => void;
+ searchQuery: string;
+ setSearchQuery: (query: string) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -73,6 +86,69 @@ export function AppProvider({ children }: { children: ReactNode }) {
  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
  const [isCartOpen, setCartOpen] = useState(false);
  const [isAddressModalOpen, setAddressModalOpen] = useState(false);
+
+ const [isAuthModalOpen, setAuthModalOpen] = useState(false);
+ const [userName, setUserName] = useState("");
+ const [userPhone, setUserPhone] = useState("");
+ const [favorites, setFavorites] = useState<number[]>([]);
+ const [orderHistory, setOrderHistory] = useState<any[]>([]);
+ const [activeCategory, setActiveCategory] = useState("Десерты");
+ const [searchQuery, setSearchQuery] = useState("");
+
+ // Persistence: load on mount
+ useEffect(() => {
+  const savedCart = localStorage.getItem("smuslest_cart");
+  if (savedCart) {
+   try {
+    setCart(JSON.parse(savedCart));
+   } catch (e) {
+    console.error("Failed to parse cart", e);
+   }
+  }
+  const savedAddress = localStorage.getItem("smuslest_address");
+  if (savedAddress) setAddress(savedAddress);
+
+  const savedName = localStorage.getItem("smuslest_name");
+  if (savedName) setUserName(savedName);
+
+  const savedPhone = localStorage.getItem("smuslest_phone");
+  if (savedPhone) setUserPhone(savedPhone);
+
+  const savedFavorites = localStorage.getItem("smuslest_favorites");
+  if (savedFavorites) {
+   try {
+    setFavorites(JSON.parse(savedFavorites));
+   } catch (e) {
+    console.error("Failed to parse favorites", e);
+   }
+  }
+
+  const savedOrders = localStorage.getItem("smuslest_orders");
+  if (savedOrders) {
+   try {
+    setOrderHistory(JSON.parse(savedOrders));
+   } catch (e) {
+    console.error("Failed to parse orders", e);
+   }
+  }
+ }, []);
+
+ // Persistence: save on change
+ useEffect(() => {
+  if (cart.length > 0) {
+   localStorage.setItem("smuslest_cart", JSON.stringify(cart));
+  } else {
+   localStorage.removeItem("smuslest_cart");
+  }
+ }, [cart]);
+
+ useEffect(() => {
+  localStorage.setItem("smuslest_address", address);
+  localStorage.setItem("smuslest_name", userName);
+  localStorage.setItem("smuslest_phone", userPhone);
+  localStorage.setItem("smuslest_favorites", JSON.stringify(favorites));
+  localStorage.setItem("smuslest_orders", JSON.stringify(orderHistory));
+ }, [address, userName, userPhone, favorites, orderHistory]);
 
  const addToCart = (product: Product) => {
   setCart((prev) => {
@@ -106,10 +182,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
  };
 
+ const toggleFavorite = (productId: number) => {
+  setFavorites((prev) =>
+   prev.includes(productId)
+    ? prev.filter((id) => id !== productId)
+    : [...prev, productId]
+  );
+ };
+
  const checkout = () => {
   const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-  if (balance >= total && cart.length > 0) {
-   setBalance((b) => b - total);
+  if (cart.length > 0) {
+   const newOrder = {
+    id: Date.now(),
+    items: [...cart],
+    total,
+    date: new Date().toLocaleDateString("ru-RU", {
+     day: "numeric",
+     month: "long",
+     year: "numeric",
+    }),
+    address,
+   };
+   setOrderHistory((prev) => [newOrder, ...prev]);
    setCart([]);
    setActiveOrders((o) => o + 1);
    setNotifications((prev) => [
@@ -154,6 +249,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCartOpen,
     isAddressModalOpen,
     setAddressModalOpen,
+    isAuthModalOpen,
+    setAuthModalOpen,
+    userName,
+    setUserName,
+    userPhone,
+    setUserPhone,
+    favorites,
+    toggleFavorite,
+    orderHistory,
+    activeCategory,
+    setActiveCategory,
+    searchQuery,
+    setSearchQuery,
    }}
   >
    {children}

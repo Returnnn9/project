@@ -15,16 +15,22 @@ import { ProductCardSkeleton } from "@/components/Skeleton"
 import { motion, AnimatePresence } from "framer-motion"
 
 export default function Home() {
- const { addToCart, isCartOpen, setCartOpen, cart } = useApp()
- const [activeCategory, setActiveCategory] = useState("Десерты")
- const [searchQuery, setSearchQuery] = useState("")
- const [isLoading, setIsLoading] = useState(true)
+ const {
+  addToCart,
+  isCartOpen,
+  setCartOpen,
+  cart,
+  activeCategory,
+  setActiveCategory,
+  searchQuery
+ } = useApp();
+ const [isLoading, setIsLoading] = useState(true);
 
  useEffect(() => {
-  setIsLoading(true)
-  const timer = setTimeout(() => setIsLoading(false), 800)
-  return () => clearTimeout(timer)
- }, [activeCategory])
+  setIsLoading(true);
+  const timer = setTimeout(() => setIsLoading(false), 800);
+  return () => clearTimeout(timer);
+ }, [activeCategory]);
 
  const filteredProducts = products.filter((p) => {
   const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -45,46 +51,7 @@ export default function Home() {
 
    <main className="flex-1 w-full px-4 sm:px-6 lg:px-10 pb-20 pt-2 lg:pt-6">
 
-    {/* ── Filter Bar ── */}
-    <motion.div
-     initial={{ opacity: 0, y: -20 }}
-     animate={{ opacity: 1, y: 0 }}
-     transition={{ duration: 0.6, ease: "easeOut" }}
-     className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 mb-12"
-    >
-     {/* Categories */}
-     <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide shrink-0">
-      {["Десерты", "Хлеб", "Снеки", "Выпечка"].map((cat) => (
-       <button
-        key={cat}
-        onClick={() => setActiveCategory(cat)}
-        className={`
-         px-6 py-3.5 rounded-2xl text-[14px] font-bold border-2 whitespace-nowrap transition-all duration-300
-         ${activeCategory === cat
-          ? "bg-white border-smusl-terracotta text-smusl-terracotta shadow-lg shadow-smusl-terracotta/10"
-          : "bg-white/50 border-transparent text-smusl-gray hover:bg-white hover:border-smusl-light-gray"
-         }
-        `}
-       >
-        {cat}
-       </button>
-      ))}
-     </div>
-
-     {/* Search */}
-     <div className="relative w-full md:w-[320px] lg:w-[400px] group">
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A403A]/20 group-focus-within:text-smusl-terracotta transition-colors" />
-      <input
-       type="text"
-       value={searchQuery}
-       onChange={(e) => setSearchQuery(e.target.value)}
-       placeholder="Поиск по товарам..."
-       className="w-full bg-white/70 backdrop-blur-md border border-[#E8E8E8] rounded-2xl py-3.5 pl-11 pr-5 text-[14px] font-medium focus:outline-none focus:border-smusl-terracotta focus:bg-white transition-all shadow-sm placeholder:text-[#4A403A]/20"
-      />
-     </div>
-    </motion.div>
-
-    <div className="flex items-center justify-between mb-8">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 sm:mb-8">
      <motion.h2
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
@@ -92,7 +59,7 @@ export default function Home() {
      >
       {activeCategory}
      </motion.h2>
-     <p className="text-[13px] font-bold text-[#4A403A]/30 uppercase tracking-widest">
+     <p className="text-[12px] sm:text-[13px] font-bold text-[#4A403A]/30 uppercase tracking-widest">
       {filteredProducts.length} товаров
      </p>
     </div>
@@ -109,7 +76,7 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.4 }}
-        className="grid grid-cols-2 gap-2"
+        className="grid grid-cols-2 gap-2 sm:gap-3"
        >
         {isLoading
          ? Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)
