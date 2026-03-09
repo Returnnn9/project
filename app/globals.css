@@ -30,6 +30,10 @@
 }
 
 @layer base {
+ html {
+  scroll-behavior: smooth;
+ }
+
  body {
   @apply font-manrope text-base font-medium antialiased text-[#4A423D] bg-[#FDF8ED];
   letter-spacing: -0.01em;

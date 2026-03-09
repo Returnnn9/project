@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { motion, AnimatePresence } from "framer-motion"
@@ -60,52 +61,60 @@ function CartItemRow({ item, index, isLast, onDecrement, onIncrement, onRemove }
    initial={{ opacity: 0, x: -10 }}
    animate={{ opacity: 1, x: 0 }}
    transition={{ delay: index * 0.05 }}
-   className={`flex items-center justify-between p-5 sm:p-8 gap-5 bg-white hover:bg-[#FAF8F5]/80 transition-colors ${!isLast ? "border-b border-smusl-light-gray/40" : ""}`}
+   className={`flex flex-col sm:flex-row sm:items-center p-4 sm:p-8 gap-4 sm:gap-5 bg-white hover:bg-[#FAF8F5]/80 transition-colors ${!isLast ? "border-b border-smusl-light-gray/40" : ""}`}
   >
-   <div className="flex items-center gap-6 flex-1 min-w-0">
-    <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-[1.8rem] overflow-hidden bg-white shrink-0 p-1.5 border border-smusl-light-gray/40 shadow-sm">
-     <img src={item.image} className="w-full h-full object-cover rounded-[1.4rem]" alt={item.name} />
+   {/* Top row: image + name/price */}
+   <div className="flex items-center gap-4 flex-1 min-w-0">
+    <div className="relative w-16 h-16 sm:w-32 sm:h-32 rounded-[1.4rem] sm:rounded-[1.8rem] overflow-hidden bg-white shrink-0 p-1 sm:p-1.5 border border-smusl-light-gray/40 shadow-sm">
+     <Image src={item.image} fill sizes="(max-width: 640px) 64px, 128px" className="object-cover rounded-[1.1rem] sm:rounded-[1.4rem]" alt={item.name} />
     </div>
-    <div className="min-w-0">
-     <h3 className="text-[18px] sm:text-[22px] font-bold text-[#5B5047] leading-tight">{item.name}</h3>
-     <p className="text-[16px] sm:text-[20px] font-black text-[#5B5047] mt-1">{item.price} ₽</p>
+    <div className="min-w-0 flex-1">
+     <h3 className="text-[15px] sm:text-[22px] font-bold text-[#5B5047] leading-tight">{item.name}</h3>
+     <p className="text-[14px] sm:text-[20px] font-black text-[#5B5047] mt-0.5 sm:mt-1">{item.price} ₽</p>
     </div>
    </div>
 
-   <div className="flex items-center shrink-0">
-    <div className="flex items-center p-2 bg-[#FAF8F5] rounded-[1.4rem] border border-smusl-light-gray/60 shadow-sm">
-     {/* Quantity Controls */}
-     <div className="flex items-center gap-4 px-1">
+   {/* Bottom row on mobile / right side on desktop: controls + price + trash */}
+   <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+    {/* Quantity Controls */}
+    <div className="flex items-center p-1.5 sm:p-2 bg-[#FAF8F5] rounded-[1.2rem] sm:rounded-[1.4rem] border border-smusl-light-gray/60 shadow-sm">
+     <div className="flex items-center gap-2 sm:gap-4 px-1">
       <button
        onClick={onDecrement}
-       className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-smusl-light-gray text-smusl-brown hover:bg-smusl-terracotta hover:text-white transition-all shadow-sm active:scale-90"
+       className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-white border border-smusl-light-gray text-smusl-brown hover:bg-smusl-terracotta hover:text-white transition-all shadow-sm active:scale-90"
       >
-       <Minus className="w-4 h-4" />
+       <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
-      <span className="text-[18px] font-black text-smusl-brown min-w-[32px] text-center">{item.quantity}</span>
+      <span className="text-[15px] sm:text-[18px] font-black text-smusl-brown min-w-[24px] sm:min-w-[32px] text-center">{item.quantity}</span>
       <button
        onClick={onIncrement}
-       className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-smusl-light-gray text-smusl-brown hover:bg-smusl-terracotta hover:text-white transition-all shadow-sm active:scale-90"
+       className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-white border border-smusl-light-gray text-smusl-brown hover:bg-smusl-terracotta hover:text-white transition-all shadow-sm active:scale-90"
       >
-       <Plus className="w-4 h-4" />
+       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
      </div>
 
-     {/* Clear Divider */}
-     <div className="w-px h-8 bg-smusl-light-gray/60 mx-3" />
+     {/* Divider */}
+     <div className="w-px h-6 sm:h-8 bg-smusl-light-gray/60 mx-2 sm:mx-3" />
 
-     {/* Delete Button */}
+     {/* Delete */}
      <button
       onClick={onRemove}
-      className="w-10 h-10 flex items-center justify-center rounded-[1rem] text-[#CF8F73] hover:text-red-500 hover:bg-red-50 transition-all active:scale-95 group"
+      className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-[0.8rem] sm:rounded-[1rem] text-[#CF8F73] hover:text-red-500 hover:bg-red-50 transition-all active:scale-95 group"
      >
-      <Trash2 className="w-5.5 h-5.5 group-hover:scale-110 transition-transform" />
+      <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
      </button>
     </div>
+
+    {/* Total price on mobile (hidden on sm where it shows inline above) */}
+    <span className="sm:hidden text-[15px] font-black text-[#5B5047] tabular-nums">
+     {(item.price * item.quantity).toLocaleString("ru-RU")} ₽
+    </span>
    </div>
   </motion.div>
  )
 }
+
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
@@ -203,13 +212,13 @@ export default function ProfilePage() {
     </div>
 
     {/* Tabs Navigation */}
-    <div className="mt-12 sm:mt-16 mb-8 sm:mb-12">
-     <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-2 px-1">
+    <div className="mt-12 sm:mt-16 mb-8 sm:mb-12 -mx-4 sm:mx-0">
+     <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-4 px-4 sm:px-1 after:content-[''] after:w-1 after:shrink-0 sm:after:hidden">
       {TABS.map(({ label, icon: Icon }) => (
        <button
         key={label}
         onClick={() => setActiveTab(label)}
-        className={`flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-4 rounded-[1.5rem] text-[14px] sm:text-[16px] font-bold border-2 transition-all duration-300 ${activeTab === label
+        className={`flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-4 rounded-[1.5rem] text-[14px] sm:text-[16px] font-bold border-2 shrink-0 whitespace-nowrap transition-all duration-300 ${activeTab === label
          ? "bg-white text-[#CF8F73] border-[#CF8F73] shadow-lg shadow-[#CF8F73]/10"
          : "bg-white text-smusl-gray/70 border-smusl-light-gray hover:border-smusl-gray/40 hover:text-smusl-gray"
          }`}
@@ -255,9 +264,9 @@ export default function ProfilePage() {
             {/* Mobile layout */}
             <div className="sm:hidden p-6 flex flex-col gap-5">
              <div className="flex gap-5">
-              <div className="w-24 h-24 rounded-[1.6rem] overflow-hidden bg-[#FDFBF9] shrink-0 shadow-sm">
+              <div className="relative w-24 h-24 rounded-[1.6rem] overflow-hidden bg-[#FDFBF9] shrink-0 shadow-sm">
                {firstProduct?.image
-                ? <img src={firstProduct.image} alt={firstProduct.name} className="w-full h-full object-cover" />
+                ? <Image src={firstProduct.image} alt={firstProduct.name} fill sizes="96px" className="object-cover" />
                 : <div className="w-full h-full bg-smusl-beige/60" />
                }
               </div>
@@ -281,9 +290,9 @@ export default function ProfilePage() {
 
             {/* Desktop layout */}
             <div className="hidden sm:flex items-center gap-10 p-8 lg:p-10">
-             <div className="w-28 h-28 rounded-[2rem] overflow-hidden bg-[#FDFBF9] shrink-0 shadow-sm">
+             <div className="relative w-28 h-28 rounded-[2rem] overflow-hidden bg-[#FDFBF9] shrink-0 shadow-sm">
               {firstProduct?.image
-               ? <img src={firstProduct.image} alt={firstProduct.name} className="w-full h-full object-cover" />
+               ? <Image src={firstProduct.image} alt={firstProduct.name} fill sizes="112px" className="object-cover" />
                : <div className="w-full h-full bg-smusl-beige/60" />
               }
              </div>

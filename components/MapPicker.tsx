@@ -4,11 +4,21 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Search, MapPin, Navigation, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export interface AddressDetails {
+ full: string;
+ road?: string;
+ house?: string;
+ city?: string;
+}
+
 interface MapPickerProps {
  initialAddress?: string;
  onAddressSelect: (address: string) => void;
+ onAddressDetailsSelect?: (details: AddressDetails) => void;
  onError?: (error: string | null) => void;
  className?: string;
+ hideSearch?: boolean;
+ externalCoords?: [number, number] | null;
 }
 
 interface Suggestion {
@@ -17,6 +27,7 @@ interface Suggestion {
  lon: string;
  address?: {
   road?: string;
+  pedestrian?: string;
   house_number?: string;
   city?: string;
   town?: string;
@@ -31,7 +42,7 @@ declare global {
  }
 }
 
-export default function MapPicker({ initialAddress, onAddressSelect, onError, className }: MapPickerProps) {
+export default function MapPicker({ initialAddress, onAddressSelect, onAddressDetailsSelect, onError, className, hideSearch, externalCoords }: MapPickerProps) {
  const API_KEY = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || "";
 
  const [isLoaded, setIsLoaded] = useState(false);
@@ -134,7 +145,7 @@ export default function MapPicker({ initialAddress, onAddressSelect, onError, cl
      controls: [],
     }, {
      suppressMapOpenBlock: true,
-     yandexMapDisablePoiInteractivity: true
+     yandexMapDisablePoiInteractivity: false
     });
 
     const marker = new window.ymaps.Placemark(defaultCenter, {}, {
@@ -177,6 +188,14 @@ export default function MapPicker({ initialAddress, onAddressSelect, onError, cl
   // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [useYandex, isLoaded]);
 
+ // Sync map when external coordinates change (e.g. address selected from suggestions)
+ useEffect(() => {
+  if (externalCoords && mapInstance.current && markerInstance.current) {
+   updateMapLocation(externalCoords as unknown as number[], false);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [externalCoords]);
+
  const autoLocate = () => {
   setIsLocating(true);
   if (useYandex && window.ymaps) {
@@ -214,6 +233,14 @@ export default function MapPicker({ initialAddress, onAddressSelect, onError, cl
        const addr = formatNominatimAddress(data);
        setSearchQuery(addr);
        onAddressSelect(addr);
+       if (onAddressDetailsSelect) {
+        onAddressDetailsSelect({
+         full: addr,
+         road: data.address?.road || data.address?.pedestrian || data.address?.suburb,
+         house: data.address?.house_number,
+         city: data.address?.city || data.address?.town || data.address?.village
+        });
+       }
       }
      } catch { /* ignore */ }
     }
@@ -255,8 +282,17 @@ export default function MapPicker({ initialAddress, onAddressSelect, onError, cl
    const obj = res.geoObjects.get(0);
    if (obj) {
     const address = obj.getAddressLine();
+    let road = obj.getThoroughfare();
+    if (!road && obj.getPremise) road = obj.getPremise();
+    const house = obj.getPremiseNumber();
+    const cityList = obj.getLocalities ? obj.getLocalities() : [];
+    const city = cityList && cityList.length > 0 ? cityList[0] : (obj.getAdministrativeAreas ? obj.getAdministrativeAreas()[0] : undefined);
+
     setSearchQuery(address);
     onAddressSelect(address);
+    if (onAddressDetailsSelect) {
+     onAddressDetailsSelect({ full: address, road, house, city });
+    }
    }
   } catch (e) {
    console.error("Reverse geocode error", e);
@@ -281,7 +317,7 @@ export default function MapPicker({ initialAddress, onAddressSelect, onError, cl
     q: `${query}, Москва`,
     format: "json",
     addressdetails: "1",
-    limit: "6",
+    limit: "10",
     "accept-language": "ru",
     countrycodes: "ru",
     viewbox: "36.8,56.0,38.0,55.4",
@@ -292,8 +328,29 @@ export default function MapPicker({ initialAddress, onAddressSelect, onError, cl
     { headers: { "Accept-Language": "ru", "User-Agent": "smuslest-app/1.0" } }
    );
    const data: Suggestion[] = await res.json();
-   setSuggestions(data);
-   setShowSuggestions(data.length > 0);
+
+   const uniqueSuggestions: Suggestion[] = [];
+   const seen = new Set<string>();
+
+   for (const item of data) {
+    const a = item.address || {};
+    const road = (a.road || a.pedestrian || "").trim();
+    const num = a.house_number ? `, д. ${a.house_number.trim()}` : "";
+    const main = (road + num) || item.display_name.split(',')[0].trim();
+    const sub = (a.suburb || a.city || "Москва").trim();
+
+    // Normalize string for checking identical values
+    const key = `${main}|${sub}`.toLowerCase().replace(/\s+/g, ' ').replace(/ё/g, 'е');
+
+    if (!seen.has(key) && main) {
+     seen.add(key);
+     uniqueSuggestions.push(item);
+    }
+   }
+
+   const finalSuggestions = uniqueSuggestions.slice(0, 6);
+   setSuggestions(finalSuggestions);
+   setShowSuggestions(finalSuggestions.length > 0);
   } catch (e) {
    console.error("Nominatim error", e);
    setSuggestions([]);
@@ -367,133 +424,133 @@ export default function MapPicker({ initialAddress, onAddressSelect, onError, cl
  };
 
  const getDisplayName = (item: Suggestion): string => {
-  const a = item.address;
-  if (!a) return item.display_name;
-  const road = a.road || "";
-  const num = a.house_number ? `, д. ${a.house_number}` : "";
-  return (road + num) || item.display_name;
+  const a = item.address || {};
+  const road = (a.road || a.pedestrian || "").trim();
+  const num = a.house_number ? `, д. ${a.house_number.trim()}` : "";
+  return (road + num) || item.display_name.split(',')[0].trim();
  };
 
  const getSubtitle = (item: Suggestion): string => {
-  const a = item.address;
-  if (!a) return "";
+  const a = item.address || {};
   // Show district (suburb) as subtitle context
-  return a.suburb || a.city || "Москва";
+  return (a.suburb || a.city || "Москва").trim();
  };
 
  return (
   <div className={cn("flex flex-col gap-4 w-full h-full min-h-[400px] relative font-montserrat", className)}>
    {/* Search Bar */}
-   <div className="relative z-[1001]">
-    <div className="relative flex items-center">
-     <Search className="absolute left-4 w-5 h-5 text-smusl-gray/40 pointer-events-none" />
-     <input
-      ref={inputRef}
-      type="text"
-      value={searchQuery}
-      onChange={(e) => handleInputChange(e.target.value)}
-      onKeyDown={handleKeyDown}
-      onFocus={() => {
-       if (suggestions.length > 0) setShowSuggestions(true);
-      }}
-      placeholder="Введите адрес доставки..."
-      autoComplete="off"
-      className="w-full h-14 pl-12 pr-28 bg-smusl-beige rounded-2xl border-2 border-transparent focus:border-smusl-terracotta focus:bg-white transition-all text-sm font-bold outline-none placeholder:font-normal placeholder:text-smusl-gray/50"
-     />
-     <div className="absolute right-3 flex items-center gap-1">
-      {isLoadingSuggestions && (
-       <Loader2 className="w-4 h-4 animate-spin text-smusl-terracotta/50" />
-      )}
-      {searchQuery && (
+   {!hideSearch && (
+    <div className="relative z-[1001]">
+     <div className="relative flex items-center">
+      <Search className="absolute left-4 w-5 h-5 text-smusl-gray/40 pointer-events-none" />
+      <input
+       ref={inputRef}
+       type="text"
+       value={searchQuery}
+       onChange={(e) => handleInputChange(e.target.value)}
+       onKeyDown={handleKeyDown}
+       onFocus={() => {
+        if (suggestions.length > 0) setShowSuggestions(true);
+       }}
+       placeholder="Введите адрес доставки..."
+       autoComplete="off"
+       className="w-full h-14 pl-12 pr-28 bg-smusl-beige rounded-2xl border-2 border-transparent focus:border-smusl-terracotta focus:bg-white transition-all text-sm font-bold outline-none placeholder:font-normal placeholder:text-smusl-gray/50"
+      />
+      <div className="absolute right-3 flex items-center gap-1">
+       {isLoadingSuggestions && (
+        <Loader2 className="w-4 h-4 animate-spin text-smusl-terracotta/50" />
+       )}
+       {searchQuery && (
+        <button
+         type="button"
+         onClick={clearSearch}
+         className="p-2 hover:bg-smusl-clay rounded-xl transition-colors"
+        >
+         <X className="w-4 h-4 text-smusl-gray/50" />
+        </button>
+       )}
        <button
         type="button"
-        onClick={clearSearch}
-        className="p-2 hover:bg-smusl-clay rounded-xl transition-colors"
+        onClick={() => {
+         if (useYandex) geocodeYandex(searchQuery);
+         setSuggestions([]);
+         setShowSuggestions(false);
+        }}
+        className="p-2 hover:bg-smusl-clay rounded-xl text-smusl-terracotta transition-colors"
+        title="Найти"
        >
-        <X className="w-4 h-4 text-smusl-gray/50" />
+        <Search className="w-4 h-4" />
        </button>
-      )}
-      <button
-       type="button"
-       onClick={() => {
-        if (useYandex) geocodeYandex(searchQuery);
-        setSuggestions([]);
-        setShowSuggestions(false);
-       }}
-       className="p-2 hover:bg-smusl-clay rounded-xl text-smusl-terracotta transition-colors"
-       title="Найти"
-      >
-       <Search className="w-4 h-4" />
-      </button>
-      <button
-       type="button"
-       onClick={autoLocate}
-       className="p-2 hover:bg-smusl-clay rounded-xl text-smusl-terracotta transition-colors"
-       title="Моё местоположение"
-      >
-       {isLocating ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-       ) : (
-        <Navigation className="w-4 h-4" />
-       )}
-      </button>
-     </div>
-    </div>
-
-    {/* Suggestions Dropdown */}
-    {showSuggestions && suggestions.length > 0 && (
-     <div
-      ref={suggestRef}
-      className="absolute top-full left-0 right-0 mt-2 z-[1002] overflow-hidden"
-     >
-      <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.13)] border border-smusl-light-gray/20 overflow-hidden">
-       {/* Header */}
-       <div className="px-4 py-2.5 bg-smusl-beige/60 border-b border-smusl-light-gray/20 flex items-center gap-2">
-        <MapPin className="w-3.5 h-3.5 text-smusl-terracotta/70" />
-        <span className="text-[11px] font-bold text-smusl-brown/50 uppercase tracking-widest">Москва</span>
-       </div>
-       <div className="overflow-y-auto" style={{ maxHeight: 260 }}>
-        {suggestions.map((item, i) => {
-         const main = getDisplayName(item);
-         const sub = getSubtitle(item);
-         return (
-          <button
-           key={i}
-           type="button"
-           onMouseDown={(e) => {
-            e.preventDefault();
-            selectSuggestion(item as any);
-           }}
-           className="w-full px-4 py-3 text-left flex items-center gap-3 border-b border-smusl-light-gray/15 last:border-0 transition-all group hover:bg-gradient-to-r hover:from-smusl-beige hover:to-transparent"
-          >
-           <div className="w-9 h-9 rounded-[10px] bg-smusl-terracotta/8 flex items-center justify-center shrink-0 group-hover:bg-smusl-terracotta/15 transition-colors border border-smusl-terracotta/10">
-            <MapPin className="w-4 h-4 text-smusl-terracotta" />
-           </div>
-           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-[13px] font-[700] text-smusl-brown leading-tight truncate group-hover:text-smusl-terracotta transition-colors">
-             {main}
-            </span>
-            {sub && (
-             <span className="text-[11px] text-smusl-gray/60 leading-tight truncate mt-0.5 font-medium">
-              {sub}
-             </span>
-            )}
-           </div>
-           <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            <div className="w-6 h-6 rounded-lg bg-smusl-terracotta/10 flex items-center justify-center">
-             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <path d="M2 5h6M5.5 2.5L8 5l-2.5 2.5" stroke="#C17B5A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-             </svg>
-            </div>
-           </div>
-          </button>
-         );
-        })}
-       </div>
+       <button
+        type="button"
+        onClick={autoLocate}
+        className="p-2 hover:bg-smusl-clay rounded-xl text-smusl-terracotta transition-colors"
+        title="Моё местоположение"
+       >
+        {isLocating ? (
+         <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+         <Navigation className="w-4 h-4" />
+        )}
+       </button>
       </div>
      </div>
-    )}
-   </div>
+
+     {/* Suggestions Dropdown */}
+     {showSuggestions && suggestions.length > 0 && (
+      <div
+       ref={suggestRef}
+       className="absolute top-full left-0 right-0 mt-2 z-[1002] overflow-hidden"
+      >
+       <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.13)] border border-smusl-light-gray/20 overflow-hidden">
+        {/* Header */}
+        <div className="px-4 py-2.5 bg-smusl-beige/60 border-b border-smusl-light-gray/20 flex items-center gap-2">
+         <MapPin className="w-3.5 h-3.5 text-smusl-terracotta/70" />
+         <span className="text-[11px] font-bold text-smusl-brown/50 uppercase tracking-widest">Москва</span>
+        </div>
+        <div className="overflow-y-auto" style={{ maxHeight: 260 }}>
+         {suggestions.map((item, i) => {
+          const main = getDisplayName(item);
+          const sub = getSubtitle(item);
+          return (
+           <button
+            key={i}
+            type="button"
+            onMouseDown={(e) => {
+             e.preventDefault();
+             selectSuggestion(item as any);
+            }}
+            className="w-full px-4 py-3 text-left flex items-center gap-3 border-b border-smusl-light-gray/15 last:border-0 transition-all group hover:bg-gradient-to-r hover:from-smusl-beige hover:to-transparent"
+           >
+            <div className="w-9 h-9 rounded-[10px] bg-smusl-terracotta/8 flex items-center justify-center shrink-0 group-hover:bg-smusl-terracotta/15 transition-colors border border-smusl-terracotta/10">
+             <MapPin className="w-4 h-4 text-smusl-terracotta" />
+            </div>
+            <div className="flex flex-col min-w-0 flex-1">
+             <span className="text-[13px] font-[700] text-smusl-brown leading-tight truncate group-hover:text-smusl-terracotta transition-colors">
+              {main}
+             </span>
+             {sub && (
+              <span className="text-[11px] text-smusl-gray/60 leading-tight truncate mt-0.5 font-medium">
+               {sub}
+              </span>
+             )}
+            </div>
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+             <div className="w-6 h-6 rounded-lg bg-smusl-terracotta/10 flex items-center justify-center">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+               <path d="M2 5h6M5.5 2.5L8 5l-2.5 2.5" stroke="#C17B5A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+             </div>
+            </div>
+           </button>
+          );
+         })}
+        </div>
+       </div>
+      </div>
+     )}
+    </div>
+   )}
 
    {/* Map Canvas (only when Yandex available) */}
    {useYandex ? (

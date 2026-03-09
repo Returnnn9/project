@@ -5,9 +5,10 @@ import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import ProductCard from "@/components/ProductCard"
 import CartSidebar from "@/components/CartSidebar"
-import CheckoutModal from "@/components/CheckoutModal"
-import ProductDetailsModal from "../../components/ProductDetailsModal"
-import AddressModal from "@/components/AddressModal"
+import dynamic from "next/dynamic"
+const CheckoutModal = dynamic(() => import("@/components/CheckoutModal"), { ssr: false })
+const ProductDetailsModal = dynamic(() => import("@/components/ProductDetailsModal"), { ssr: false })
+const AddressModal = dynamic(() => import("@/components/AddressModal"), { ssr: false })
 import { Search, ShoppingCart, X } from "lucide-react"
 import { products } from "@/components/data"
 import { useApp } from "@/store/AppContext"

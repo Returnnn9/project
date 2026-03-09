@@ -16,29 +16,29 @@ const newsItems = [
   id: 2,
   date: '23.02.2026',
   title: 'Технология безглютеновой выпечки: зачем нужны псиллиум, ксантан и точная гидратация',
-  image: '/images/Rectangle 12.svg',
+  image: '/images/Rectangle 17.svg',
   aspectRatio: 'aspect-video sm:aspect-[3/2]'
  },
  {
   id: 3,
   date: '11.02.2026',
   title: 'Мифы о безглютеновом хлебе: почему он может быть вкусным и полезным',
-  image: '/images/flour.png',
+  image: '/images/Rectangle15.svg',
   aspectRatio: 'aspect-[4/5] sm:aspect-square md:aspect-[4/5]'
  },
  {
   id: 4,
   date: '11.02.2026',
   title: 'Мифы о безглютеновом хлебе: почему он может быть вкусным и полезным',
-  image: '/images/Rectangle 13.svg',
+  image: '/images/Rectangle 16.svg',
   aspectRatio: 'aspect-video sm:aspect-[3/2]'
  },
 ];
 
 const LandingNews = () => {
  return (
-  <section className="py-24 bg-[#FAF8F5]">
-   <div className="container mx-auto px-4 md:px-8 lg:px-12">
+  <section id="news" className="py-24 bg-[#FAF8F5]">
+   <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 lg:px-12">
     {/* Section Header */}
     <div className="flex items-center justify-center gap-4 md:gap-8 mb-16 lg:mb-20">
      <span className="font-manrope text-[40px] md:text-[64px] font-thin text-smusl-red/40 select-none translate-y-2">(</span>
@@ -47,7 +47,7 @@ const LandingNews = () => {
     </div>
 
     {/* News Grid */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-16 items-start">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-14 mb-16 items-start">
      {newsItems.map((item, idx) => (
       <motion.div
        key={item.id}
@@ -60,7 +60,7 @@ const LandingNews = () => {
        <motion.div
         whileHover={{ scale: 1.02 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className={`relative ${item.aspectRatio} rounded-[16px] md:rounded-[24px] overflow-hidden mb-5 lg:mb-6 shadow-sm group-hover:shadow-md transition-shadow w-full`}
+        className={`relative ${item.aspectRatio} rounded-[16px] md:rounded-[24px] overflow-hidden mb-6 lg:mb-8 shadow-sm group-hover:shadow-md transition-shadow w-full`}
        >
         <Image
          src={item.image}
@@ -70,11 +70,11 @@ const LandingNews = () => {
         />
        </motion.div>
 
-       <div className="flex flex-col space-y-2 lg:space-y-3 px-1">
-        <h4 className="text-[13px] lg:text-[14px] font-normal uppercase leading-[1.4] text-[#B56D56] group-hover:opacity-80 transition-opacity tracking-[0.02em] max-w-[95%]">
+       <div className="flex flex-col space-y-4 lg:space-y-5 px-1">
+        <h4 className="text-[17px] sm:text-[19px] lg:text-[21px] xl:text-[23px] font-normal uppercase leading-[1.25] text-[#B56D56] group-hover:opacity-80 transition-opacity tracking-[0.02em] max-w-[100%]">
          {item.title}
         </h4>
-        <p className="text-[11px] lg:text-[12px] font-light text-[#C29787] uppercase tracking-wide">
+        <p className="text-[14px] sm:text-[15px] lg:text-[16px] xl:text-[17px] font-light text-[#C29787] uppercase tracking-wide">
          {item.date}
         </p>
        </div>

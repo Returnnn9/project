@@ -31,7 +31,7 @@ const LandingProducts = () => {
  const filteredProducts = products.filter(p => p.category === activeTab);
 
  return (
-  <section className="pt-32 pb-24 bg-[#FAF8F5]">
+  <section id="menu" className="pt-32 pb-24 bg-[#FAF8F5]">
    <div className="w-full max-w-[1700px] mx-auto px-4 md:px-8 lg:px-12">
 
     {/* Section Header */}
@@ -40,7 +40,7 @@ const LandingProducts = () => {
      {/* Title */}
      <div className="flex items-center gap-4 md:gap-8 mx-auto xl:mx-0 xl:absolute xl:left-1/2 xl:-translate-x-1/2">
       <span className="font-manrope text-[40px] md:text-[64px] lg:text-[90px] font-thin text-[#B54442]/60 select-none translate-y-2">(</span>
-      <h2 className="font-script text-[60px] md:text-[90px] lg:text-[130px] font-bold text-[#B54442] lowercase leading-none drop-shadow-sm pt-4">наша выпечка</h2>
+      <h2 className="font-script text-[60px] md:text-[90px] lg:text-[130px] font-bold text-[#B54442] lowercase leading-none drop-shadow-sm pt-4 tracking-[0.08em]" style={{ display: 'inline-block', transform: 'scaleX(1.2)', transformOrigin: 'center' }}>наша выпечка</h2>
       <span className="font-manrope text-[40px] md:text-[64px] lg:text-[90px] font-thin text-[#B54442]/60 select-none translate-y-2">)</span>
      </div>
 
@@ -50,9 +50,9 @@ const LandingProducts = () => {
        <button
         key={cat.id}
         onClick={() => setActiveTab(cat.id)}
-        className={`px-8 md:px-10 py-3 md:py-4 rounded-[30px] text-[13px] md:text-[15px] font-medium transition-all duration-300 border-[1.5px] ${activeTab === cat.id
-         ? 'bg-transparent text-[#B54442] border-[#B54442]'
-         : 'bg-white text-[#8A7968] border-white hover:border-[#B54442]/40'
+        className={`px-8 md:px-10 py-2 md:py-2.5 rounded-full text-[14px] md:text-[16px] xl:text-[20px] font-medium transition-all duration-300 border-[1.5px] ${activeTab === cat.id
+         ? 'bg-white text-[#B54442] border-[#B54442]'
+         : 'bg-white text-[#A68064] border-[#A68064] hover:border-[#B54442]/40'
          }`}
        >
         {cat.label}

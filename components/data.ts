@@ -53,7 +53,7 @@ export const products: Product[] = [
   weight: "400 г",
   price: 85,
   category: "Хлеб",
-  image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&q=80&fit=crop"
+  image: "/photo/bread1.jpg"
  },
  {
   id: 8,
@@ -61,7 +61,7 @@ export const products: Product[] = [
   weight: "120 г",
   price: 180,
   category: "Кексы и печенье",
-  image: "https://images.unsplash.com/photo-1558401391-7899b4bd5bbf?w=400&q=80&fit=crop"
+  image: "/photo/snack1.jpg"
  },
  {
   id: 9,
@@ -69,6 +69,6 @@ export const products: Product[] = [
   weight: "90 г",
   price: 120,
   category: "Слойка",
-  image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80&fit=crop"
+  image: "/photo/snack1.jpg"
  }
 ];

@@ -3,116 +3,91 @@
 import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 const LandingAbout = () => {
  return (
-  <section className="py-20 md:py-32 bg-[#FAF8F5] overflow-hidden relative">
-   <div className="w-full max-w-[1700px] mx-auto px-4 md:px-8 lg:px-12">
+  <section className="py-20 md:py-32 lg:py-40 bg-[#F4EEE9] overflow-hidden relative">
+   <div className="w-full max-w-[1920px] mx-auto px-6 md:px-12 lg:px-20 xl:px-32 2xl:px-40">
 
-    {/* Top Row: Title & Text */}
-    <div className="flex flex-col items-center lg:items-end gap-6 lg:gap-10 mb-20 md:mb-28 w-full max-w-[1400px] mx-auto">
+    <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20 xl:gap-24 2xl:gap-32">
 
-     {/* Title and Description Container */}
-     <div className="w-full lg:w-[80%] xl:w-[70%] flex flex-col items-start gap-4">
+     {/* Left Side: Large Hero Image */}
+     <motion.div
+      initial={{ opacity: 0, x: -50 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full lg:w-[48%] xl:w-[45%] 2xl:w-[42%]"
+     >
+      <div className="relative aspect-[1.1/1] w-full rounded-[40px] overflow-hidden shadow-2xl shadow-smusl-brown/10 border border-white/20">
+       <Image
+        src="/images/croissant_promo.png"
+        alt="СМЫСЛ ЕСТЬ — Безглютеновая выпечка"
+        fill
+        className="object-cover"
+        sizes="(max-width: 1024px) 100vw, 50vw"
+        priority
+       />
+      </div>
+     </motion.div>
 
-      {/* Section Header: ( о Нас ) */}
+     {/* Right Side: Content */}
+     <div className="w-full lg:w-[50%] xl:w-[50%] 2xl:w-[55%] flex flex-col items-start text-left">
       <motion.div
-       initial={{ opacity: 0, x: -30 }}
-       whileInView={{ opacity: 1, x: 0 }}
+       initial={{ opacity: 0, y: 30 }}
+       whileInView={{ opacity: 1, y: 0 }}
        viewport={{ once: true }}
-       transition={{ duration: 0.8 }}
-       className="flex items-center gap-2 lg:gap-4 -ml-4 md:-ml-8"
+       transition={{ duration: 0.8, delay: 0.2 }}
+       className="w-full"
       >
-       <span className="font-manrope text-[30px] md:text-[50px] lg:text-[60px] font-thin text-[#CF6A6A]/60 select-none translate-y-1">(</span>
-       <div className="flex items-baseline gap-2 md:gap-4">
-        <span className="font-manrope text-2xl md:text-4xl lg:text-5xl text-[#CF6A6A] font-medium -translate-y-2 md:-translate-y-4">о</span>
-        <h2 className="font-script text-[50px] md:text-[80px] lg:text-[90px] font-normal text-[#CF6A6A] -ml-2 pt-2">Нас</h2>
-       </div>
-       <span className="font-manrope text-[30px] md:text-[50px] lg:text-[60px] font-thin text-[#CF6A6A]/60 select-none translate-y-1">)</span>
+       <h2 className="text-[52px] md:text-[80px] lg:text-[95px] xl:text-[115px] 2xl:text-[140px] leading-[0.9] font-bold text-[#B54442] uppercase tracking-[-0.02em] mb-12 w-full select-none">
+        МЫ УБРАЛИ <br />
+        ГЛЮТЕН <br />
+        — ВКУС <br />
+        ТРОГАТЬ НЕ <br />
+        СТАЛИ!
+       </h2>
       </motion.div>
 
-      {/* Description Block */}
       <motion.div
-       initial={{ opacity: 0, x: 50 }}
-       whileInView={{ opacity: 1, x: 0 }}
-       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+       initial={{ opacity: 0, y: 20 }}
+       whileInView={{ opacity: 1, y: 0 }}
        viewport={{ once: true }}
-       className="w-full md:pl-20"
+       transition={{ duration: 0.8, delay: 0.4 }}
+       className="max-w-[480px] xl:max-w-[550px] mb-16"
       >
-       <p className="text-[12px] md:text-[15px] lg:text-[18px] xl:text-[20px] leading-[1.3] md:leading-[1.4] text-[#CF6A6A] font-medium uppercase tracking-[0.02em] md:tracking-[0.03em]">
-        <span className="font-script text-[60px] md:text-[100px] lg:text-[120px] leading-[0.5] inline-block translate-y-[10px] md:translate-y-[20px] lg:translate-y-[30px] mr-2 md:mr-3 lg:mr-4 align-bottom font-normal">Мы</span>
-        ПЕРВЫМИ В РОССИИ НАЧАЛИ ИМПОРТ ТЕФОВОЙ МУКИ И РАБОТАЕМ С ШИРОКИМ СПЕКТРОМ АЛЬТЕРНАТИВНОГО СЫРЬЯ: АМАРАНТОВОЙ, РИСОВОЙ, ГРЕЧНЕВОЙ, КУКУРУЗНОЙ, ОВСЯНОЙ И ОРЕХОВОЙ МУКОЙ. В АССОРТИМЕНТЕ БРЕНДА «СМЫСЛ ЕСТЬ» — БОЛЕЕ 20 ВИДОВ ПРОДУКЦИИ: ОТ ХЛЕБА ДО ДЕСЕРТОВ
+       <p className="text-[17px] md:text-[20px] lg:text-[22px] xl:text-[24px] font-medium leading-[1.4] text-[#B54442]/80">
+        Оставили сочность, хруст, тягучие начинки, насыщенный шоколад и тот самый аромат свежей выпечки, от которого невозможно пройти мимо
        </p>
       </motion.div>
+
+      <motion.div
+       initial={{ opacity: 0, y: 20 }}
+       whileInView={{ opacity: 1, y: 0 }}
+       viewport={{ once: true }}
+       transition={{ duration: 0.8, delay: 0.6 }}
+       className="w-full flex justify-end lg:justify-start xl:justify-end pr-0 lg:pr-10 xl:pr-0"
+      >
+       <Link href="/market" className="group flex items-center gap-4 text-[18px] md:text-[20px] xl:text-[24px] 2xl:text-[28px] font-bold tracking-widest text-[#B54442] hover:opacity-70 transition-all uppercase">
+        СМОТРЕТЬ КАТАЛОГ
+        <svg
+         width="32"
+         height="32"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         strokeWidth="2.5"
+         strokeLinecap="round"
+         strokeLinejoin="round"
+         className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform w-[28px] h-[28px] xl:w-[32px] xl:h-[32px]"
+        >
+         <line x1="7" y1="17" x2="17" y2="7"></line>
+         <polyline points="7 7 17 7 17 17"></polyline>
+        </svg>
+       </Link>
+      </motion.div>
      </div>
-    </div>
-
-    {/* Image Layout */}
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 lg:gap-x-16 xl:gap-x-24 gap-y-16 w-full items-start max-w-[1500px] mx-auto">
-
-     {/* Left Column: Chef Image & Text */}
-     <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.1 }}
-      viewport={{ once: true }}
-      className="col-span-1 lg:col-span-4 xl:col-span-4 flex flex-col items-start lg:mt-[-40px]"
-     >
-      <div className="relative w-[85%] md:w-[70%] lg:w-[100%] aspect-[4/3] rounded-[20px] md:rounded-[24px] overflow-hidden mb-5">
-       <Image
-        src="/images/Rectangle 19.svg"
-        alt="Chef at work"
-        fill
-        className="object-cover hover:scale-[1.03] transition-transform duration-700"
-        sizes="(max-width: 1024px) 85vw, 30vw"
-       />
-      </div>
-      <p className="text-[13px] md:text-[15px] leading-[1.4] text-[#CF6A6A] font-medium w-[90%] md:w-[80%] lg:w-[95%] tracking-wide">
-       «Смысл есть» — это пекарня в Москве, специализирующаяся на производстве безглютенового хлеба и выпечки
-      </p>
-     </motion.div>
-
-     {/* Center Column: Baguettes & Button */}
-     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1, delay: 0.3 }}
-      viewport={{ once: true }}
-      className="col-span-1 lg:col-span-6 xl:col-span-6 flex flex-col items-start lg:mt-24 xl:mt-32"
-     >
-      <div className="relative w-full aspect-[4/3] md:aspect-[16/10] rounded-[24px] overflow-hidden mb-6 md:mb-8">
-       <Image
-        src="/images/Rectangle 14.svg"
-        alt="Artisanal Bread"
-        fill
-        className="object-cover hover:scale-[1.03] transition-transform duration-700"
-        sizes="(max-width: 1024px) 100vw, 50vw"
-       />
-      </div>
-      <button className="flex items-center gap-2 md:gap-3 text-[16px] md:text-[18px] lg:text-[20px] font-normal uppercase tracking-[0.03em] text-[#CF6A6A] hover:opacity-70 transition-opacity group">
-       СМОТРЕТЬ КАТАЛОГ
-       <span className="text-xl md:text-2xl font-light group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform">↗</span>
-      </button>
-     </motion.div>
-
-     {/* Right Column: Vertical Baguette */}
-     <motion.div
-      initial={{ opacity: 0, x: 40 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.8, delay: 0.5 }}
-      viewport={{ once: true }}
-      className="col-span-1 lg:col-span-2 xl:col-span-2 flex flex-col justify-start lg:mt-10"
-     >
-      <div className="relative w-[60%] sm:w-[45%] lg:w-full ml-auto lg:ml-0 aspect-[1/2.8] rounded-[20px] md:rounded-[24px] overflow-hidden">
-       <Image
-        src="/images/Rectangle 13.svg"
-        alt="Packaging"
-        fill
-        className="object-cover hover:scale-[1.03] transition-transform duration-700"
-        sizes="(max-width: 1024px) 50vw, 15vw"
-       />
-      </div>
-     </motion.div>
 
     </div>
    </div>

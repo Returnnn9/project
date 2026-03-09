@@ -2,6 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { User, MapPin, Search } from "lucide-react"
 import { useApp } from "@/store/AppContext"
 import { useSession } from "next-auth/react"
@@ -38,7 +39,7 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
     <div className="flex items-center justify-between py-3 sm:py-4">
      {/* Logo */}
      <Link href="/" className="flex items-center cursor-pointer shrink-0 select-none">
-      <img src="/photo/logo.png" alt="СМЫСЛ ЕСТЬ" className="h-[30px] xs:h-[35px] sm:h-[40px] md:h-[46px] w-auto object-contain" />
+      <Image src="/photo/logo.png" alt="СМЫСЛ ЕСТЬ" width={180} height={46} priority className="h-[30px] xs:h-[35px] sm:h-[40px] md:h-[46px] w-auto object-contain" />
      </Link>
 
      {/* Right: Address + Profile */}

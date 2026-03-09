@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 
@@ -61,10 +62,11 @@ export default function NotFound() {
      className="order-1 lg:order-2 flex justify-center"
     >
      <div className="relative w-full max-w-[500px] aspect-square rounded-[3rem] overflow-hidden shadow-2xl shadow-smusl-terracotta/5 border border-white">
-      <img
+      <Image
        src="/photo/404-croissant.png"
        alt="404 Croissant"
-       className="w-full h-full object-cover"
+       fill
+       className="object-cover"
       />
       {/* Soft Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-[#4A403A]/10 to-transparent pointer-events-none" />
@@ -82,7 +84,7 @@ export default function NotFound() {
     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
     className="fixed bottom-10 right-10 opacity-10 pointer-events-none hidden lg:block"
    >
-    <img src="/photo/logo.png" alt="" className="w-32 grayscale" />
+    <Image src="/photo/logo.png" alt="" width={128} height={32} className="w-32 h-auto grayscale" />
    </motion.div>
   </div>
  );

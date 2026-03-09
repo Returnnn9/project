@@ -5,16 +5,16 @@ import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Menu, X } from "lucide-react"
-import { motion, AnimatePresence, Variants } from "framer-motion"
+import { motion, AnimatePresence, Variants, useScroll, useMotionValueEvent } from "framer-motion"
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const NAV_LINKS = [
- { label: "меню", href: "/catalog" },
- { label: "доставка", href: "/delivery" },
- { label: "новости", href: "/news" },
- { label: "контакты", href: "/contacts" },
- { label: "faq", href: "/faq" },
+ { label: "меню", href: "/#menu" },
+ { label: "доставка", href: "/#delivery" },
+ { label: "новости", href: "/#news" },
+ { label: "контакты", href: "/#contacts" },
+ { label: "faq", href: "/#faq" },
 ] as const
 
 const SCROLL_THRESHOLD = 20
@@ -43,13 +43,11 @@ const itemVariants: Variants = {
 const LandingHeader: React.FC = () => {
  const [isScrolled, setIsScrolled] = useState(false)
  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+ const { scrollY } = useScroll()
 
- // Scroll detection
- useEffect(() => {
-  const onScroll = () => setIsScrolled(window.scrollY > SCROLL_THRESHOLD)
-  window.addEventListener("scroll", onScroll)
-  return () => window.removeEventListener("scroll", onScroll)
- }, [])
+ useMotionValueEvent(scrollY, "change", (latest) => {
+  setIsScrolled(latest > SCROLL_THRESHOLD)
+ })
 
  // Lock body scroll when mobile menu is open
  useEffect(() => {
@@ -62,73 +60,92 @@ const LandingHeader: React.FC = () => {
 
  return (
   <>
-   {/* ── Floating Header ── */}
-   <div className={cn(
-    "fixed top-0 left-0 w-full z-[100] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] flex justify-center",
-    isScrolled ? "pt-4 md:pt-6 px-4" : "pt-0 px-0"
-   )}>
-    <header className={cn(
-     "relative flex items-center justify-between w-full transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
-     isScrolled
-      ? "max-w-[1200px] bg-white/60 backdrop-blur-2xl rounded-[32px] px-6 md:px-8 py-3 border border-white/60 shadow-[0_8px_32px_rgba(147,103,70,0.08)] ring-1 ring-black/[0.02]"
-      : "container mx-auto px-4 md:px-8 py-4 md:py-6 bg-transparent"
-    )}>
+   {/* ── Premium Scroll Header ── */}
+   <motion.header
+    initial="top"
+    animate={isScrolled ? "scrolled" : "top"}
+    variants={{
+     top: {
+      backgroundColor: "rgba(253, 248, 237, 0)",
+      backdropFilter: "blur(0px)",
+      boxShadow: "0px 0px 0px rgba(0,0,0,0)",
+      paddingTop: "24px",
+      paddingBottom: "24px",
+     },
+     scrolled: {
+      backgroundColor: "rgba(244, 238, 233, 1)",
+      backdropFilter: "blur(0px)",
+      boxShadow: "0 10px 30px -10px rgba(100,70,50,0.2)",
+      paddingTop: "16px",
+      paddingBottom: "16px",
+     }
+    }}
+    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    className="fixed top-0 left-0 w-full z-[100] px-4 md:px-8 xl:px-12 flex items-center justify-between"
+   >
+    {/* Mobile: hamburger */}
+    <div className="lg:hidden flex-1 flex items-center justify-start">
+     <button
+      onClick={openMenu}
+      className="p-2 -ml-2 text-[#936746] hover:text-[#B54442] transition-colors active:scale-95 group"
+      aria-label="Открыть меню"
+     >
+      <Menu className="w-8 h-8 group-hover:drop-shadow-sm transition-all" strokeWidth={1.5} />
+     </button>
+    </div>
 
-     {/* Mobile: hamburger */}
-     <div className="lg:hidden flex-1 flex items-center justify-start">
-      <button
-       onClick={openMenu}
-       className="p-2 -ml-2 text-[#936746] hover:text-[#B54442] transition-colors active:scale-95 group"
-       aria-label="Открыть меню"
+    {/* Desktop: left nav */}
+    <nav className="hidden lg:flex flex-1 items-center justify-start gap-4 xl:gap-14 text-[15px] font-[800] tracking-wide text-[#936746]">
+     {NAV_LINKS.map((link) => (
+      <Link
+       key={link.label}
+       href={link.href}
+       className="relative group lowercase transition-colors hover:text-[#B54442] text-[#936746] py-2"
       >
-       <Menu className="w-8 h-8 group-hover:drop-shadow-sm transition-all" strokeWidth={1.5} />
-      </button>
-     </div>
+       <span className="relative z-10">{link.label}</span>
+       <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-[#B54442] group-hover:w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+      </Link>
+     ))}
+    </nav>
 
-     {/* Desktop: left nav */}
-     <nav className="hidden lg:flex flex-1 items-center justify-start gap-1 xl:gap-2 text-[14px] font-[800] tracking-wider text-[#936746]">
-      {NAV_LINKS.map((link) => (
-       <Link
-        key={link.label}
-        href={link.href}
-        className="relative px-4 py-2 rounded-full overflow-hidden group lowercase transition-colors hover:text-[#B54442] text-[#936746]"
-       >
-        <span className="relative z-10">{link.label}</span>
-        <span className="absolute inset-0 bg-[#936746]/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300 ease-out origin-center" />
-       </Link>
-      ))}
-     </nav>
-
-     {/* Center: logo */}
-     <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-      <Link href="/" className="hover:scale-105 transition-transform duration-500 ease-out flex items-center group">
+    {/* Center: logo */}
+    <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+     <Link href="/" className="flex items-center group">
+      <motion.div
+       variants={{
+        top: { scale: 1 },
+        scrolled: { scale: 0.9 }
+       }}
+       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+       className="relative origin-center hover:scale-105 transition-transform duration-500 ease-out py-1"
+      >
        <Image
         src="/images/Logoo.png"
         alt="СМЫСЛ ЕСТЬ"
-        width={isScrolled ? 46 : 66}
-        height={isScrolled ? 46 : 66}
-        className="transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] w-[44px] md:w-[50px] lg:w-auto h-auto object-contain drop-shadow-sm group-hover:drop-shadow-md"
+        width={90}
+        height={90}
+        className="w-[60px] md:w-[75px] lg:w-[90px] h-auto object-contain drop-shadow-sm group-hover:drop-shadow-md"
         priority
        />
-      </Link>
-     </div>
+      </motion.div>
+     </Link>
+    </div>
 
-     {/* Desktop: right contacts */}
-     <div className="hidden lg:flex flex-1 items-center justify-end gap-6 xl:gap-8 text-[15px] font-[800] text-[#936746]">
-      <a href="tel:+79262104565" className="hidden xl:inline-block relative group transition-colors hover:text-[#B54442] whitespace-nowrap">
-       +7 926 210-45-65
-       <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#B54442] group-hover:w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
-      </a>
-      <a href="mailto:info@smislest.ru" className="relative group transition-colors hover:text-[#B54442]">
-       info@smislest.ru
-       <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#B54442] group-hover:w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
-      </a>
-     </div>
+    {/* Desktop: right contacts */}
+    <div className="hidden lg:flex flex-1 items-center justify-end gap-6 xl:gap-12 text-[16px] font-[800] text-[#936746]">
+     <a href="tel:+79262104565" className="relative group transition-colors hover:text-[#B54442] whitespace-nowrap py-2">
+      +7 926 210-45-65
+      <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-[#B54442] group-hover:w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+     </a>
+     <a href="mailto:info@smislest.ru" className="relative group transition-colors hover:text-[#B54442] py-2">
+      info@smislest.ru
+      <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-[#B54442] group-hover:w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+     </a>
+    </div>
 
-     {/* Mobile: right spacer */}
-     <div className="lg:hidden flex-1" />
-    </header>
-   </div>
+    {/* Mobile: right spacer */}
+    <div className="lg:hidden flex-1" />
+   </motion.header>
 
    {/* ── Mobile Fullscreen Menu ── */}
    <AnimatePresence>

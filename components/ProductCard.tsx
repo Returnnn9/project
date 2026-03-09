@@ -33,6 +33,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ onAdd, index = 0, ...product 
      layoutId={`img-${id}`}
      src={image}
      alt={name}
+     loading="lazy"
+     decoding="async"
      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
     />
     <motion.button
