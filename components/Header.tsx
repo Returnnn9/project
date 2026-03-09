@@ -3,7 +3,7 @@
 import React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { User, MapPin, Search } from "lucide-react"
+import { User, MapPin, Search, ChevronDown } from "lucide-react"
 import { useApp } from "@/store/AppContext"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -22,6 +22,7 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
  const {
   setAddressModalOpen,
   address,
+  deliveryType,
   activeCategory,
   setActiveCategory,
   searchQuery,
@@ -43,24 +44,21 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
      </Link>
 
      {/* Right: Address + Profile */}
-     <div className="flex items-center gap-2 sm:gap-3">
-      {/* Address Button */}
+     <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
+      {/* Address Button (Custom Mockup Style) */}
       <button
        onClick={() => setAddressModalOpen(true)}
-       className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white border border-[#D8CEC8] rounded-full text-[14px] text-[#5B5047]/80 hover:border-[#CF8F73]/60 hover:text-[#5B5047] transition-all"
+       className="flex flex-col items-start text-left group transition-opacity hover:opacity-80"
       >
-       <MapPin className="w-4 h-4 text-[#5B5047]/50 shrink-0" />
-       <span className="max-w-[220px] truncate">
-        {address || "Выберите способ и адрес получения"}
+       <span className="text-[13px] sm:text-[14px] font-[800] text-[#3A332E] leading-tight mb-0.5 sm:mb-1 uppercase tracking-tight">
+        {deliveryType === "pickup" ? "Самовывоз" : (deliveryType === "delivery" ? "Доставка на дом" : "Способ получения")}
        </span>
-      </button>
-
-      {/* Address (mobile icon only) */}
-      <button
-       onClick={() => setAddressModalOpen(true)}
-       className="sm:hidden flex items-center justify-center w-9 h-9 bg-white border border-[#D8CEC8] rounded-full"
-      >
-       <MapPin className="w-4 h-4 text-[#5B5047]/60" />
+       <div className="flex items-center gap-1 sm:gap-1.5">
+        <span className="text-[14px] sm:text-[15px] font-[500] text-[#3A332E]/70 max-w-[140px] xs:max-w-[180px] sm:max-w-[240px] md:max-w-[320px] truncate">
+         {address || "Нажмите, чтобы выбрать"}
+        </span>
+        <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#3A332E]/40 group-hover:text-smusl-terracotta transition-colors" />
+       </div>
       </button>
 
       {/* Profile Button */}

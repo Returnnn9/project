@@ -212,14 +212,14 @@ export default function AddressModal() {
     apartment && `кв. ${apartment}`
    ].filter(Boolean).join(', ')
 
-   updateAddress(fullAddress)
+   updateAddress(fullAddress, "delivery")
    handleClose()
   }
  }
 
  const handleSavePickup = () => {
   if (selectedPickup) {
-   updateAddress(`${selectedPickup.city}, ${selectedPickup.address}`)
+   updateAddress(`${selectedPickup.city}, ${selectedPickup.address}`, "pickup")
    handleClose()
   }
  }
@@ -258,9 +258,9 @@ export default function AddressModal() {
         exit={{ opacity: 0, scale: 0.98 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - Visual Placeholder */}
-        <div className="w-full h-[220px] shrink-0 sm:h-full sm:w-[45%] p-4 pb-0 sm:p-6 sm:pb-6">
-         <div className="w-full h-full bg-[#D9D9D9] rounded-[1.5rem] flex items-center justify-center overflow-hidden relative">
+        {/* Left Panel - Visual Placeholder (At top on mobile) */}
+        <div className="w-full h-[240px] shrink-0 sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6">
+         <div className="w-full h-full bg-[#D9D9D9] rounded-[2rem] sm:rounded-[2rem] flex items-center justify-center overflow-hidden relative border border-gray-100 shadow-sm">
           {/* Visual Map Background for Step 1 */}
           <div className="absolute inset-0 opacity-40 mix-blend-multiply bg-[url('/photo/map-bg.png')] bg-cover bg-center grayscale" />
           <div className="relative z-10 w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg">
@@ -318,9 +318,9 @@ export default function AddressModal() {
         exit={{ opacity: 0, x: -20 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - MAP */}
-        <div className="w-full h-[260px] shrink-0 sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6">
-         <div className="w-full h-full rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-inner">
+        {/* Left Panel - MAP (At top on mobile) */}
+        <div className="w-full h-[280px] sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6 shrink-0 sm:shrink">
+         <div className="w-full h-full rounded-[2rem] sm:rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm relative">
           <MapPicker
            hideSearch={true}
            initialAddress={tempAddress}
@@ -341,16 +341,17 @@ export default function AddressModal() {
         </div>
 
         {/* Right Panel - Inputs */}
-        <div className="flex-1 p-5 sm:p-10 flex flex-col overflow-y-auto no-scrollbar min-h-0">
-         <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex-1 p-6 sm:p-10 flex flex-col overflow-y-auto no-scrollbar min-h-0 bg-white sm:bg-transparent">
+         {/* Header below map on mobile */}
+         <div className="flex items-center justify-between mb-5 sm:mb-8">
+          <div className="flex items-center gap-4">
            <button
             onClick={() => setStep(1)}
             className="p-1 text-[#3A332E] hover:text-smusl-terracotta transition-colors"
            >
             <ArrowLeft className="w-6 h-6" />
            </button>
-           <h2 className="text-[20px] sm:text-[24px] font-[800] text-[#3A332E] tracking-tight">
+           <h2 className="text-[22px] sm:text-[24px] font-[800] text-[#3A332E] tracking-tight">
             Введите адрес
            </h2>
           </div>
@@ -543,8 +544,8 @@ export default function AddressModal() {
         className="flex flex-col sm:flex-row h-full w-full"
        >
         {/* Left Panel - Map (At top on mobile) */}
-        <div className="w-full h-[240px] sm:h-full sm:w-[55%] p-0 sm:p-6 sm:pb-6 shrink-0 sm:shrink">
-         <div className="w-full h-full rounded-b-[2.5rem] sm:rounded-[2rem] overflow-hidden border-b border-gray-100 shadow-sm relative">
+        <div className="w-full h-[260px] sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6 shrink-0 sm:shrink">
+         <div className="w-full h-full rounded-[2rem] sm:rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm relative">
           <MapPicker
            hideSearch={true}
            initialAddress={selectedPickup ? `${selectedPickup.city}, ${selectedPickup.address}` : ""}
@@ -552,21 +553,20 @@ export default function AddressModal() {
            onError={setMapError}
            externalCoords={selectedPickup ? (selectedPickup.coords as [number, number]) : null}
           />
-          {/* Center pin overlay for visual cue on mobile if needed */}
          </div>
         </div>
 
-        <div className="flex-1 p-5 sm:p-10 flex flex-col min-h-0 bg-white sm:bg-transparent">
+        <div className="flex-1 p-6 sm:p-10 flex flex-col min-h-0 bg-white sm:bg-transparent">
          {/* Header below map on mobile */}
-         <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <div className="flex items-center gap-3 sm:gap-4">
+         <div className="flex items-center justify-between mb-5 sm:mb-8">
+          <div className="flex items-center gap-4">
            <button
             onClick={() => setStep(1)}
             className="p-1 text-[#3A332E] hover:text-smusl-terracotta transition-colors"
            >
             <ArrowLeft className="w-6 h-6" />
            </button>
-           <h2 className="text-[20px] sm:text-[24px] font-[800] text-[#3A332E] leading-tight max-w-[200px] sm:max-w-none">
+           <h2 className="text-[22px] sm:text-[24px] font-[800] text-[#3A332E] leading-tight max-w-[200px] sm:max-w-none">
             Выберите адрес самовывоза
            </h2>
           </div>
@@ -608,31 +608,30 @@ export default function AddressModal() {
           )}
          </div>
 
-         {/* Address selection list */}
-         <div className="flex flex-col gap-2.5 flex-1 overflow-y-auto pr-1 no-scrollbar z-40 pb-4">
+         <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1 no-scrollbar z-40 pb-4">
           {PICKUP_POINTS.filter(p => p.city === selectedCity).map((p) => (
            <button
             key={p.address}
             onClick={() => setSelectedPickup(p)}
             className={cn(
-             "w-full h-[64px] px-6 rounded-[1.2rem] border transition-all flex items-center justify-between group",
+             "w-full h-[60px] px-6 rounded-[1.2rem] border transition-all flex items-center justify-between group",
              selectedPickup?.address === p.address
-              ? "border-smusl-terracotta bg-white shadow-sm"
-              : "border-[#F0F0F0] bg-white hover:border-smusl-terracotta/30"
+              ? "border-[#E8DFD8] bg-white shadow-sm"
+              : "border-gray-100 bg-white hover:border-smusl-terracotta/20"
             )}
            >
             <span className={cn(
-             "text-[15px] sm:text-[16px] font-[700] transition-colors",
-             selectedPickup?.address === p.address ? "text-[#3A332E]" : "text-[#3A332E]/70"
+             "text-[16px] font-[700] transition-colors",
+             selectedPickup?.address === p.address ? "text-[#3A332E]" : "text-[#3A332E]/60"
             )}>
              {p.address}
             </span>
             <div className={cn(
-             "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
-             selectedPickup?.address === p.address ? "border-smusl-terracotta" : "border-[#E0E0E0] group-hover:border-smusl-terracotta/40"
+             "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
+             selectedPickup?.address === p.address ? "border-smusl-terracotta" : "border-gray-200"
             )}>
              <div className={cn(
-              "w-2.5 h-2.5 rounded-full bg-smusl-terracotta transition-all duration-300",
+              "w-3 h-3 rounded-full bg-smusl-terracotta transition-all duration-300",
               selectedPickup?.address === p.address ? "scale-100 opacity-100" : "scale-0 opacity-0"
              )} />
             </div>

@@ -55,13 +55,14 @@ interface AppState {
  balance: number
  activeOrders: number
  address: string
+ deliveryType: "delivery" | "pickup" | null
  notifications: Notification[]
  addToCart: (product: Product) => void
  addMultipleToCart: (products: Product[]) => void
  updateQuantity: (id: number, delta: number) => void
  checkout: () => boolean
  topUpBalance: (amount: number) => void
- updateAddress: (newAddress: string) => void
+ updateAddress: (newAddress: string, type: "delivery" | "pickup") => void
  isCheckoutOpen: boolean
  setCheckoutOpen: (open: boolean) => void
  selectedProduct: Product | null
@@ -109,6 +110,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
  const [balance, setBalance] = useState(1250)
  const [activeOrders, setActiveOrders] = useState(1)
  const [address, setAddress] = useState("") // Empty by default
+ const [deliveryType, setDeliveryType] = useState<"delivery" | "pickup" | null>(null)
  const [notifications, setNotifications] = useState<Notification[]>([
   { id: 1, message: "Заказ #4049 передан курьеру", read: false },
  ])
@@ -135,6 +137,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const savedAddress = localStorage.getItem("smuslest_address")
   if (savedAddress) setAddress(savedAddress)
+
+  const savedType = localStorage.getItem("smuslest_delivery_type") as "delivery" | "pickup" | null
+  if (savedType) setDeliveryType(savedType)
 
   const savedName = localStorage.getItem("smuslest_name")
   if (savedName) setUserName(savedName)
@@ -163,12 +168,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
  // Persist other state
  useEffect(() => {
   localStorage.setItem("smuslest_address", address)
+  localStorage.setItem("smuslest_delivery_type", deliveryType || "")
   localStorage.setItem("smuslest_name", userName)
   localStorage.setItem("smuslest_phone", userPhone)
   localStorage.setItem("smuslest_favorites", JSON.stringify(favorites))
   localStorage.setItem("smuslest_orders", JSON.stringify(orderHistory))
   localStorage.setItem("smuslest_has_set_address", String(hasSetAddress))
- }, [address, userName, userPhone, favorites, orderHistory, hasSetAddress])
+ }, [address, deliveryType, userName, userPhone, favorites, orderHistory, hasSetAddress])
 
  // ── Actions ─────────────────────────────────────────────────────────────────
 
@@ -250,8 +256,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
  }
 
  const topUpBalance = (amount: number) => setBalance(b => b + amount)
- const updateAddress = (newAddress: string) => {
+ const updateAddress = (newAddress: string, type: "delivery" | "pickup") => {
   setAddress(newAddress)
+  setDeliveryType(type)
   setHasSetAddress(true)
  }
 
@@ -259,7 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
  return (
   <AppContext.Provider value={{
-   cart, balance, activeOrders, address, notifications,
+   cart, balance, activeOrders, address, deliveryType, notifications,
    addToCart, addMultipleToCart, updateQuantity, checkout, topUpBalance, updateAddress,
    isCheckoutOpen, setCheckoutOpen,
    selectedProduct, setSelectedProduct,

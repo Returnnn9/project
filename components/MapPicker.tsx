@@ -145,7 +145,7 @@ export default function MapPicker({ initialAddress, onAddressSelect, onAddressDe
      controls: [],
     }, {
      suppressMapOpenBlock: true,
-     yandexMapDisablePoiInteractivity: false
+     yandexMapDisablePoiInteractivity: true // Disable POI to keep users in-app
     });
 
     const marker = new window.ymaps.Placemark(defaultCenter, {}, {
@@ -603,8 +603,17 @@ export default function MapPicker({ initialAddress, onAddressSelect, onAddressDe
     [class*="ymaps-2-1"][class*="-map-copyrights-promo"],
     [class*="ymaps-2-1"][class*="-copyright-promo-container"],
     [class*="ymaps-2-1"][class*="-copyright__wrap"],
-    [class*="ymaps-2-1"][class*="-any-links-container"] {
+    [class*="ymaps-2-1"][class*="-any-links-container"],
+    [class*="ymaps-2-1"][class*="-zoom"],
+    [class*="ymaps-2-1"][class*="-float-button"],
+    [class*="ymaps-2-1"][class*="-gotomaps"],
+    [class*="ymaps-2-1"][class*="-gototaxi"],
+    [class*="ymaps-2-1"][class*="-gotoyandex"],
+    [class*="ymaps-2-1"][class*="-balloon__close-button"],
+    [class*="ymaps-2-1"][class*="-route-panel"] {
      display: none !important;
+     visibility: hidden !important;
+     pointer-events: none !important;
     }
    `}</style>
   </div>
