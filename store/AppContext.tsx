@@ -83,6 +83,8 @@ interface AppState {
  setActiveCategory: (category: string) => void
  searchQuery: string
  setSearchQuery: (query: string) => void
+ hasSetAddress: boolean
+ setHasSetAddress: (val: boolean) => void
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -106,7 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
  const [cart, setCart] = useState<CartItem[]>([])
  const [balance, setBalance] = useState(1250)
  const [activeOrders, setActiveOrders] = useState(1)
- const [address, setAddress] = useState("акад. янгеля, д. 8")
+ const [address, setAddress] = useState("") // Empty by default
  const [notifications, setNotifications] = useState<Notification[]>([
   { id: 1, message: "Заказ #4049 передан курьеру", read: false },
  ])
@@ -123,6 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
  const [orderHistory, setOrderHistory] = useState<Order[]>([])
  const [activeCategory, setActiveCategory] = useState("Десерты")
  const [searchQuery, setSearchQuery] = useState("")
+ const [hasSetAddress, setHasSetAddress] = useState(false)
 
  // Load persisted state on mount
  useEffect(() => {
@@ -138,6 +141,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const savedPhone = localStorage.getItem("smuslest_phone")
   if (savedPhone) setUserPhone(savedPhone)
+
+  const savedHasSet = localStorage.getItem("smuslest_has_set_address")
+  if (savedHasSet === "true") {
+   setHasSetAddress(true)
+  } else {
+   // First visit OR address not set - open modal
+   setAddressModalOpen(true)
+  }
  }, [])
 
  // Persist cart
@@ -156,7 +167,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   localStorage.setItem("smuslest_phone", userPhone)
   localStorage.setItem("smuslest_favorites", JSON.stringify(favorites))
   localStorage.setItem("smuslest_orders", JSON.stringify(orderHistory))
- }, [address, userName, userPhone, favorites, orderHistory])
+  localStorage.setItem("smuslest_has_set_address", String(hasSetAddress))
+ }, [address, userName, userPhone, favorites, orderHistory, hasSetAddress])
 
  // ── Actions ─────────────────────────────────────────────────────────────────
 
@@ -238,7 +250,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
  }
 
  const topUpBalance = (amount: number) => setBalance(b => b + amount)
- const updateAddress = (newAddress: string) => setAddress(newAddress)
+ const updateAddress = (newAddress: string) => {
+  setAddress(newAddress)
+  setHasSetAddress(true)
+ }
 
  // ── Context Value ─────────────────────────────────────────────────────────────
 
@@ -257,6 +272,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
    orderHistory,
    activeCategory, setActiveCategory,
    searchQuery, setSearchQuery,
+   hasSetAddress, setHasSetAddress,
   }}>
    {children}
   </AppContext.Provider>

@@ -155,12 +155,11 @@ export default function AddressModal() {
   setApartment('')
  }
 
- // Reset modal when it opens
+ // Reset modal to Step 1 when it opens
  useEffect(() => {
   if (isAddressModalOpen) {
-   reset()
+   reset() // Start at Step 1 (Способ получения)
   }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [isAddressModalOpen])
 
  const handleGeolocate = () => {
@@ -344,18 +343,18 @@ export default function AddressModal() {
         {/* Right Panel - Inputs */}
         <div className="flex-1 p-5 sm:p-10 flex flex-col overflow-y-auto no-scrollbar min-h-0">
          <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
            <button
             onClick={() => setStep(1)}
-            className="p-1 text-smusl-gray hover:text-smusl-brown transition-colors"
+            className="p-1 text-[#3A332E] hover:text-smusl-terracotta transition-colors"
            >
             <ArrowLeft className="w-6 h-6" />
            </button>
-           <h2 className="text-[20px] sm:text-[24px] font-extrabold text-smusl-brown tracking-tight flex items-center justify-between">
+           <h2 className="text-[20px] sm:text-[24px] font-[800] text-[#3A332E] tracking-tight">
             Введите адрес
            </h2>
           </div>
-          <button onClick={handleClose} className="p-1 text-smusl-gray hover:text-smusl-brown transition-colors">
+          <button onClick={handleClose} className="p-1 text-gray-300 hover:text-[#3A332E] transition-colors">
            <X className="w-6 h-6" />
           </button>
          </div>
@@ -365,24 +364,24 @@ export default function AddressModal() {
           {/* City field */}
           <div className="relative z-50">
            <div
-            className="bg-[#F2F2F2] rounded-[1rem] px-5 py-4 cursor-pointer select-none"
+            className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5 sm:py-4 cursor-pointer select-none"
             onClick={() => setShowCityDropdown(v => !v)}
            >
-            <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-0.5">Город</span>
+            <span className="block text-[9px] font-[700] text-[#B5B5B5] uppercase tracking-[0.1em] mb-0.5">ГОРОД</span>
             <div className="flex items-center justify-between">
-             <span className="text-[15px] font-extrabold text-smusl-brown">{selectedCity}</span>
-             <ChevronDown className={cn('w-4 h-4 text-gray-400 transition-transform duration-200', showCityDropdown && 'rotate-180')} />
+             <span className="text-[15px] sm:text-[16px] font-[800] text-[#3A332E]">{selectedCity}</span>
+             <ChevronDown className={cn('w-4 h-4 text-gray-300 transition-transform duration-200', showCityDropdown && 'rotate-180')} />
             </div>
            </div>
            {showCityDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-[1rem] shadow-[0_16px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden">
+            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-[1.2rem] shadow-[0_12px_30px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden">
              {(['Москва', 'Санкт-Петербург'] as const).map(c => (
               <button
                key={c}
                onClick={() => { setSelectedCity(c); setTempAddress(''); setSuggestions([]); setSelectedCoords(null); setShowCityDropdown(false) }}
                className={cn(
                 'w-full text-left px-5 py-3.5 text-[15px] font-bold transition-colors border-b last:border-0 border-gray-50',
-                selectedCity === c ? 'text-smusl-terracotta bg-smusl-terracotta/5' : 'text-smusl-brown hover:bg-gray-50'
+                selectedCity === c ? 'text-smusl-terracotta bg-smusl-terracotta/5' : 'text-[#3A332E] hover:bg-gray-50'
                )}
               >
                {c}
@@ -394,9 +393,9 @@ export default function AddressModal() {
 
           {/* Address input */}
           <div className="relative z-40">
-           <div className="bg-[#F2F2F2] rounded-[1rem] px-5 py-3.5">
+           <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5">
             <div className="flex justify-between items-center mb-0.5">
-             <span className="block text-[10px] font-bold text-gray-400 tracking-wide uppercase">
+             <span className="block text-[9px] font-[700] text-[#B5B5B5] tracking-wide uppercase">
               Улица и дом
              </span>
             </div>
@@ -406,7 +405,7 @@ export default function AddressModal() {
               value={tempAddress}
               onChange={(e) => setTempAddress(e.target.value)}
               placeholder="Введите адрес"
-              className="bg-transparent border-none outline-none text-[15px] font-extrabold text-[#4A3F39] placeholder:text-[#BDBDBD] placeholder:font-normal w-full"
+              className="bg-transparent border-none outline-none text-[15px] font-[800] text-[#3A332E] placeholder:text-[#BDBDBD] placeholder:font-normal w-full"
              />
              {isLoadingSuggestions && <Loader2 className="w-4 h-4 animate-spin text-smusl-terracotta flex-shrink-0" />}
              {tempAddress && !isLoadingSuggestions && (
@@ -512,7 +511,7 @@ export default function AddressModal() {
           <button
            onClick={handleGeolocate}
            disabled={isLocating}
-           className="flex items-center gap-2.5 w-full px-5 py-3.5 rounded-[1rem] bg-[#F2F2F2] text-smusl-brown text-[14px] font-bold hover:bg-gray-200 transition-all active:scale-[0.98] disabled:opacity-50"
+           className="flex items-center gap-2.5 w-full px-5 py-3.5 rounded-[1.2rem] bg-[#F8F8F8] text-[#3A332E] text-[14px] font-[700] hover:bg-gray-100 transition-all active:scale-[0.98] disabled:opacity-50"
           >
            {isLocating
             ? <Loader2 className="w-4 h-4 animate-spin text-smusl-terracotta flex-shrink-0" />
@@ -526,9 +525,9 @@ export default function AddressModal() {
          <button
           onClick={handleSaveDelivery}
           disabled={!tempAddress}
-          className="mt-4 sm:mt-auto w-full h-[56px] sm:h-[64px] bg-smusl-terracotta z-10 disabled:bg-smusl-terracotta/40 text-white rounded-[1.2rem] font-[800] text-[16px] sm:text-[18px] hover:bg-[#b87a60] transition-all shadow-xl shadow-smusl-terracotta/20 active:scale-95 mb-4 sm:mb-0 shrink-0"
+          className="mt-4 sm:mt-auto w-full h-[64px] sm:h-[72px] bg-smusl-terracotta z-10 disabled:bg-smusl-terracotta/50 text-white rounded-full font-[800] text-[18px] sm:text-[20px] hover:bg-[#b87a60] transition-all shadow-lg shadow-smusl-terracotta/20 active:scale-95 mb-6 sm:mb-0 shrink-0"
          >
-          Сохранить адрес
+          Всё верно
          </button>
         </div>
        </motion.div>
@@ -543,9 +542,9 @@ export default function AddressModal() {
         exit={{ opacity: 0, x: -20 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - Map */}
-        <div className="w-full h-[260px] shrink-0 sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6">
-         <div className="w-full h-full rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-inner">
+        {/* Left Panel - Map (At top on mobile) */}
+        <div className="w-full h-[240px] sm:h-full sm:w-[55%] p-0 sm:p-6 sm:pb-6 shrink-0 sm:shrink">
+         <div className="w-full h-full rounded-b-[2.5rem] sm:rounded-[2rem] overflow-hidden border-b border-gray-100 shadow-sm relative">
           <MapPicker
            hideSearch={true}
            initialAddress={selectedPickup ? `${selectedPickup.city}, ${selectedPickup.address}` : ""}
@@ -553,51 +552,53 @@ export default function AddressModal() {
            onError={setMapError}
            externalCoords={selectedPickup ? (selectedPickup.coords as [number, number]) : null}
           />
+          {/* Center pin overlay for visual cue on mobile if needed */}
          </div>
         </div>
 
-        <div className="flex-1 p-6 pb-12 sm:pb-10 sm:p-10 flex flex-col min-h-0">
-         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex-1 p-5 sm:p-10 flex flex-col min-h-0 bg-white sm:bg-transparent">
+         {/* Header below map on mobile */}
+         <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
            <button
             onClick={() => setStep(1)}
-            className="p-1 text-smusl-gray hover:text-smusl-brown transition-colors"
+            className="p-1 text-[#3A332E] hover:text-smusl-terracotta transition-colors"
            >
             <ArrowLeft className="w-6 h-6" />
            </button>
-           <h2 className="text-[22px] sm:text-[24px] font-extrabold text-smusl-brown tracking-tight">
+           <h2 className="text-[20px] sm:text-[24px] font-[800] text-[#3A332E] leading-tight max-w-[200px] sm:max-w-none">
             Выберите адрес самовывоза
            </h2>
           </div>
           <button
            onClick={handleClose}
-           className="p-1 text-smusl-gray hover:text-smusl-brown transition-colors"
+           className="p-1 text-gray-300 hover:text-[#3A332E] transition-colors"
           >
            <X className="w-6 h-6" />
           </button>
          </div>
 
-         {/* City field */}
-         <div className="relative mb-6 z-50">
+         {/* City field - matching mockup styling */}
+         <div className="relative mb-5 sm:mb-6 z-50">
           <div
-           className="bg-[#F2F2F2] rounded-[1rem] px-5 py-4 cursor-pointer select-none"
+           className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5 sm:py-4 cursor-pointer select-none"
            onClick={() => setShowCityDropdown(v => !v)}
           >
-           <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-0.5">Город</span>
+           <span className="block text-[9px] font-[700] text-[#B5B5B5] uppercase tracking-[0.1em] mb-0.5">ГОРОД</span>
            <div className="flex items-center justify-between">
-            <span className="text-[15px] font-extrabold text-smusl-brown">{selectedCity}</span>
-            <ChevronDown className={cn('w-4 h-4 text-gray-400 transition-transform duration-200', showCityDropdown && 'rotate-180')} />
+            <span className="text-[15px] sm:text-[16px] font-[800] text-[#3A332E]">{selectedCity}</span>
+            <ChevronDown className={cn('w-4 h-4 text-gray-300 transition-transform duration-200', showCityDropdown && 'rotate-180')} />
            </div>
           </div>
           {showCityDropdown && (
-           <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-[1rem] shadow-[0_16px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden">
+           <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-[1.2rem] shadow-[0_12px_30px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden">
             {(['Москва', 'Санкт-Петербург'] as const).map(c => (
              <button
               key={c}
               onClick={() => { setSelectedCity(c); setSelectedPickup(null); setShowCityDropdown(false) }}
               className={cn(
                'w-full text-left px-5 py-3.5 text-[15px] font-bold transition-colors border-b last:border-0 border-gray-50',
-               selectedCity === c ? 'text-smusl-terracotta bg-smusl-terracotta/5' : 'text-smusl-brown hover:bg-gray-50'
+               selectedCity === c ? 'text-smusl-terracotta bg-smusl-terracotta/5' : 'text-[#3A332E] hover:bg-gray-50'
               )}
              >
               {c}
@@ -607,7 +608,8 @@ export default function AddressModal() {
           )}
          </div>
 
-         <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1 no-scrollbar z-40">
+         {/* Address selection list */}
+         <div className="flex flex-col gap-2.5 flex-1 overflow-y-auto pr-1 no-scrollbar z-40 pb-4">
           {PICKUP_POINTS.filter(p => p.city === selectedCity).map((p) => (
            <button
             key={p.address}
@@ -615,19 +617,19 @@ export default function AddressModal() {
             className={cn(
              "w-full h-[64px] px-6 rounded-[1.2rem] border transition-all flex items-center justify-between group",
              selectedPickup?.address === p.address
-              ? "border-smusl-terracotta bg-white z-10 relative"
-              : "border-gray-200 bg-white hover:border-smusl-terracotta/50 relative"
+              ? "border-smusl-terracotta bg-white shadow-sm"
+              : "border-[#F0F0F0] bg-white hover:border-smusl-terracotta/30"
             )}
            >
             <span className={cn(
-             "text-[15px] font-extrabold transition-colors",
-             selectedPickup?.address === p.address ? "text-smusl-brown" : "text-smusl-brown/80"
+             "text-[15px] sm:text-[16px] font-[700] transition-colors",
+             selectedPickup?.address === p.address ? "text-[#3A332E]" : "text-[#3A332E]/70"
             )}>
              {p.address}
             </span>
             <div className={cn(
-             "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors px-0.5",
-             selectedPickup?.address === p.address ? "border-smusl-terracotta" : "border-gray-200 group-hover:border-smusl-terracotta/50"
+             "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+             selectedPickup?.address === p.address ? "border-smusl-terracotta" : "border-[#E0E0E0] group-hover:border-smusl-terracotta/40"
             )}>
              <div className={cn(
               "w-2.5 h-2.5 rounded-full bg-smusl-terracotta transition-all duration-300",
@@ -638,12 +640,13 @@ export default function AddressModal() {
           ))}
          </div>
 
+         {/* Wide "Всё верно" button */}
          <button
           onClick={handleSavePickup}
           disabled={!selectedPickup}
-          className="mt-6 w-full h-[64px] bg-smusl-terracotta disabled:bg-smusl-terracotta/40 text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-smusl-terracotta/20 z-10 shrink-0 mb-8 sm:mb-0"
+          className="mt-2 sm:mt-6 w-full h-[64px] sm:h-[72px] bg-smusl-terracotta disabled:bg-smusl-terracotta/50 text-white rounded-full font-[800] text-[18px] sm:text-[20px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-lg shadow-smusl-terracotta/20 z-10 shrink-0 mb-6 sm:mb-0"
          >
-          Сохранить пункт вывоза
+          Всё верно
          </button>
         </div>
        </motion.div>
