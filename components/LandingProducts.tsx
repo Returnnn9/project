@@ -4,26 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const categories = [
- { id: 'desserts', label: 'Десерты' },
- { id: 'pastries', label: 'Выпечка' },
- { id: 'bread', label: 'Хлеб' },
-];
-
-const products = [
- { id: 1, name: 'Cloud Cake', category: 'desserts', image: '/images/Desert.png', gridArea: 'col-span-1' },
- { id: 2, name: 'Pistachio Cube', category: 'desserts', image: '/images/pistachio-nut.png', gridArea: 'col-span-1' },
- { id: 3, name: 'Empty Space 1', category: 'desserts', type: 'empty', gridArea: 'col-span-1 hidden md:block' },
- { id: 4, name: 'Berry Delight', category: 'desserts', image: '/images/pistachio-raspberry.png', gridArea: 'col-span-1' },
- { id: 5, name: 'Yellow Peanut', category: 'desserts', image: '/images/yellow-peanut.png', gridArea: 'col-span-1' },
- { id: 6, name: 'Empty Space 2', category: 'desserts', type: 'empty', gridArea: 'col-span-1 hidden md:block' },
- { id: 7, name: 'Yellow Peanut 2', category: 'desserts', image: '/images/yellow-peanut.png', gridArea: 'col-span-1' },
- { id: 8, name: 'Pistachio Cube 2', category: 'desserts', image: '/images/pistachio-nut.png', gridArea: 'col-span-1' },
- { id: 9, name: 'Empty Space 3', category: 'desserts', type: 'empty', gridArea: 'col-span-1 hidden md:block' },
- { id: 10, name: 'Empty Space 4', category: 'desserts', type: 'empty', gridArea: 'col-span-1 hidden md:block' },
- { id: 11, name: 'Premium Pastry', category: 'pastries', image: '/images/Desert.png', gridArea: 'col-span-1' },
- { id: 12, name: 'Artisan Sourdough', category: 'bread', image: '/images/Rectangle 14.svg', gridArea: 'col-span-1' },
-];
+import { categories, products } from '@/data/products';
 
 const LandingProducts = () => {
  const [activeTab, setActiveTab] = useState('desserts');

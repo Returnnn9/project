@@ -10,7 +10,7 @@ const CheckoutModal = dynamic(() => import("@/components/CheckoutModal"), { ssr:
 const ProductDetailsModal = dynamic(() => import("@/components/ProductDetailsModal"), { ssr: false })
 const AddressModal = dynamic(() => import("@/components/AddressModal"), { ssr: false })
 import { Search, ShoppingCart, X } from "lucide-react"
-import { products } from "@/components/data"
+import { products } from "@/data/products"
 import { useUIStore, useCartStore, useStoreData } from "@/store/hooks"
 import { ProductCardSkeleton } from "@/components/Skeleton"
 import { motion, AnimatePresence } from "framer-motion"
@@ -43,11 +43,8 @@ export default function Home() {
 
   const cat = activeCategory.toLowerCase()
   const pCat = p.category.toLowerCase()
-  if (cat === "десерты") return pCat === "пирожные" || pCat === "торты"
-  if (cat === "хлеб") return pCat === "хлеб"
-  if (cat === "выпечка") return pCat === "слойка" || pCat === "эклеры"
-  if (cat === "снеки") return pCat === "кексы и печенье"
-  return false
+
+  return pCat === cat
  })
 
  return (
@@ -94,7 +91,7 @@ export default function Home() {
      </section>
 
      {/* Sticky Cart Sidebar */}
-     <aside className="hidden lg:block lg:sticky lg:top-8">
+     <aside className="hidden md:block md:sticky md:top-8">
       <CartSidebar />
      </aside>
     </div>
@@ -102,7 +99,7 @@ export default function Home() {
     {/* ── Mobile Cart Layer ── */}
     <AnimatePresence>
      {isCartOpen && (
-      <div className="fixed inset-0 z-[100] lg:hidden">
+      <div className="fixed inset-0 z-[100] md:hidden">
        {/* Glass Backdrop */}
        <motion.div
         initial={{ opacity: 0 }}
@@ -148,7 +145,7 @@ export default function Home() {
        initial={{ y: 100 }}
        animate={{ y: 0 }}
        exit={{ y: 100 }}
-       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-[400px] sm:hidden"
+       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-[400px] md:hidden"
       >
        <motion.button
         whileHover={{ scale: 1.02 }}

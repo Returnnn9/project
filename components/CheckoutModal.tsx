@@ -5,21 +5,11 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
 import MapPicker from "./MapPicker"
 import { cn } from "@/lib/utils"
+import { useAddressSearch } from "@/hooks/useAddressSearch"
+import { PICKUP_POINTS } from "@/lib/constants/delivery"
+import { PickupPoint, CityKey } from "@/lib/types/address"
 
 type DeliveryType = "delivery" | "pickup" | null
-
-const PICKUP_POINTS = [
- { city: "Москва", address: "Ижорская 3", coords: [55.882, 37.514] },
- { city: "Москва", address: "Арбат 5", coords: [55.752, 37.598] },
- { city: "Москва", address: "Ленинская 2", coords: [55.748, 37.618] },
- { city: "Москва", address: "Пушкина 12", coords: [55.755, 37.617] },
- { city: "Москва", address: "Садовая 8", coords: [55.759, 37.60] },
- { city: "Санкт-Петербург", address: "Невский проспект, 28", coords: [59.935, 30.325] },
- { city: "Санкт-Петербург", address: "Лиговский пр., 10", coords: [59.930, 30.362] },
- { city: "Санкт-Петербург", address: "Садовая ул., 10", coords: [59.932, 30.339] },
-] as const;
-
-type PickupPoint = typeof PICKUP_POINTS[number];
 
 export default function CheckoutModal() {
  const uiStore = useUIStore()
@@ -43,8 +33,7 @@ export default function CheckoutModal() {
  const [tempAddress, setTempAddress] = useState(address)
  const [selectedPickup, setSelectedPickup] = useState<PickupPoint | null>(null)
  const [mapError, setMapError] = useState<string | null>(null)
- const [isLocating, setIsLocating] = useState(false)
- const [selectedCity, setSelectedCity] = useState<'Москва' | 'Санкт-Петербург'>('Москва')
+ const [selectedCity, setSelectedCity] = useState<CityKey>('Москва')
  const [showCityDropdown, setShowCityDropdown] = useState(false)
  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(null)
 
@@ -54,59 +43,17 @@ export default function CheckoutModal() {
  const [floor, setFloor] = useState('')
  const [apartment, setApartment] = useState('')
 
- // Address search states
- const [suggestions, setSuggestions] = useState<any[]>([])
- const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
- const searchTimeout = React.useRef<NodeJS.Timeout | null>(null)
- const skipNextFetch = React.useRef<boolean>(false)
-
- const CITY_CONFIG = {
-  'Москва': { viewbox: '36.8,56.0,38.0,55.4', short: 'мск' },
-  'Санкт-Петербург': { viewbox: '29.5,60.2,30.8,59.7', short: 'спб' },
- } as const
-
- const fetchAddressSuggestions = async (query: string) => {
-  if (query.length < 3) { setSuggestions([]); return }
-  setIsLoadingSuggestions(true)
-  try {
-   const cfg = CITY_CONFIG[selectedCity]
-   const params = new URLSearchParams({
-    q: query,
-    format: 'json',
-    addressdetails: '1',
-    limit: '15',
-    'accept-language': 'ru',
-   })
-   const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-    headers: { 'Accept-Language': 'ru', 'User-Agent': 'smuslest-app/1.0' }
-   })
-   const data = await res.json()
-
-   const uniqueSuggestions = []
-   const seen = new Set<string>()
-
-   for (const s of data) {
-    const road = (s.address?.road || s.address?.pedestrian || s.address?.suburb || s.display_name.split(',')[0] || "").trim()
-    const houseNum = (s.address?.house_number || "").trim()
-    const title = houseNum ? `${road}, ${houseNum}` : road
-    const city = (s.address?.city || s.address?.town || s.address?.village || selectedCity || "").trim()
-
-    // Normalize key to effectively catch duplicates (e.g. Усачёва vs Усачева, whitespace diffs)
-    const key = `${title}|${city}`.toLowerCase().replace(/\s+/g, ' ').replace(/ё/g, 'е')
-
-    if (!seen.has(key) && road) {
-     seen.add(key)
-     uniqueSuggestions.push(s)
-    }
-   }
-
-   setSuggestions(uniqueSuggestions.slice(0, 6))
-  } catch (err) {
-   console.error('Search error:', err)
-  } finally {
-   setIsLoadingSuggestions(false)
-  }
- }
+ // Address search hook
+ const {
+  suggestions,
+  setSuggestions,
+  isLoading: isLoadingSuggestions,
+  isLocating,
+  skipNextFetch,
+  fetchSuggestions,
+  geolocate,
+  searchTimeout
+ } = useAddressSearch(selectedCity);
 
  useEffect(() => {
   if (skipNextFetch.current) {
@@ -117,13 +64,13 @@ export default function CheckoutModal() {
   if (step === 2 && deliveryType === "delivery" && tempAddress.length >= 3) {
    if (searchTimeout.current) clearTimeout(searchTimeout.current)
    searchTimeout.current = setTimeout(() => {
-    fetchAddressSuggestions(tempAddress)
+    fetchSuggestions(tempAddress)
    }, 400)
   } else {
-   setSuggestions([])
+   setSuggestions(prev => prev.length > 0 ? [] : prev)
   }
   return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current) }
- }, [tempAddress, step, deliveryType, selectedCity])
+ }, [tempAddress, step, deliveryType, selectedCity, fetchSuggestions, searchTimeout, setSuggestions, skipNextFetch])
 
  const reset = () => {
   setStep(1)
@@ -141,38 +88,11 @@ export default function CheckoutModal() {
  }
 
  const handleGeolocate = () => {
-  if (!navigator.geolocation) return
-  setIsLocating(true)
-  navigator.geolocation.getCurrentPosition(
-   async (pos) => {
-    try {
-     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=ru`,
-      { headers: { 'Accept-Language': 'ru' } }
-     )
-     const data = await res.json()
-     const a = data.address || {}
-     // Only accept if city matches selected
-     const geoCity = a.city || a.town || a.village || ''
-     const cityMatch = selectedCity === 'Москва'
-      ? geoCity.includes('Москва')
-      : geoCity.includes('Санкт') || geoCity.includes('Петербург') || geoCity.includes('Ленинград')
-     if (!cityMatch) {
-      // Auto-switch city or ignore
-      if (geoCity.includes('Санкт') || geoCity.includes('Петербург')) setSelectedCity('Санкт-Петербург')
-      else if (geoCity.includes('Москва')) setSelectedCity('Москва')
-     }
-     const parts: string[] = []
-     if (a.road) parts.push(a.road)
-     if (a.house_number) parts.push(a.house_number)
-     const addr = parts.length > 0 ? parts.join(', ') : data.display_name.split(',')[0]
-     setTempAddress(addr)
-    } catch { /* ignore */ }
-    setIsLocating(false)
-   },
-   () => setIsLocating(false),
-   { timeout: 8000 }
-  )
+  geolocate((addr, coords, matchedCity) => {
+   if (matchedCity) setSelectedCity(matchedCity);
+   setTempAddress(addr);
+   setSelectedCoords(coords);
+  });
  }
 
  const handleClose = () => {

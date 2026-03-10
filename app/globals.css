@@ -27,6 +27,11 @@
  --radius-r-full: 9999px;
 
  --ease-out-premium: cubic-bezier(0.16, 1, 0.3, 1);
+
+ --z-modal: 100;
+ --z-overlay: 90;
+ --z-dropdown: 50;
+ --z-header: 40;
 }
 
 @layer base {

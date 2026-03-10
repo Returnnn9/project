@@ -259,7 +259,7 @@ export default function MapPicker({ initialAddress, onAddressSelect, onAddressDe
  };
 
  const geocodeYandex = async (addr: string) => {
-  if (!window.ymaps?.geocode) return;
+  if (!window.ymaps?.geocode || !addr || !addr.trim()) return;
   try {
    const res = await window.ymaps.geocode(addr);
    const obj = res.geoObjects.get(0);
