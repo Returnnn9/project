@@ -16,6 +16,8 @@ export interface Product {
   fats: string
   carbs: string
  }
+ type?: 'empty' | 'product'
+ gridArea?: string
 }
 
 export interface CartItem {

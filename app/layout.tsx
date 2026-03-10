@@ -29,6 +29,7 @@ const greatVibes = Great_Vibes({
 });
 
 export const metadata: Metadata = {
+ metadataBase: new URL("https://smuslest.ru"),
  title: {
   template: "%s | СМЫСЛ ЕСТЬ",
   default: "СМЫСЛ ЕСТЬ - Доставка еды",

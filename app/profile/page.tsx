@@ -194,13 +194,13 @@ export default function ProfilePage() {
       <h1 className="text-[32px] sm:text-[48px] lg:text-[60px] font-black text-[#CF8F73] leading-[0.95]">
        {displayName}!
       </h1>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="mt-8 flex flex-wrap items-center gap-3">
        {!isAuthenticated && (
         <button
          onClick={() => setAuthModalOpen(true)}
-         className="px-8 py-3.5 sm:px-10 sm:py-4 rounded-[2rem] bg-[#CD8B70] text-white text-[16px] sm:text-[18px] font-bold hover:bg-[#C27E63] transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-[0_8px_24px_rgba(205,139,112,0.35)] hover:shadow-[0_12px_32px_rgba(205,139,112,0.5)] select-none touch-manipulation transform-gpu"
+         className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-full bg-[#CD8B70] text-white text-[14px] sm:text-[16px] font-bold hover:bg-[#C27E63] transition-colors shadow-sm active:scale-95 select-none touch-manipulation"
         >
-         <span className="drop-shadow-sm tracking-wide pointer-events-none">Войти в аккаунт</span>
+         <span className="tracking-wide pointer-events-none">Войти в аккаунт</span>
         </button>
        )}
        {isAuthenticated && (

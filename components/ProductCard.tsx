@@ -59,13 +59,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ onAdd, index = 0, ...product 
     <div className="flex flex-col justify-between pt-1 sm:pt-2">
      <div className="space-y-0.5 sm:space-y-1">
       {/* Title & Price Row */}
-      <div className="flex items-start justify-between gap-3 sm:gap-4">
+      <div className="flex items-start justify-between gap-1.5 sm:gap-4 w-full overflow-hidden">
        <motion.h3
-        className="text-[16px] xs:text-[18px] sm:text-[20px] xl:text-[22px] font-bold text-[#6B5D54] leading-[1.1] tracking-tight line-clamp-2"
+        className="text-[15px] xs:text-[16px] sm:text-[20px] xl:text-[22px] font-bold text-[#6B5D54] leading-[1.15] tracking-tight line-clamp-2 flex-1 min-w-0 pr-1 break-words"
        >
         {name}
        </motion.h3>
-       <div className="text-[18px] xs:text-[20px] sm:text-[24px] xl:text-[26px] font-[900] text-[#6B5D54] whitespace-nowrap text-right shrink-0 tracking-tight">
+       <div className="text-[17px] xs:text-[18px] sm:text-[24px] xl:text-[26px] font-[900] text-[#6B5D54] whitespace-nowrap text-right shrink-0 tracking-tight pt-0.5">
         {price} ₽/шт
        </div>
       </div>
