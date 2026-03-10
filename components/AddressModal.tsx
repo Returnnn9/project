@@ -1,11 +1,12 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useUIStore, useUserStore, useStoreData } from "@/store/hooks"
 import { X, ChevronDown, MapPin, ArrowLeft, Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import MapPicker from "./MapPicker"
 import { cn } from "@/lib/utils"
+import { useAddressSearch } from "@/hooks/useAddressSearch"
 
 type DeliveryType = "delivery" | "pickup" | null
 
@@ -37,7 +38,6 @@ export default function AddressModal() {
  const [tempAddress, setTempAddress] = useState(address)
  const [selectedPickup, setSelectedPickup] = useState<PickupPoint | null>(null)
  const [mapError, setMapError] = useState<string | null>(null)
- const [isLocating, setIsLocating] = useState(false)
  const [selectedCity, setSelectedCity] = useState<'Москва' | 'Санкт-Петербург'>('Москва')
  const [showCityDropdown, setShowCityDropdown] = useState(false)
  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(null)
@@ -48,59 +48,17 @@ export default function AddressModal() {
  const [floor, setFloor] = useState('')
  const [apartment, setApartment] = useState('')
 
- // Address search states
- const [suggestions, setSuggestions] = useState<any[]>([])
- const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
- const searchTimeout = useRef<NodeJS.Timeout | null>(null)
- const skipNextFetch = useRef<boolean>(false)
-
- const CITY_CONFIG = {
-  'Москва': { viewbox: '36.8,56.0,38.0,55.4', short: 'мск' },
-  'Санкт-Петербург': { viewbox: '29.5,60.2,30.8,59.7', short: 'спб' },
- } as const
-
- const fetchAddressSuggestions = async (query: string) => {
-  if (query.length < 3) { setSuggestions([]); return }
-  setIsLoadingSuggestions(true)
-  try {
-   const cfg = CITY_CONFIG[selectedCity]
-   const params = new URLSearchParams({
-    q: query,
-    format: 'json',
-    addressdetails: '1',
-    limit: '15',
-    'accept-language': 'ru',
-   })
-   const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-    headers: { 'Accept-Language': 'ru', 'User-Agent': 'smuslest-app/1.0' }
-   })
-   const data = await res.json()
-
-   const uniqueSuggestions = []
-   const seen = new Set<string>()
-
-   for (const s of data) {
-    const road = (s.address?.road || s.address?.pedestrian || s.address?.suburb || s.display_name.split(',')[0] || "").trim()
-    const houseNum = (s.address?.house_number || "").trim()
-    const title = houseNum ? `${road}, ${houseNum}` : road
-    const city = (s.address?.city || s.address?.town || s.address?.village || selectedCity || "").trim()
-
-    // Normalize key to effectively catch duplicates (e.g. Усачёва vs Усачева, whitespace diffs)
-    const key = `${title}|${city}`.toLowerCase().replace(/\s+/g, ' ').replace(/ё/g, 'е')
-
-    if (!seen.has(key) && road) {
-     seen.add(key)
-     uniqueSuggestions.push(s)
-    }
-   }
-
-   setSuggestions(uniqueSuggestions.slice(0, 6))
-  } catch (err) {
-   console.error('Search error:', err)
-  } finally {
-   setIsLoadingSuggestions(false)
-  }
- }
+ // Address search hook
+ const {
+  suggestions,
+  setSuggestions,
+  isLoading: isLoadingSuggestions,
+  isLocating,
+  skipNextFetch,
+  fetchSuggestions,
+  geolocate,
+  searchTimeout
+ } = useAddressSearch(selectedCity);
 
  useEffect(() => {
   if (skipNextFetch.current) {
@@ -108,16 +66,16 @@ export default function AddressModal() {
    return
   }
 
-  if (step === 2 && deliveryType === "delivery" && tempAddress.length >= 3) {
+  if (step === 2 && deliveryType === "delivery" && tempAddress.length >= 2) {
    if (searchTimeout.current) clearTimeout(searchTimeout.current)
    searchTimeout.current = setTimeout(() => {
-    fetchAddressSuggestions(tempAddress)
+    fetchSuggestions(tempAddress)
    }, 400)
   } else {
    setSuggestions([])
   }
   return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
  }, [tempAddress, step, deliveryType, selectedCity])
 
  const reset = () => {
@@ -143,39 +101,11 @@ export default function AddressModal() {
  }, [isAddressModalOpen])
 
  const handleGeolocate = () => {
-  if (!navigator.geolocation) return
-  setIsLocating(true)
-  navigator.geolocation.getCurrentPosition(
-   async (pos) => {
-    try {
-     setSelectedCoords([pos.coords.latitude, pos.coords.longitude])
-     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=ru`,
-      { headers: { 'Accept-Language': 'ru' } }
-     )
-     const data = await res.json()
-     const a = data.address || {}
-     // Only accept if city matches selected
-     const geoCity = a.city || a.town || a.village || ''
-     const cityMatch = selectedCity === 'Москва'
-      ? geoCity.includes('Москва')
-      : geoCity.includes('Санкт') || geoCity.includes('Петербург') || geoCity.includes('Ленинград')
-     if (!cityMatch) {
-      // Auto-switch city or ignore
-      if (geoCity.includes('Санкт') || geoCity.includes('Петербург')) setSelectedCity('Санкт-Петербург')
-      else if (geoCity.includes('Москва')) setSelectedCity('Москва')
-     }
-     const parts: string[] = []
-     if (a.road) parts.push(a.road)
-     if (a.house_number) parts.push(a.house_number)
-     const addr = parts.length > 0 ? parts.join(', ') : data.display_name.split(',')[0]
-     setTempAddress(addr)
-    } catch { /* ignore */ }
-    setIsLocating(false)
-   },
-   () => setIsLocating(false),
-   { timeout: 8000 }
-  )
+  geolocate((addr, coords, matchedCity) => {
+   if (matchedCity) setSelectedCity(matchedCity);
+   setTempAddress(addr);
+   setSelectedCoords(coords);
+  });
  }
 
  const handleClose = () => {
@@ -204,6 +134,24 @@ export default function AddressModal() {
    handleClose()
   }
  }
+
+ // Stabilized callbacks for MapPicker
+ const onAddressSelect = useCallback((val: string) => {
+  skipNextFetch.current = true;
+  setTempAddress(val);
+ }, [skipNextFetch]);
+
+ const onAddressDetailsSelect = useCallback((details: any) => {
+  skipNextFetch.current = true;
+  const road = details.road || details.full.split(',')[0];
+  const house = details.house || '';
+  const displayAddr = house ? `${road}, ${house}` : road;
+  setTempAddress(displayAddr.replace(`${selectedCity}, `, '').replace('Москва, ', '').replace('Санкт-Петербург, ', ''));
+  setHouse(house);
+  if (details.coords) {
+   setSelectedCoords(details.coords);
+  }
+ }, [selectedCity, skipNextFetch]);
 
  if (!isAddressModalOpen) return null
 
@@ -239,7 +187,6 @@ export default function AddressModal() {
         exit={{ opacity: 0, scale: 0.98 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - Map (At top on mobile) */}
         <div className="w-full h-[280px] sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6 shrink-0 sm:shrink">
          <div className="w-full h-full rounded-[2rem] sm:rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm relative">
           <MapPicker
@@ -265,7 +212,6 @@ export default function AddressModal() {
          </div>
 
          <div className="space-y-4">
-          {/* Delivery Option */}
           <button
            onClick={() => { setDeliveryType("delivery"); setStep(2) }}
            className="w-full h-[72px] px-6 rounded-[1.2rem] border border-gray-200 hover:border-smusl-terracotta bg-white transition-all flex items-center justify-between group"
@@ -276,7 +222,6 @@ export default function AddressModal() {
            </div>
           </button>
 
-          {/* Pickup Option */}
           <button
            onClick={() => { setDeliveryType("pickup"); setStep(2) }}
            className="w-full h-[72px] px-6 rounded-[1.2rem] border border-gray-200 hover:border-smusl-terracotta bg-white transition-all flex items-center justify-between group"
@@ -300,31 +245,20 @@ export default function AddressModal() {
         exit={{ opacity: 0, x: -20 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - MAP (At top on mobile) */}
         <div className="w-full h-[280px] sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6 shrink-0 sm:shrink">
          <div className="w-full h-full rounded-[2rem] sm:rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm relative">
           <MapPicker
            hideSearch={true}
            initialAddress={tempAddress}
-           onAddressSelect={setTempAddress}
-           onAddressDetailsSelect={(details) => {
-            const road = details.road || details.full.split(',')[0];
-            setTempAddress(road.replace(`${selectedCity}, `, '').replace('Москва, ', '').replace('Санкт-Петербург, ', ''));
-            if (details.house) {
-             setHouse(details.house.replace(/\D/g, ''));
-            } else {
-             setHouse('');
-            }
-           }}
+           onAddressSelect={onAddressSelect}
+           onAddressDetailsSelect={onAddressDetailsSelect}
            onError={setMapError}
            externalCoords={selectedCoords}
           />
          </div>
         </div>
 
-        {/* Right Panel - Inputs */}
         <div className="flex-1 p-6 sm:p-10 flex flex-col overflow-y-auto no-scrollbar min-h-0 bg-white sm:bg-transparent">
-         {/* Header below map on mobile */}
          <div className="flex items-center justify-between mb-5 sm:mb-8">
           <div className="flex items-center gap-4">
            <button
@@ -343,8 +277,6 @@ export default function AddressModal() {
          </div>
 
          <div className="space-y-3 flex-1">
-
-          {/* City field */}
           <div className="relative z-50">
            <div
             className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5 sm:py-4 cursor-pointer select-none"
@@ -374,7 +306,6 @@ export default function AddressModal() {
            )}
           </div>
 
-          {/* Address input */}
           <div className="relative z-40">
            <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5">
             <div className="flex justify-between items-center mb-0.5">
@@ -405,32 +336,31 @@ export default function AddressModal() {
             <motion.div
              initial={{ opacity: 0, y: 4 }}
              animate={{ opacity: 1, y: 0 }}
-             className="mt-2 bg-white rounded-[1.2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden max-h-[300px] overflow-y-auto no-scrollbar absolute w-full left-0 py-1 z-50"
+             className="mt-2 bg-white rounded-[1.2rem] shadow-[0_16px_48px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden max-h-[340px] overflow-y-auto no-scrollbar absolute w-full left-0 py-1.5 z-50"
             >
              {suggestions.map((s, idx) => {
-              const road = (s.address?.road || s.address?.pedestrian || s.address?.suburb || s.display_name.split(',')[0] || "").trim();
-              const houseNum = (s.address?.house_number || "").trim();
-              const title = houseNum ? `${road}, ${houseNum}` : road;
-              const city = (s.address?.city || s.address?.town || s.address?.village || s.address?.state || selectedCity || "").trim();
+              const title = (s.address as any)?.title || s.display_name;
+              const subtitle = (s.address as any)?.subtitle || selectedCity;
+              const road = (s.address as any)?.road || title;
+              const houseNum = (s.address as any)?.house_number || "";
 
               return (
                <button
                 key={idx}
                 onClick={() => {
                  skipNextFetch.current = true;
-                 setTempAddress(title);
-                 setHouse('');
-
-                 // Store coords to sync map
+                 const displayAddr = houseNum ? `${road}, ${houseNum}` : road;
+                 setTempAddress(displayAddr);
+                 setHouse(houseNum);
                  if (s.lat && s.lon) {
                   setSelectedCoords([parseFloat(s.lat), parseFloat(s.lon)]);
                  }
                  setSuggestions([]);
                 }}
-                className="w-full text-left px-5 py-3.5 flex flex-col group hover:bg-[#F9F9F9] transition-colors border-b last:border-0 border-gray-50"
+                className="w-full text-left px-5 py-3.5 flex flex-col group hover:bg-[#F8F9FA] transition-colors"
                >
-                <span className="text-[15px] font-[700] text-[#333333] leading-snug">{title}</span>
-                <span className="text-[13px] font-[500] text-[#999999] mt-0.5">{city}</span>
+                <span className="text-[15px] font-[800] text-[#333333] leading-tight group-hover:text-smusl-terracotta transition-colors">{title}</span>
+                <span className="text-[12px] font-[600] text-[#999999] mt-1 uppercase tracking-wider">{subtitle}</span>
                </button>
               );
              })}
@@ -438,7 +368,6 @@ export default function AddressModal() {
            )}
           </div>
 
-          {/* Additional details: House, Entrance, Floor, Apt */}
           <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
            <div className="bg-[#F2F2F2] rounded-[1rem] px-2 sm:px-5 py-2.5 sm:py-3 flex flex-col justify-center overflow-hidden">
             <span className="block text-[7px] min-[375px]:text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-normal sm:tracking-[0.1em] mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">Дом</span>
@@ -471,7 +400,7 @@ export default function AddressModal() {
             />
            </div>
            <div className="bg-[#F2F2F2] rounded-[1rem] px-2 sm:px-5 py-2.5 sm:py-3 flex flex-col justify-center overflow-hidden">
-            <span className="block text-[7px] min-[375px]:text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-normal sm:tracking-[0.1em] mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title="Кв. / Офис">Кв. / Офис</span>
+            <span className="block text-[7px] min-[375px]:text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-normal sm:tracking-[0.1em] mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">Кв. / Офис</span>
             <input
              type="text"
              value={apartment}
@@ -482,7 +411,6 @@ export default function AddressModal() {
            </div>
           </div>
 
-          {/* Где я — geolocation button */}
           <button
            onClick={handleGeolocate}
            disabled={isLocating}
@@ -494,7 +422,6 @@ export default function AddressModal() {
            }
            {isLocating ? 'Определяем...' : 'Где я'}
           </button>
-
          </div>
 
          <button
@@ -517,13 +444,12 @@ export default function AddressModal() {
         exit={{ opacity: 0, x: -20 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - Map (At top on mobile) */}
         <div className="w-full h-[260px] sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6 shrink-0 sm:shrink">
          <div className="w-full h-full rounded-[2rem] sm:rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm relative">
           <MapPicker
            hideSearch={true}
            initialAddress={selectedPickup ? `${selectedPickup.city}, ${selectedPickup.address}` : ""}
-           onAddressSelect={() => { }} // Read-only for pickup
+           onAddressSelect={() => { }}
            onError={setMapError}
            externalCoords={selectedPickup ? (selectedPickup.coords as [number, number]) : null}
           />
@@ -531,7 +457,6 @@ export default function AddressModal() {
         </div>
 
         <div className="flex-1 p-6 sm:p-10 flex flex-col min-h-0 bg-white sm:bg-transparent">
-         {/* Header below map on mobile */}
          <div className="flex items-center justify-between mb-5 sm:mb-8">
           <div className="flex items-center gap-4">
            <button
@@ -552,7 +477,6 @@ export default function AddressModal() {
           </button>
          </div>
 
-         {/* City field - matching mockup styling */}
          <div className="relative mb-5 sm:mb-6 z-50">
           <div
            className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5 sm:py-4 cursor-pointer select-none"
@@ -613,7 +537,6 @@ export default function AddressModal() {
           ))}
          </div>
 
-         {/* Wide "Всё верно" button */}
          <button
           onClick={handleSavePickup}
           disabled={!selectedPickup}

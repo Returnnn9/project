@@ -18,6 +18,7 @@ export interface Product {
  }
  type?: 'empty' | 'product'
  gridArea?: string
+ quantity?: number
 }
 
 export interface CartItem {

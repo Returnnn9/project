@@ -8,8 +8,8 @@ import Footer from "@/components/Footer"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, Clock, Heart, ShoppingBag, Minus, Plus, Trash2, LogOut, RotateCcw } from "lucide-react"
 import { Product, CartItem } from "@/store/types"
-import { useUIStore, useCartStore, useUserStore, useStoreData } from "@/store/hooks"
-import { products } from "@/components/data"
+import { useUIStore, useCartStore, useUserStore, useProductStore, useStoreData } from "@/store/hooks"
+import { useSession, signOut } from "next-auth/react"
 import ProductCard from "@/components/ProductCard"
 import { ProductCardSkeleton } from "@/components/Skeleton"
 
@@ -123,6 +123,9 @@ export default function ProfilePage() {
  const uiStore = useUIStore()
  const cartStore = useCartStore()
  const userStore = useUserStore()
+ const productStore = useProductStore()
+
+ const products = useStoreData(productStore, s => s.getProducts()) || []
 
  const cart = useStoreData(cartStore, s => s.getCart())
  const favorites = useStoreData(userStore, s => s.getFavorites())
@@ -133,37 +136,36 @@ export default function ProfilePage() {
  const addToCart = (p: Product) => cartStore.addToCart(p)
  const addMultipleToCart = (p: Product[]) => cartStore.addMultipleToCart(p)
  const updateQuantity = (id: number, d: number) => cartStore.updateQuantity(id, d)
- const [localSession, setLocalSession] = useState<LocalSession | null>(null)
+ const { data: session, status: authStatus } = useSession()
+ const isAuthenticated = authStatus === "authenticated"
+ const isLoadingSession = authStatus === "loading"
  const [activeTab, setActiveTab] = useState<TabLabel>("История заказов")
- const [isLoading, setIsLoading] = useState(true)
+ const [isPageLoading, setIsPageLoading] = useState(true)
 
  useEffect(() => {
-  try {
-   const raw = localStorage.getItem("smuslest_session")
-   if (raw) setLocalSession(JSON.parse(raw))
-  } catch {
-   // storage unavailable
-  }
-  const timer = setTimeout(() => setIsLoading(false), 600)
+  const timer = setTimeout(() => setIsPageLoading(false), 600)
   return () => clearTimeout(timer)
  }, [])
 
- const isAuthenticated = !!localSession
- const displayName = isAuthenticated ? localSession!.name : "Гость"
- const favoriteProducts = products.filter(p => favorites.includes(p.id))
+ useEffect(() => {
+  if (products.length === 0) {
+   productStore.fetchProducts()
+  }
+ }, [])
+
+ const displayName = isAuthenticated ? (session?.user?.name || "Пользователь") : "Гость"
+ const isLoading = isLoadingSession || (isPageLoading && !isAuthenticated)
+ const favoriteProducts = products.filter((p: any) => favorites.includes(p.id))
  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
- const handleLogout = () => {
-  localStorage.removeItem("smuslest_session")
-  setLocalSession(null)
-  setUserName("")
-  window.location.reload()
+ const handleLogout = async () => {
+  await signOut({ callbackUrl: "/" })
  }
 
  const handleRepeatOrder = (order: any) => {
   const productsToAdd: Product[] = []
   order.items.forEach((item: CartItem) => {
-   const product = products.find(p => p.id === item.id)
+   const product = products.find((p: any) => p.id === item.id)
    if (product) productsToAdd.push(product)
   })
 
@@ -204,13 +206,32 @@ export default function ProfilePage() {
         </button>
        )}
        {isAuthenticated && (
-        <button
-         onClick={handleLogout}
-         className="flex items-center gap-2 px-5 py-2 rounded-full bg-red-50 text-red-500 border border-red-100 text-[13px] font-bold hover:bg-red-100 transition-all active:scale-95"
-        >
-         <LogOut className="w-4 h-4" />
-         Выйти
-        </button>
+        <div className="flex items-center gap-3">
+         {(session?.user as any)?.role === "ADMIN" && (
+          <Link
+           href="/admin"
+           className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-full bg-[#3A332E] text-white text-[14px] sm:text-[16px] font-bold hover:bg-black transition-colors shadow-sm active:scale-95"
+          >
+           Панель управления
+          </Link>
+         )}
+         <motion.button
+          whileHover={{ scale: 1.05, backgroundColor: "rgba(254, 226, 226, 0.8)" }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleLogout}
+          className="group flex items-center gap-2 px-6 py-2.5 rounded-full bg-red-50/50 text-red-500 border border-red-200/50 text-[14px] font-bold backdrop-blur-md transition-all shadow-sm hover:shadow-md hover:border-red-300"
+         >
+          <motion.div
+           variants={{
+            hover: { x: 3 }
+           }}
+           transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+           <LogOut className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </motion.div>
+          Выйти
+         </motion.button>
+        </div>
        )}
       </div>
      </div>
@@ -264,7 +285,7 @@ export default function ProfilePage() {
         ) : orderHistory.length > 0 ? (
          orderHistory.map((order, i) => {
           const firstItem = order.items[0] as CartItem
-          const firstProduct = products.find(p => p.id === firstItem?.id)
+          const firstProduct = products.find((p: any) => p.id === firstItem?.id)
           const extraCount = order.items.length - 1
           return (
            <motion.div
@@ -349,7 +370,7 @@ export default function ProfilePage() {
       {activeTab === "Избранное" && (
        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {isLoading
-         ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
+         ? Array.from({ length: 4 }).map((_, i: number) => <ProductCardSkeleton key={i} />)
          : favoriteProducts.length > 0
           ? favoriteProducts.map((p: Product, i) => (
            <ProductCard key={p.id} {...p} onAdd={() => addToCart(p)} index={i} />

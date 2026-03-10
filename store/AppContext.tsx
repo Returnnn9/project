@@ -125,7 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
  const [userPhone, setUserPhone] = useState("")
  const [favorites, setFavorites] = useState<number[]>([])
  const [orderHistory, setOrderHistory] = useState<Order[]>([])
- const [activeCategory, setActiveCategory] = useState("Десерты")
+ const [activeCategory, setActiveCategory] = useState("desserts")
  const [searchQuery, setSearchQuery] = useState("")
  const [hasSetAddress, setHasSetAddress] = useState(false)
 
@@ -244,6 +244,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
    date: new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }),
    address,
   }
+
+  // Persist order globally to backend
+  fetch('/api/orders', {
+   method: 'POST',
+   headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify(order)
+  }).catch(err => console.error("Failed to persist order globally:", err));
 
   setOrderHistory(prev => [order, ...prev])
   setCart([])

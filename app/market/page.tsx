@@ -6,18 +6,23 @@ import Footer from "@/components/Footer"
 import ProductCard from "@/components/ProductCard"
 import CartSidebar from "@/components/CartSidebar"
 import dynamic from "next/dynamic"
+import { Search, ShoppingCart, X } from "lucide-react"
+import { useUIStore, useCartStore, useProductStore, useStoreData } from "@/store/hooks"
+import { ProductCardSkeleton } from "@/components/Skeleton"
+import { motion, AnimatePresence } from "framer-motion"
+
+
+
+
+
 const CheckoutModal = dynamic(() => import("@/components/CheckoutModal"), { ssr: false })
 const ProductDetailsModal = dynamic(() => import("@/components/ProductDetailsModal"), { ssr: false })
 const AddressModal = dynamic(() => import("@/components/AddressModal"), { ssr: false })
-import { Search, ShoppingCart, X } from "lucide-react"
-import { products } from "@/data/products"
-import { useUIStore, useCartStore, useStoreData } from "@/store/hooks"
-import { ProductCardSkeleton } from "@/components/Skeleton"
-import { motion, AnimatePresence } from "framer-motion"
 
 export default function Home() {
  const uiStore = useUIStore()
  const cartStore = useCartStore()
+ const productStore = useProductStore()
 
  const isCartOpen = useStoreData(uiStore, s => s.getIsCartOpen())
  const activeCategory = useStoreData(uiStore, s => s.getActiveCategory())
@@ -25,19 +30,28 @@ export default function Home() {
  const selectedProduct = useStoreData(uiStore, s => s.getSelectedProduct())
 
  const cart = useStoreData(cartStore, s => s.getCart())
+ const products = useStoreData(productStore, s => s.getProducts()) || []
+ const fetchLoading = useStoreData(productStore, s => s.getIsLoading())
 
  const setCartOpen = (o: boolean) => uiStore.setCartOpen(o)
  const setActiveCategory = (c: string) => uiStore.setActiveCategory(c)
  const addToCart = (p: any) => cartStore.addToCart(p)
  const [isLoading, setIsLoading] = useState(true);
+ const showSkeletons = fetchLoading || isLoading;
 
  useEffect(() => {
   setIsLoading(true);
-  const timer = setTimeout(() => setIsLoading(false), 800);
+  const timer = setTimeout(() => setIsLoading(false), 600);
   return () => clearTimeout(timer);
  }, [activeCategory]);
 
- const filteredProducts = products.filter((p) => {
+ useEffect(() => {
+  if (products.length === 0) {
+   productStore.fetchProducts()
+  }
+ }, [])
+
+ const filteredProducts = products.filter((p: any) => {
   const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
   if (!matchesSearch) return false
 
@@ -69,10 +83,10 @@ export default function Home() {
         transition={{ duration: 0.4 }}
         className="grid grid-cols-2 gap-1.5 sm:gap-3"
        >
-        {isLoading
+        {showSkeletons
          ? Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)
          : filteredProducts.length > 0 ? (
-          filteredProducts.map((p, i) => (
+          filteredProducts.map((p: any, i: number) => (
            <ProductCard key={p.id} {...p} onAdd={() => addToCart(p)} index={i} />
           ))
          ) : (

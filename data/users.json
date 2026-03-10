@@ -1,0 +1,10 @@
+[
+  {
+    "name": "ian",
+    "email": "ian@gmail.com",
+    "passwordHash": "$2b$12$g7B4bDYQL8rHmxZ4yrRM9./UIdKB6jH3OZqvjJ.liVIu3/iQsdsjy",
+    "role": "USER",
+    "id": "local-1773154482938",
+    "createdAt": "2026-03-10T14:54:42.938Z"
+  }
+]

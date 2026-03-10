@@ -52,7 +52,7 @@ export const products: Product[] = [
   name: "Эклер фисташка",
   image: "/photo/Rectangle 22-5.png",
  },
- // Filler items for other categories
+
  {
   id: 7,
   name: "Хлеб Бородинский",

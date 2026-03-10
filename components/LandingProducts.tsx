@@ -1,13 +1,22 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { categories, products } from '@/data/products';
+import { categories } from '@/data/products';
+import { useProductStore, useStoreData } from '@/store/hooks';
 
 const LandingProducts = () => {
  const [activeTab, setActiveTab] = useState('desserts');
+ const productStore = useProductStore();
+ const products = useStoreData(productStore, s => s.getProducts()) || [];
+
+ useEffect(() => {
+  if (products.length === 0) {
+   productStore.fetchProducts();
+  }
+ }, []);
 
  const filteredProducts = products.filter(p => p.category === activeTab);
 

@@ -11,45 +11,33 @@ export function useAddressSearch(selectedCity: CityKey) {
  const skipNextFetch = useRef<boolean>(false);
 
  const fetchSuggestions = useCallback(async (query: string) => {
-  if (query.length < 3) {
+  if (query.length < 2) {
    setSuggestions(prev => (prev.length > 0 ? [] : prev));
    return;
   }
   setIsLoading(true);
   try {
-   const params = new URLSearchParams({
-    q: query,
-    format: 'json',
-    addressdetails: '1',
-    limit: '15',
-    'accept-language': 'ru',
-   });
-   const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-    headers: { 'Accept-Language': 'ru', 'User-Agent': 'smuslest-app/1.0' }
-   });
+   const params = new URLSearchParams({ q: query, city: selectedCity });
+   const res = await fetch(`/api/address/search?${params}`);
    const data: OSMSuggestion[] = await res.json();
 
    const uniqueSuggestions: OSMSuggestion[] = [];
    const seen = new Set<string>();
 
    for (const s of data) {
-    const road = (s.address?.road || s.address?.pedestrian || s.address?.suburb || s.display_name.split(',')[0] || "").trim();
-    const houseNum = (s.address?.house_number || "").trim();
-    const title = houseNum ? `${road}, ${houseNum}` : road;
-    const city = (s.address?.city || s.address?.town || s.address?.village || selectedCity || "").trim();
+    const title = (s.address as any)?.title || s.display_name;
+    const subtitle = (s.address as any)?.subtitle || selectedCity;
+    const key = `${title}|${subtitle}`.toLowerCase().replace(/\s+/g, ' ').replace(/ё/g, 'е');
 
-    const key = `${title}|${city}`.toLowerCase().replace(/\s+/g, ' ').replace(/ё/g, 'е');
-
-    if (!seen.has(key) && road) {
+    if (!seen.has(key)) {
      seen.add(key);
      uniqueSuggestions.push(s);
     }
    }
 
-   const final = uniqueSuggestions.slice(0, 6);
+   const final = uniqueSuggestions.slice(0, 8);
    setSuggestions(prev => {
     if (prev.length === 0 && final.length === 0) return prev;
-    // Simple shallow check for demo, usually enough to break immediate loops
     return final;
    });
   } catch (err) {
@@ -65,25 +53,20 @@ export function useAddressSearch(selectedCity: CityKey) {
   navigator.geolocation.getCurrentPosition(
    async (pos) => {
     try {
-     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=ru`,
-      { headers: { 'Accept-Language': 'ru' } }
-     );
-     const data: OSMSuggestion = await res.json();
-     const a = data.address || {};
+     const { latitude, longitude } = pos.coords;
+     const res = await fetch(`/api/address/reverse?lat=${latitude}&lon=${longitude}`);
+     const data = await res.json();
 
-     const geoCity = a.city || a.town || a.village || '';
+     if (data.error) throw new Error(data.error);
+
      let matchedCity: CityKey | undefined;
+     const geoCity = data.city || '';
 
      if (geoCity.includes('Москва')) matchedCity = 'Москва';
      else if (geoCity.includes('Санкт') || geoCity.includes('Петербург')) matchedCity = 'Санкт-Петербург';
 
-     const parts: string[] = [];
-     if (a.road) parts.push(a.road);
-     if (a.house_number) parts.push(a.house_number);
-
-     const addr = parts.length > 0 ? parts.join(', ') : data.display_name.split(',')[0];
-     onSuccess(addr, [pos.coords.latitude, pos.coords.longitude], matchedCity);
+     const addr = data.full || `${data.road}, ${data.house}`;
+     onSuccess(addr, [latitude, longitude], matchedCity);
     } catch (err) {
      console.error('Reverse geocode error:', err);
     } finally {

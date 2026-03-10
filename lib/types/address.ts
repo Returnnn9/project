@@ -11,6 +11,8 @@ export interface OSMSuggestion {
   town?: string;
   village?: string;
   state?: string;
+  title?: string;
+  subtitle?: string;
   [key: string]: string | undefined;
  };
 }

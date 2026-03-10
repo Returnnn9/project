@@ -7,7 +7,7 @@ export class UIStore extends EventEmitter {
  private isCartOpen: boolean = false;
  private isAddressModalOpen: boolean = false;
  private isAuthModalOpen: boolean = false;
- private activeCategory: string = "Десерты";
+ private activeCategory: string = "desserts";
  private searchQuery: string = "";
 
  // Getters

@@ -1,17 +1,20 @@
 import { CartStore } from "./CartStore";
 import { UserStore } from "./UserStore";
 import { UIStore } from "./UIStore";
+import { ProductStore } from "./ProductStore";
 import { safeParseJSON, CartItem, Order } from "../types";
 
 export class RootStore {
  cartStore: CartStore;
  userStore: UserStore;
  uiStore: UIStore;
+ productStore: ProductStore;
 
  constructor() {
   this.cartStore = new CartStore();
   this.userStore = new UserStore(this);
   this.uiStore = new UIStore();
+  this.productStore = new ProductStore();
  }
 
  // Called once on mount to hydrate data from localStorage

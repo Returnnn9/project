@@ -8,9 +8,7 @@ import { useUIStore, useUserStore, useStoreData } from "@/store/hooks"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const CATEGORIES = ["Десерты", "Хлеб", "Снеки", "Выпечка"] as const
+import { categories } from "@/data/products"
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -81,18 +79,18 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-8 pt-1">
       {/* Categories */}
       <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar smooth-scroll shrink-0 w-[calc(100%+2rem)] -mx-4 px-4 sm:w-auto sm:mx-0 sm:px-0">
-       {CATEGORIES.map((cat) => (
+       {categories.map((cat) => (
         <button
-         key={cat}
-         onClick={() => setActiveCategory(cat)}
+         key={cat.id}
+         onClick={() => setActiveCategory(cat.id)}
          className={cn(
           "px-5 sm:px-6 py-2 sm:py-2.5 rounded-[1rem] text-[15px] sm:text-[16px] font-medium border-[1.5px] transition-all duration-200 whitespace-nowrap",
-          activeCategory === cat
+          activeCategory === cat.id
            ? "bg-white border-[#CF8F73] text-[#CF8F73]"
            : "bg-white text-[#5B5047]/70 border-[#D8CEC8]/60 hover:border-[#CF8F73]/50 hover:text-[#5B5047]"
          )}
         >
-         {cat}
+         {cat.label}
         </button>
        ))}
       </div>

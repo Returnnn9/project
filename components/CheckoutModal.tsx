@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { useUIStore, useCartStore, useUserStore, useStoreData, useRootStore } from "@/store/hooks"
 import { X, ChevronRight, ChevronDown, Truck, MapPin, ArrowLeft, User, Phone, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -65,7 +65,7 @@ export default function CheckoutModal() {
    return
   }
 
-  if (step === 2 && deliveryType === "delivery" && tempAddress.length >= 3) {
+  if (step === 2 && deliveryType === "delivery" && tempAddress.length >= 2) {
    if (searchTimeout.current) clearTimeout(searchTimeout.current)
    searchTimeout.current = setTimeout(() => {
     fetchSuggestions(tempAddress)
@@ -164,6 +164,24 @@ export default function CheckoutModal() {
   }
  }
 
+ // Stabilized callbacks for MapPicker
+ const onAddressSelect = useCallback((val: string) => {
+  skipNextFetch.current = true;
+  setTempAddress(val);
+ }, [skipNextFetch]);
+
+ const onAddressDetailsSelect = useCallback((details: any) => {
+  skipNextFetch.current = true;
+  const road = details.road || details.full.split(',')[0];
+  const house = details.house || '';
+  const displayAddr = house ? `${road}, ${house}` : road;
+  setTempAddress(displayAddr.replace(`${selectedCity}, `, '').replace('Москва, ', '').replace('Санкт-Петербург, ', ''));
+  setHouse(house);
+  if (details.coords) {
+   setSelectedCoords(details.coords);
+  }
+ }, [selectedCity, skipNextFetch]);
+
  if (!isCheckoutOpen) return null
 
  const LeftPanel = ({ icon, text }: { icon: React.ReactNode, text: React.ReactNode }) => (
@@ -226,7 +244,6 @@ export default function CheckoutModal() {
         exit={{ opacity: 0, scale: 0.98 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - Map */}
         <div className="w-full h-[280px] sm:h-full sm:w-[45%] p-4 pb-0 sm:p-6 sm:pb-6 shrink-0 sm:shrink">
          <div className="w-full h-full rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-inner relative">
           <MapPicker
@@ -252,7 +269,6 @@ export default function CheckoutModal() {
          </div>
 
          <div className="space-y-4">
-          {/* Delivery Option */}
           <button
            onClick={() => { setDeliveryType("delivery"); setStep(2) }}
            className="w-full h-[72px] px-6 rounded-[1.2rem] border border-gray-200 hover:border-smusl-terracotta bg-white transition-all flex items-center justify-between group"
@@ -263,7 +279,6 @@ export default function CheckoutModal() {
            </div>
           </button>
 
-          {/* Pickup Option */}
           <button
            onClick={() => { setDeliveryType("pickup"); setStep(2) }}
            className="w-full h-[72px] px-6 rounded-[1.2rem] border border-gray-200 hover:border-smusl-terracotta bg-white transition-all flex items-center justify-between group"
@@ -277,6 +292,8 @@ export default function CheckoutModal() {
         </div>
        </motion.div>
       )}
+
+      {/* ───── STEP 2: Delivery ───── */}
       {step === 2 && deliveryType === "delivery" && (
        <motion.div
         key="step2-delivery"
@@ -285,31 +302,19 @@ export default function CheckoutModal() {
         exit={{ opacity: 0, x: -20 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - MAP */}
         <div className="w-full h-[260px] shrink-0 sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6">
          <div className="w-full h-full rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-inner">
           <MapPicker
            hideSearch={true}
            initialAddress={tempAddress}
-           onAddressSelect={setTempAddress}
-           onAddressDetailsSelect={(details) => {
-            // Auto-fill address components from map pin drop
-            const road = details.road || details.full.split(',')[0];
-            // Remove city prefixes just in case map returns it in the road string if undefined
-            setTempAddress(road.replace(`${selectedCity}, `, '').replace('Москва, ', '').replace('Санкт-Петербург, ', ''));
-            if (details.house) {
-             setHouse(details.house.replace(/\D/g, '')); // only numbers
-            } else {
-             setHouse('');
-            }
-           }}
+           onAddressSelect={onAddressSelect}
+           onAddressDetailsSelect={onAddressDetailsSelect}
            onError={setMapError}
            externalCoords={selectedCoords}
           />
          </div>
         </div>
 
-        {/* Right Panel - Inputs */}
         <div className="flex-1 p-5 sm:p-10 flex flex-col overflow-y-auto no-scrollbar min-h-0">
          <div className="flex items-center gap-4 mb-6 sm:mb-8">
           <button
@@ -324,8 +329,6 @@ export default function CheckoutModal() {
          </div>
 
          <div className="space-y-3 flex-1">
-
-          {/* City field — dropdown style, same look as Улица */}
           <div className="relative">
            <div
             className="bg-[#F2F2F2] rounded-[1rem] px-5 py-4 cursor-pointer select-none"
@@ -355,7 +358,6 @@ export default function CheckoutModal() {
            )}
           </div>
 
-          {/* Address input */}
           <div className="relative">
            <div className="bg-[#F2F2F2] rounded-[1rem] px-5 py-3.5">
             <div className="flex justify-between items-center mb-0.5">
@@ -386,32 +388,30 @@ export default function CheckoutModal() {
             <motion.div
              initial={{ opacity: 0, y: 4 }}
              animate={{ opacity: 1, y: 0 }}
-             className="mt-2 bg-white rounded-[1.2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden max-h-[300px] overflow-y-auto no-scrollbar absolute w-full left-0 py-1 z-50"
+             className="mt-2 bg-white rounded-[1.2rem] shadow-[0_16px_48px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden max-h-[340px] overflow-y-auto no-scrollbar absolute w-full left-0 py-1.5 z-50"
             >
              {suggestions.map((s, idx) => {
-              const road = (s.address?.road || s.address?.pedestrian || s.address?.suburb || s.display_name.split(',')[0] || "").trim();
-              const houseNum = (s.address?.house_number || "").trim();
-              const title = houseNum ? `${road}, ${houseNum}` : road;
-              const city = (s.address?.city || s.address?.town || s.address?.village || s.address?.state || selectedCity || "").trim();
+              const title = (s.address as any)?.title || s.display_name;
+              const subtitle = (s.address as any)?.subtitle || selectedCity;
+              const road = (s.address as any)?.road || title;
+              const houseNum = (s.address as any)?.house_number || "";
 
               return (
                <button
                 key={idx}
                 onClick={() => {
                  skipNextFetch.current = true;
-                 setTempAddress(title);
-                 setHouse('');
-
-                 // Store coords to sync map
+                 setTempAddress(road);
+                 setHouse(houseNum);
                  if (s.lat && s.lon) {
                   setSelectedCoords([parseFloat(s.lat), parseFloat(s.lon)]);
                  }
                  setSuggestions([]);
                 }}
-                className="w-full text-left px-5 py-3.5 flex flex-col group hover:bg-[#F9F9F9] transition-colors border-b last:border-0 border-gray-50"
+                className="w-full text-left px-5 py-3.5 flex flex-col group hover:bg-[#F8F9FA] transition-colors"
                >
-                <span className="text-[15px] font-[700] text-[#333333] leading-snug">{title}</span>
-                <span className="text-[13px] font-[500] text-[#999999] mt-0.5">{city}</span>
+                <span className="text-[15px] font-[800] text-[#333333] leading-tight group-hover:text-smusl-terracotta transition-colors">{title}</span>
+                <span className="text-[12px] font-[600] text-[#999999] mt-1 uppercase tracking-wider">{subtitle}</span>
                </button>
               );
              })}
@@ -419,7 +419,6 @@ export default function CheckoutModal() {
            )}
           </div>
 
-          {/* Additional details: House, Entrance, Floor, Apt */}
           <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
            <div className="bg-[#F2F2F2] rounded-[1rem] px-2 sm:px-5 py-2.5 sm:py-3 flex flex-col justify-center overflow-hidden">
             <span className="block text-[7px] min-[375px]:text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-normal sm:tracking-[0.1em] mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">Дом</span>
@@ -463,7 +462,6 @@ export default function CheckoutModal() {
            </div>
           </div>
 
-          {/* Где я — geolocation button */}
           <button
            onClick={handleGeolocate}
            disabled={isLocating}
@@ -475,8 +473,6 @@ export default function CheckoutModal() {
            }
            {isLocating ? 'Определяем...' : 'Где я'}
           </button>
-
-
          </div>
 
          <button
@@ -499,13 +495,12 @@ export default function CheckoutModal() {
         exit={{ opacity: 0, x: -20 }}
         className="flex flex-col sm:flex-row h-full w-full"
        >
-        {/* Left Panel - Map */}
         <div className="w-full h-[260px] shrink-0 sm:h-full sm:w-[55%] p-4 pb-0 sm:p-6 sm:pb-6">
          <div className="w-full h-full rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-inner">
           <MapPicker
            hideSearch={true}
            initialAddress={selectedPickup ? `${selectedPickup.city}, ${selectedPickup.address}` : ""}
-           onAddressSelect={() => { }} // Read-only for pickup
+           onAddressSelect={() => { }}
            onError={setMapError}
            externalCoords={selectedPickup ? (selectedPickup.coords as [number, number]) : null}
           />
@@ -533,7 +528,6 @@ export default function CheckoutModal() {
           </button>
          </div>
 
-         {/* City field — dropdown style, same look as Улица */}
          <div className="relative mb-6">
           <div
            className="bg-[#F2F2F2] rounded-[1rem] px-5 py-4 cursor-pointer select-none"
@@ -594,8 +588,6 @@ export default function CheckoutModal() {
           ))}
          </div>
 
-
-
          <button
           onClick={handleNextFromPickup}
           disabled={!selectedPickup}
@@ -614,258 +606,187 @@ export default function CheckoutModal() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
-        className="flex flex-col sm:flex-row h-full w-full"
+        className="flex h-full w-full"
        >
         <LeftPanel
-         icon={<User className="w-14 h-14 text-[#CF8F73]" strokeWidth={1.2} />}
-         text={<>Оставьте контакты для<br />связи с вами</>}
+         icon={<User className="w-12 h-12 text-smusl-terracotta" />}
+         text="Ваши контактные данные для уточнения деталей заказа"
         />
-
-        <div className="flex-1 p-5 sm:p-8 md:p-10 flex flex-col">
-         <div className="flex items-start justify-between mb-6 sm:mb-10">
-          <div>
-           <button onClick={() => setStep(2)} className="sm:hidden flex items-center gap-1.5 text-[12px] font-bold text-[#6C5B52]/50 mb-2">
-            <ArrowLeft className="w-3.5 h-3.5" /> Назад
-           </button>
-           <h2 className="text-[20px] sm:text-[24px] font-[800] text-[#4A3F39] tracking-tight">
-            Ваши контакты
-           </h2>
+        <div className="flex-1 p-6 sm:p-12 flex flex-col justify-center">
+         <h2 className="text-[24px] sm:text-[28px] font-extrabold text-smusl-brown mb-8 tracking-tight">
+          Как к вам обращаться?
+         </h2>
+         <div className="space-y-4">
+          <div className="bg-[#F2F2F2] rounded-[1.2rem] px-6 py-4">
+           <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Имя</span>
+           <input
+            type="text"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            placeholder="Иван"
+            className="bg-transparent border-none outline-none text-[16px] font-extrabold text-smusl-brown placeholder:text-gray-300 w-full"
+           />
           </div>
-          <button onClick={handleClose} className="p-2 bg-[#FAF6F3] rounded-full text-[#6C5B52]/40 hover:text-[#4A3F39] transition-colors shrink-0">
-           <X className="w-5 h-5" />
-          </button>
+          <div className="bg-[#F2F2F2] rounded-[1.2rem] px-6 py-4">
+           <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Телефон</span>
+           <input
+            type="tel"
+            value={userPhone}
+            onChange={(e) => setUserPhone(e.target.value)}
+            placeholder="+7 (999) 000-00-00"
+            className="bg-transparent border-none outline-none text-[16px] font-extrabold text-smusl-brown placeholder:text-gray-300 w-full"
+           />
+          </div>
          </div>
-
-         <div className="flex flex-col gap-4 sm:gap-6 flex-1">
-          <div className="space-y-1.5">
-           <label className="text-[10px] sm:text-[11px] font-[800] text-[#6C5B52]/50 uppercase tracking-[0.1em] ml-2">Ваше имя</label>
-           <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#6C5B52]/30" />
-            <input
-             type="text"
-             value={userName}
-             onChange={(e) => setUserName(e.target.value)}
-             placeholder="Иван"
-             className="w-full bg-[#FAF6F3] border-2 border-[#4A3F39]/5 rounded-[1.2rem] pl-11 sm:pl-14 pr-4 py-4 sm:py-5
-																			text-[15px] sm:text-[16px] font-[800] text-[#4A3F39] placeholder:text-[#6C5B52]/20
-																			focus:outline-none focus:border-[#CF8F73] focus:bg-white transition-all shadow-sm"
-            />
-           </div>
-          </div>
-
-          <div className="space-y-1.5">
-           <label className="text-[10px] sm:text-[11px] font-[800] text-[#6C5B52]/50 uppercase tracking-[0.1em] ml-2">Телефон</label>
-           <div className="relative">
-            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#6C5B52]/30" />
-            <input
-             type="tel"
-             value={userPhone}
-             onChange={(e) => setUserPhone(e.target.value)}
-             placeholder="+7 (999) 000-00-00"
-             className="w-full bg-[#FAF6F3] border-2 border-[#4A3F39]/5 rounded-[1.2rem] pl-11 sm:pl-14 pr-4 py-4 sm:py-5
-																			text-[15px] sm:text-[16px] font-[800] text-[#4A3F39] placeholder:text-[#6C5B52]/20
-																			focus:outline-none focus:border-[#CF8F73] focus:bg-white transition-all shadow-sm"
-            />
-           </div>
-          </div>
-
-          <div className="flex-1" />
-
-          <button
-           onClick={() => setStep(4)}
-           disabled={!userName || !userPhone}
-           className="w-full bg-[#CF8F73] disabled:bg-[#CF8F73]/40 disabled:cursor-not-allowed
-																rounded-[1.2rem] h-[60px] sm:h-[72px] text-white font-[800] text-[16px] sm:text-[18px]
-																hover:bg-[#b87a60] transition-all shadow-xl shadow-[#CF8F73]/20 active:scale-[0.98] mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0"
-          >
-           Далее к оплате
-          </button>
-         </div>
+         <button
+          onClick={() => setStep(4)}
+          disabled={!userName || !userPhone}
+          className="mt-10 w-full h-[64px] bg-smusl-terracotta disabled:bg-smusl-terracotta/40 text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-smusl-terracotta/20"
+         >
+          Далее
+         </button>
         </div>
        </motion.div>
       )}
 
-      {/* ───── STEP 4: Payment Selection ───── */}
+      {/* ───── STEP 4: Payment ───── */}
       {step === 4 && (
        <motion.div
-        key="step4-payment"
+        key="step4-pay"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
-        className="flex flex-col sm:flex-row h-full w-full"
+        className="flex h-full w-full"
        >
         <LeftPanel
-         icon={
-          <div className="relative">
-           <div className="absolute -top-4 -right-4 w-8 h-8 bg-[#CF8F73] rounded-full flex items-center justify-center text-white text-[14px] font-black">!</div>
-           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CF8F73" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
-           </svg>
-          </div>
-         }
-         text={<>Выберите удобный<br />способ оплаты</>}
+         icon={<CheckCircle2 className="w-12 h-12 text-smusl-terracotta" />}
+         text="Выберите удобный способ оплаты"
         />
+        <div className="flex-1 p-6 sm:p-12 flex flex-col justify-center">
+         <h2 className="text-[24px] sm:text-[28px] font-extrabold text-smusl-brown mb-8 tracking-tight">
+          Оплата заказа
+         </h2>
 
-        <div className="flex-1 p-5 sm:p-8 md:p-10 flex flex-col overflow-y-auto no-scrollbar">
-         <div className="flex items-start justify-between mb-8">
-          <div>
-           <button onClick={() => setStep(3)} className="sm:hidden flex items-center gap-1.5 text-[12px] font-bold text-[#6C5B52]/50 mb-2">
-            <ArrowLeft className="w-3.5 h-3.5" /> Назад
-           </button>
-           <h2 className="text-[24px] font-[800] text-[#4A3F39] tracking-tight">Способ оплаты</h2>
-          </div>
-          <button onClick={handleClose} className="p-2 bg-[#FAF6F3] rounded-full text-[#6C5B52]/40 hover:text-[#4A3F39] transition-colors shrink-0">
-           <X className="w-5 h-5" />
-          </button>
-         </div>
-
-         <div className="flex flex-col gap-4 flex-1">
-          {/* SBP Option */}
+         <div className="space-y-4">
           <button
            onClick={() => setPaymentMethod('sbp')}
            className={cn(
-            "w-full p-6 rounded-[1.5rem] border-2 transition-all flex items-center gap-5 group",
-            paymentMethod === 'sbp' ? "border-[#CF8F73] bg-[#CF8F73]/5" : "border-[#4A3F39]/5 bg-[#FAF6F3] hover:border-[#CF8F73]/30"
+            "w-full p-6 rounded-[1.5rem] border-2 transition-all flex items-center justify-between group",
+            paymentMethod === 'sbp' ? "border-smusl-terracotta bg-smusl-terracotta/5" : "border-gray-100 hover:border-gray-200"
            )}
           >
-           <div className={cn(
-            "w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm transition-colors",
-            paymentMethod === 'sbp' ? "bg-[#CF8F73] text-white" : "bg-white text-[#CF8F73]"
-           )}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-             <polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /><line x1="4" y1="4" x2="9" y2="9" />
-            </svg>
-           </div>
-           <div className="text-left flex-1">
-            <span className="block text-[18px] font-[800] text-[#4A3F39]">СБП</span>
-            <span className="block text-[13px] font-medium text-[#6C5B52]/60">Система быстрых платежей</span>
+           <div className="flex items-center gap-4">
+            <div className="w-12 h-8 bg-[#1D1B1A] rounded flex items-center justify-center text-white font-bold text-[10px]">SBP</div>
+            <span className="font-extrabold text-smusl-brown">Оплата через СБП</span>
            </div>
            <div className={cn(
-            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-            paymentMethod === 'sbp' ? "border-[#CF8F73] bg-[#CF8F73]" : "border-[#D8CEC8]"
+            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors px-0.5",
+            paymentMethod === 'sbp' ? "border-smusl-terracotta" : "border-gray-200"
            )}>
-            {paymentMethod === 'sbp' && <div className="w-2 h-2 rounded-full bg-white" />}
+            <div className={cn(
+             "w-2.5 h-2.5 rounded-full bg-smusl-terracotta transition-all",
+             paymentMethod === 'sbp' ? "scale-100 opacity-100" : "scale-0 opacity-0"
+            )} />
            </div>
           </button>
 
-          {/* Card Option */}
           <button
            onClick={() => setPaymentMethod('card')}
            className={cn(
-            "w-full p-6 rounded-[1.5rem] border-2 transition-all flex items-center gap-5 group",
-            paymentMethod === 'card' ? "border-[#CF8F73] bg-[#CF8F73]/5" : "border-[#4A3F39]/5 bg-[#FAF6F3] hover:border-[#CF8F73]/30"
+            "w-full p-6 rounded-[1.5rem] border-2 transition-all flex items-center justify-between group",
+            paymentMethod === 'card' ? "border-smusl-terracotta bg-smusl-terracotta/5" : "border-gray-100 hover:border-gray-200"
            )}
           >
-           <div className={cn(
-            "w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm transition-colors",
-            paymentMethod === 'card' ? "bg-[#CF8F73] text-white" : "bg-white text-[#CF8F73]"
-           )}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-             <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
-            </svg>
-           </div>
-           <div className="text-left flex-1">
-            <span className="block text-[18px] font-[800] text-[#4A3F39]">Картой</span>
-            <span className="block text-[13px] font-medium text-[#6C5B52]/60">Перевод по номеру карты</span>
+           <div className="flex items-center gap-4">
+            <div className="w-12 h-8 bg-[#1D1B1A] rounded flex items-center justify-center text-white font-bold text-[10px]">CARD</div>
+            <span className="font-extrabold text-smusl-brown">Банковской картой</span>
            </div>
            <div className={cn(
-            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-            paymentMethod === 'card' ? "border-[#CF8F73] bg-[#CF8F73]" : "border-[#D8CEC8]"
+            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors px-0.5",
+            paymentMethod === 'card' ? "border-smusl-terracotta" : "border-gray-200"
            )}>
-            {paymentMethod === 'card' && <div className="w-2 h-2 rounded-full bg-white" />}
+            <div className={cn(
+             "w-2.5 h-2.5 rounded-full bg-smusl-terracotta transition-all",
+             paymentMethod === 'card' ? "scale-100 opacity-100" : "scale-0 opacity-0"
+            )} />
            </div>
-          </button>
-
-          {paymentMethod === 'card' && (
-           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mt-2 p-5 bg-white border border-[#4A3F39]/10 rounded-[1.2rem] shadow-sm flex flex-col gap-4"
-           >
-            <div>
-             <label className="text-[10px] font-bold text-[#6C5B52]/50 uppercase block mb-1.5 ml-1">Номер карты</label>
-             <div className="relative">
-              <input
-               type="text"
-               value={cardNumber}
-               onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-               placeholder="0000 0000 0000 0000"
-               className="w-full bg-[#FAF6F3] border-2 border-[#4A3F39]/5 rounded-[0.8rem] px-4 py-3
-																			text-[16px] font-[800] text-[#4A3F39] placeholder:text-[#6C5B52]/20
-																			focus:outline-none focus:border-[#CF8F73] transition-all"
-              />
-             </div>
-            </div>
-
-            <div className="flex gap-4">
-             <div className="flex-1">
-              <label className="text-[10px] font-bold text-[#6C5B52]/50 uppercase block mb-1.5 ml-1">Срок действия</label>
-              <input
-               type="text"
-               value={cardExpiry}
-               onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
-               placeholder="ММ/ГГ"
-               className="w-full bg-[#FAF6F3] border-2 border-[#4A3F39]/5 rounded-[0.8rem] px-4 py-3
-																				text-[16px] font-[800] text-[#4A3F39] placeholder:text-[#6C5B52]/20
-																				focus:outline-none focus:border-[#CF8F73] transition-all"
-              />
-             </div>
-             <div className="flex-1">
-              <label className="text-[10px] font-bold text-[#6C5B52]/50 uppercase block mb-1.5 ml-1">CVC / CVV</label>
-              <input
-               type="password"
-               value={cardCVC}
-               onChange={(e) => setCardCVC(e.target.value.replace(/\D/g, '').substring(0, 3))}
-               placeholder="•••"
-               className="w-full bg-[#FAF6F3] border-2 border-[#4A3F39]/5 rounded-[0.8rem] px-4 py-3
-																				text-[16px] font-[800] text-[#4A3F39] placeholder:text-[#6C5B52]/20
-																				focus:outline-none focus:border-[#CF8F73] transition-all"
-              />
-             </div>
-            </div>
-           </motion.div>
-          )}
-
-          <div className="flex-1 min-h-[20px]" />
-
-          <button
-           onClick={handleFinalCheckout}
-           disabled={!paymentMethod || (paymentMethod === 'card' && !isCardValid)}
-           className="w-full bg-[#CF8F73] disabled:bg-[#CF8F73]/40 disabled:cursor-not-allowed
-																rounded-[1.2rem] h-[60px] sm:h-[72px] text-white font-[800] text-[16px] sm:text-[18px]
-																hover:bg-[#b87a60] transition-all shadow-xl shadow-[#CF8F73]/20 active:scale-[0.98] mt-auto mb-[env(safe-area-inset-bottom)] sm:mb-0"
-          >
-           Оформить заказ
           </button>
          </div>
+
+         {paymentMethod === 'card' && (
+          <motion.div
+           initial={{ opacity: 0, y: 10 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="mt-6 space-y-3"
+          >
+           <div className="bg-[#F2F2F2] rounded-[1.2rem] px-5 py-3">
+            <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Номер карты</span>
+            <input
+             type="text"
+             value={cardNumber}
+             onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+             placeholder="0000 0000 0000 0000"
+             className="bg-transparent border-none outline-none text-[15px] font-extrabold text-smusl-brown w-full"
+            />
+           </div>
+           <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[#F2F2F2] rounded-[1.2rem] px-5 py-3">
+             <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Срок</span>
+             <input
+              type="text"
+              value={cardExpiry}
+              onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+              placeholder="ММ/ГГ"
+              className="bg-transparent border-none outline-none text-[15px] font-extrabold text-smusl-brown w-full"
+             />
+            </div>
+            <div className="bg-[#F2F2F2] rounded-[1.2rem] px-5 py-3">
+             <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">CVC</span>
+             <input
+              type="password"
+              value={cardCVC}
+              onChange={(e) => setCardCVC(e.target.value.substring(0, 3))}
+              placeholder="•••"
+              className="bg-transparent border-none outline-none text-[15px] font-extrabold text-smusl-brown w-full"
+             />
+            </div>
+           </div>
+          </motion.div>
+         )}
+
+         <button
+          onClick={handleFinalCheckout}
+          disabled={!paymentMethod || (paymentMethod === 'card' && !isCardValid)}
+          className="mt-8 w-full h-[64px] bg-smusl-terracotta disabled:bg-smusl-terracotta/40 text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-smusl-terracotta/20"
+         >
+          Оплатить
+         </button>
         </div>
        </motion.div>
       )}
 
-      {/* ───── STEP 5: Success! ───── */}
+      {/* ───── STEP 5: Success ───── */}
       {step === 5 && (
        <motion.div
         key="step5-success"
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="flex flex-col items-center justify-center p-12 w-full h-full"
+        className="flex flex-col items-center justify-center h-full w-full p-12 text-center"
        >
-        <div className="w-24 h-24 rounded-[2.5rem] bg-green-50 flex items-center justify-center mb-8 shadow-inner">
-         <CheckCircle2 className="w-12 h-12 text-green-500" strokeWidth={1.5} />
+        <div className="w-24 h-24 rounded-full bg-green-50 flex items-center justify-center mb-8">
+         <CheckCircle2 className="w-12 h-12 text-green-500" />
         </div>
-        <h2 className="text-[32px] font-[800] text-[#4A3F39] mb-4 text-center tracking-tight">
+        <h2 className="text-[28px] sm:text-[32px] font-extrabold text-smusl-brown mb-4 tracking-tight">
          Заказ принят!
         </h2>
-        <p className="text-[#6C5B52] text-[18px] text-center font-medium leading-relaxed mb-10 max-w-[340px]">
-         Спасибо за ваш выбор. <br />
-         Мы свяжемся с вами в ближайшее время для подтверждения.
+        <p className="text-smusl-brown/60 text-[16px] max-w-[320px] leading-relaxed mb-10">
+         Спасибо за покупку. Мы уже начали готовить ваш заказ и скоро свяжемся с вами.
         </p>
         <button
          onClick={handleClose}
-         className="px-14 py-5 bg-[#CF8F73] text-white rounded-[1.2rem] font-[800] text-[17px] hover:bg-[#b87a60] transition-all shadow-xl shadow-[#CF8F73]/20"
+         className="w-full max-w-[280px] h-[64px] bg-smusl-brown text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#2D231F] transition-all active:scale-95"
         >
-         Вернуться к покупкам
+         Отлично
         </button>
        </motion.div>
       )}

@@ -2,90 +2,108 @@
 
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 
 export default function NotFound() {
  return (
-  <div className="min-h-screen bg-[#FDF8ED] flex flex-col items-center justify-center px-6 py-12 font-manrope">
-   <div className="max-w-[1200px] w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+  <div className="min-h-screen bg-[#FDF8ED] flex flex-col items-center justify-center p-6 text-center overflow-hidden selection:bg-smusl-terracotta/20 relative">
+
+   {/* Background Abstract Geometric Shapes */}
+   <div className="absolute inset-0 pointer-events-none -z-10">
+    <motion.div
+     animate={{
+      rotate: 360,
+      scale: [1, 1.1, 1]
+     }}
+     transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] border-[1px] border-smusl-brown/[0.03] rounded-[15vw]"
+    />
+    <motion.div
+     animate={{
+      rotate: -360,
+      scale: [1, 1.2, 1]
+     }}
+     transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] border-[1px] border-smusl-terracotta/[0.05] rounded-full"
+    />
+   </div>
+
+   <div className="relative z-10 flex flex-col items-center max-w-[1000px] w-full mt-[-10vh]">
+
+    {/* Massive Error Code */}
+    <motion.div
+     initial={{ opacity: 0, scale: 0.9 }}
+     animate={{ opacity: 1, scale: 1 }}
+     transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+     className="relative mb-8"
+    >
+     <div className="text-[180px] sm:text-[240px] lg:text-[320px] font-black leading-none text-smusl-brown tracking-tighter opacity-[0.05]">
+      404
+     </div>
+     <div className="absolute inset-0 flex items-center justify-center">
+      <motion.div
+       initial={{ rotate: -5, opacity: 0 }}
+       animate={{ rotate: 0, opacity: 1 }}
+       transition={{ delay: 0.5, duration: 1 }}
+       className="text-smusl-terracotta italic font-script text-[80px] sm:text-[120px] lg:text-[160px] drop-shadow-2xl translate-y-4"
+      >
+       крошка
+      </motion.div>
+     </div>
+    </motion.div>
 
     {/* Text Section */}
     <motion.div
-     initial={{ opacity: 0, x: -30 }}
-     animate={{ opacity: 1, x: 0 }}
-     transition={{ duration: 0.8, ease: "easeOut" }}
-     className="order-2 lg:order-1 text-center lg:text-left"
+     initial={{ opacity: 0, y: 30 }}
+     animate={{ opacity: 1, y: 0 }}
+     transition={{ delay: 0.8, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+     className="flex flex-col items-center"
     >
-     <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.2, duration: 0.5 }}
-      className="inline-block px-4 py-1.5 rounded-full bg-smusl-terracotta/10 text-smusl-terracotta text-sm font-bold uppercase tracking-widest mb-6"
-     >
-      Ошибка 404
-     </motion.div>
+     <div className="inline-block px-5 py-2 rounded-full border border-smusl-brown/10 text-smusl-brown/40 text-[12px] font-bold uppercase tracking-[0.3em] mb-8">
+      lost in thought
+     </div>
 
-     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#4A403A] mb-6 leading-tight">
-      Упс! Кажется, эта <span className="text-smusl-terracotta italic font-great-vibes text-5xl lg:text-7xl">крошка</span> завела вас не туда.
+     <h1 className="text-[36px] sm:text-[48px] lg:text-[62px] font-black text-smusl-brown leading-tight tracking-tight mb-8 max-w-[800px]">
+      Кажется, поиск завел вас <br className="hidden sm:block" /> в тупик, <span className="text-smusl-terracotta underline decoration-smusl-terracotta/20 underline-offset-8">но смысл есть</span> везде.
      </h1>
 
-     <p className="text-lg text-[#4A403A]/60 mb-10 max-w-[500px] mx-auto lg:mx-0">
-      Страница, которую вы ищете, была съедена или никогда не существовала. Но не расстраивайтесь — у нас много других свежих новинок!
+     <p className="text-[17px] sm:text-[19px] text-smusl-gray font-medium mb-12 max-w-[540px] leading-relaxed">
+      Мы не нашли того, за чем вы пришли. Возможно, стоит начать заново?
+      Наши свежие новости и новинки ждут вас в магазине.
      </p>
 
-     <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-      <Link
-       href="/"
-       className="flex items-center gap-2 px-8 py-4 bg-[#4A403A] text-white rounded-2xl font-bold hover:bg-[#3D3530] transition-all transform active:scale-95 shadow-xl shadow-[#4A403A]/10 w-full sm:w-auto text-center justify-center"
-      >
-       <ArrowLeft className="w-5 h-5" />
-       <span>На главную</span>
-      </Link>
+     {/* Magnetic Buttons (via framer-motion) */}
+     <div className="flex flex-col sm:flex-row items-center gap-6">
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+       <Link
+        href="/"
+        className="flex items-center justify-center gap-3 px-12 py-6 bg-smusl-brown text-white rounded-[24px] font-black text-[18px] transition-all duration-300 hover:shadow-[0_20px_40px_rgba(74,66,61,0.2)]"
+       >
+        <ArrowLeft className="w-5 h-5" />
+        <span>На главную</span>
+       </Link>
+      </motion.div>
 
-      <Link
-       href="/market"
-       className="flex items-center gap-2 px-8 py-4 bg-white border border-[#E8E8E8] text-[#4A403A] rounded-2xl font-bold hover:border-smusl-terracotta hover:text-smusl-terracotta transition-all transform active:scale-95 w-full sm:w-auto text-center justify-center shadow-sm"
-      >
-       <ShoppingBag className="w-5 h-5" />
-       <span>В магазин</span>
-      </Link>
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+       <Link
+        href="/market"
+        className="flex items-center justify-center gap-3 px-12 py-6 bg-white text-smusl-brown rounded-[24px] font-black text-[18px] border-2 border-smusl-light-gray transition-all duration-300 hover:border-smusl-terracotta hover:text-smusl-terracotta"
+       >
+        <ShoppingBag className="w-5 h-5" />
+        <span>В магазин</span>
+       </Link>
+      </motion.div>
      </div>
     </motion.div>
-
-    {/* Image Section */}
-    <motion.div
-     initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
-     animate={{ opacity: 1, scale: 1, rotate: 0 }}
-     transition={{ duration: 1, ease: "easeOut" }}
-     className="order-1 lg:order-2 flex justify-center"
-    >
-     <div className="relative w-full max-w-[500px] aspect-square rounded-[3rem] overflow-hidden shadow-2xl shadow-smusl-terracotta/5 border border-white">
-      <Image
-       src="/photo/404-croissant.png"
-       alt="404 Croissant"
-       fill
-       className="object-cover"
-      />
-      {/* Soft Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#4A403A]/10 to-transparent pointer-events-none" />
-     </div>
-    </motion.div>
-
    </div>
 
-   {/* Decorative Elements */}
-   <motion.div
-    animate={{
-     y: [0, -10, 0],
-     rotate: [0, 5, 0]
-    }}
-    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-    className="fixed bottom-10 right-10 opacity-10 pointer-events-none hidden lg:block"
-   >
-    <Image src="/photo/logo.png" alt="" width={128} height={32} className="w-32 h-auto grayscale" />
-   </motion.div>
+   {/* Decorative Rhythmic Typography */}
+   <div className="fixed bottom-12 left-0 right-0 pointer-events-none px-12 hidden lg:flex justify-between items-end opacity-[0.05]">
+    <div className="text-[120px] font-black leading-none">СМЫСЛ</div>
+    <div className="text-[120px] font-black leading-none">ЕСТЬ</div>
+   </div>
+
   </div>
  );
 }

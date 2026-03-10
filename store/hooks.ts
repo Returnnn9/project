@@ -37,3 +37,8 @@ export const useUIStore = () => {
  const { uiStore } = useRootStore();
  return uiStore;
 };
+
+export const useProductStore = () => {
+ const { productStore } = useRootStore();
+ return productStore;
+};

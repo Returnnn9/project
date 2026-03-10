@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Search, MapPin, Navigation, Loader2, X } from "lucide-react";
+import { Search, MapPin, Loader2, X, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface AddressDetails {
@@ -9,6 +9,8 @@ export interface AddressDetails {
  road?: string;
  house?: string;
  city?: string;
+ apartment?: string;
+ coords?: [number, number];
 }
 
 interface MapPickerProps {
@@ -27,596 +29,370 @@ interface Suggestion {
  lon: string;
  address?: {
   road?: string;
-  pedestrian?: string;
   house_number?: string;
   city?: string;
-  town?: string;
-  suburb?: string;
-  state?: string;
+  title?: string;
+  subtitle?: string;
  };
 }
 
 declare global {
  interface Window {
-  ymaps: any;
+  mapgl: any;
  }
 }
 
-export default function MapPicker({ initialAddress, onAddressSelect, onAddressDetailsSelect, onError, className, hideSearch, externalCoords }: MapPickerProps) {
- const API_KEY = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || "";
+export default function MapPicker({
+ initialAddress,
+ onAddressSelect,
+ onAddressDetailsSelect,
+ onError,
+ className,
+ hideSearch,
+ externalCoords,
+}: MapPickerProps) {
+ const API_KEY = process.env.NEXT_PUBLIC_2GIS_API_KEY || "";
 
  const [isLoaded, setIsLoaded] = useState(false);
  const [error, setError] = useState<string | null>(null);
- const [useYandex, setUseYandex] = useState(false);
 
  const mapRef = useRef<HTMLDivElement>(null);
  const mapInstance = useRef<any>(null);
- const markerInstance = useRef<any>(null);
+ const lastReportedCoords = useRef<[number, number] | null>(null);
 
  const [searchQuery, setSearchQuery] = useState(initialAddress || "");
  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
  const [isLocating, setIsLocating] = useState(false);
- const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+ const [isMoving, setIsMoving] = useState(false);
  const [showSuggestions, setShowSuggestions] = useState(false);
+
+ const isProgrammatic = useRef(false);
  const inputRef = useRef<HTMLInputElement>(null);
  const suggestRef = useRef<HTMLDivElement>(null);
  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+ // Sync callbacks to refs to prevent map re-initialization on parent render
+ const onAddressSelectRef = useRef(onAddressSelect);
+ const onAddressDetailsSelectRef = useRef(onAddressDetailsSelect);
+
+ useEffect(() => {
+  onAddressSelectRef.current = onAddressSelect;
+  onAddressDetailsSelectRef.current = onAddressDetailsSelect;
+ }, [onAddressSelect, onAddressDetailsSelect]);
 
  // Sync error with parent
  useEffect(() => {
   if (onError) onError(error);
  }, [error, onError]);
 
- // Close suggestions on outside click
- useEffect(() => {
-  const handleClick = (e: MouseEvent) => {
-   if (
-    suggestRef.current && !suggestRef.current.contains(e.target as Node) &&
-    inputRef.current && !inputRef.current.contains(e.target as Node)
-   ) {
-    setShowSuggestions(false);
-   }
-  };
-  document.addEventListener("mousedown", handleClick);
-  return () => document.removeEventListener("mousedown", handleClick);
+ // Handle address selections using refs
+ const handleAddressSelect = useCallback((details: AddressDetails) => {
+  const fullAddr = details.full;
+  setSearchQuery(fullAddr);
+  if (onAddressSelectRef.current) onAddressSelectRef.current(fullAddr);
+  if (onAddressDetailsSelectRef.current) onAddressDetailsSelectRef.current(details);
  }, []);
 
- // 1. Try to load Yandex Maps Script
- useEffect(() => {
-  if (!API_KEY) {
-   setError(null); // No error shown – we'll use Nominatim
-   setIsLoaded(true);
-   setUseYandex(false);
-   return;
-  }
+ // Reverse geocoding via 2GIS backend
+ const reverseGeocodeRef = useRef(async (coords: [number, number]) => {
+  try {
+   const [lat, lon] = coords;
+   const res = await fetch(`/api/address/reverse?lat=${lat}&lon=${lon}`);
+   const data = await res.json();
 
-  const scriptId = "yandex-maps-script";
-
-  if (document.getElementById(scriptId)) {
-   if (window.ymaps) {
-    window.ymaps.ready(() => {
-     setIsLoaded(true);
-     setUseYandex(true);
+   if (data && !data.error) {
+    lastReportedCoords.current = coords;
+    handleAddressSelect({
+     full: data.full || `${data.road}, ${data.house}`,
+     road: data.road || "",
+     house: data.house || "",
+     city: data.city || "",
+     coords: coords,
     });
    }
-   return;
+  } catch (e) {
+   console.error("2GIS Reverse Geocode error:", e);
+  }
+ });
+
+ const updateMapLocationRef = useRef((coords: [number, number], doReverse = true) => {
+  if (!mapInstance.current) return;
+
+  const center = [coords[1], coords[0]];
+
+  if (!doReverse) {
+   isProgrammatic.current = true;
   }
 
+  mapInstance.current.setCenter(center);
+
+  if (doReverse) {
+   reverseGeocodeRef.current(coords);
+  }
+
+  if (!doReverse) {
+   setTimeout(() => { isProgrammatic.current = false }, 500);
+  }
+ });
+
+ const geocodeAddressRef = useRef(async (address: string) => {
+  if (!address?.trim()) return;
+  try {
+   const params = new URLSearchParams({ q: address });
+   const res = await fetch(`/api/address/search?${params}`);
+   const data = await res.json();
+   if (data && data.length > 0 && data[0].lat && data[0].lon) {
+    updateMapLocationRef.current([parseFloat(data[0].lat), parseFloat(data[0].lon)], false);
+   }
+  } catch (e) {
+   console.error("2GIS Geocode error:", e);
+  }
+ });
+
+ // --- Map Initialization logic ---
+ useEffect(() => {
+  if (document.getElementById("2gis-maps-script")) {
+   if (window.mapgl) setIsLoaded(true);
+   return;
+  }
   const script = document.createElement("script");
-  script.id = scriptId;
-  script.src = `https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=${API_KEY}&load=package.full`;
+  script.id = "2gis-maps-script";
+  script.src = "https://mapgl.2gis.com/api/js/v1";
   script.async = true;
-  const timeout = setTimeout(() => {
-   // If Yandex didn't load in 5s – fallback to Nominatim only
-   if (!window.ymaps) {
-    setIsLoaded(true);
-    setUseYandex(false);
-   }
-  }, 5000);
-  script.onload = () => {
-   clearTimeout(timeout);
-   if (window.ymaps) {
-    window.ymaps.ready(() => {
-     setIsLoaded(true);
-     setUseYandex(true);
-    });
-   }
-  };
-  script.onerror = () => {
-   clearTimeout(timeout);
-   setIsLoaded(true);
-   setUseYandex(false);
-  };
+  script.onload = () => setIsLoaded(true);
+  script.onerror = () => setError("Failed to load 2GIS Maps");
   document.head.appendChild(script);
-  return () => clearTimeout(timeout);
- }, [API_KEY]);
+ }, []);
 
- // 2. Initialize Yandex Map (only if useYandex)
  useEffect(() => {
-  if (!useYandex || !isLoaded || !mapRef.current || mapInstance.current || !window.ymaps) return;
+  if (!isLoaded || !mapRef.current || mapInstance.current || !window.mapgl) return;
 
   try {
-   window.ymaps.ready(() => {
-    const defaultCenter = [55.7558, 37.6173];
+   const initialCoords: [number, number] = externalCoords || [55.7558, 37.6173];
+   const center = [initialCoords[1], initialCoords[0]]; // Lon, Lat
 
-    const map = new window.ymaps.Map(mapRef.current, {
-     center: defaultCenter,
-     zoom: 13,
-     controls: [],
-    }, {
-     suppressMapOpenBlock: true,
-     yandexMapDisablePoiInteractivity: true // Disable POI to keep users in-app
-    });
+   const map = new window.mapgl.Map(mapRef.current, {
+    center: center,
+    zoom: 16,
+    key: API_KEY,
+    zoomControl: false, // Disabling native zoom controls as per request
+   });
 
-    const marker = new window.ymaps.Placemark(defaultCenter, {}, {
-     preset: "islands#redDotIconWithCaption",
-     draggable: true,
-    });
+   mapInstance.current = map;
 
-    map.geoObjects.add(marker);
+   map.on('move', () => {
+    setIsMoving(true);
+   });
 
-    marker.events.add("dragend", () => {
-     const coords = marker.geometry.getCoordinates();
-     reverseGeocodeYandex(coords);
-    });
-
-    map.events.add("click", (e: any) => {
-     const coords = e.get("coords");
-     marker.geometry.setCoordinates(coords);
-     reverseGeocodeYandex(coords);
-    });
-
-    mapInstance.current = map;
-    markerInstance.current = marker;
-
-    if (!initialAddress) {
-     autoLocate();
-    } else {
-     geocodeYandex(initialAddress);
+   map.on('moveend', () => {
+    setIsMoving(false);
+    if (!isProgrammatic.current) {
+     const newCenter = map.getCenter();
+     reverseGeocodeRef.current([newCenter[1], newCenter[0]]);
     }
    });
-  } catch (err) {
-   console.error("Yandex Map init failed", err);
+
+   if (initialAddress && !externalCoords) {
+    geocodeAddressRef.current(initialAddress);
+   }
+
+  } catch (e) {
+   console.error("2GIS Map Init Error:", e);
+   setError("Failed to initialize map");
   }
 
+  // Cleanup should ONLY run on unmount, not on every prop change!
   return () => {
    if (mapInstance.current) {
     mapInstance.current.destroy();
     mapInstance.current = null;
    }
   };
+  // Empty dependency array ensures this effect runs exactly once when loaded
   // eslint-disable-next-line react-hooks/exhaustive-deps
- }, [useYandex, isLoaded]);
+ }, [isLoaded, API_KEY]);
+ // Removed other dependencies to fix map refreshing entirely.
 
- // Sync map when external coordinates change (e.g. address selected from suggestions)
+ // Sync with externalCoords - strictly controlled
  useEffect(() => {
-  if (externalCoords && mapInstance.current && markerInstance.current) {
-   updateMapLocation(externalCoords as unknown as number[], false);
+  if (externalCoords && mapInstance.current) {
+   // 1. Precise check: if same as last dragged center, do nothing.
+   if (lastReportedCoords.current &&
+    Math.abs(lastReportedCoords.current[0] - externalCoords[0]) < 0.00001 &&
+    Math.abs(lastReportedCoords.current[1] - externalCoords[1]) < 0.00001) {
+    return;
+   }
+
+   const currentCenter = mapInstance.current.getCenter(); // [lon, lat]
+   const deltaLat = Math.abs(currentCenter[1] - externalCoords[0]);
+   const deltaLon = Math.abs(currentCenter[0] - externalCoords[1]);
+
+   // 2. Threshold check (~10 meters now for extra safety)
+   if (deltaLat > 0.0001 || deltaLon > 0.0001) {
+    isProgrammatic.current = true;
+    const center = [externalCoords[1], externalCoords[0]];
+    mapInstance.current.setCenter(center);
+    setTimeout(() => { isProgrammatic.current = false }, 500);
+   }
   }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [externalCoords]);
 
- const autoLocate = () => {
-  setIsLocating(true);
-  if (useYandex && window.ymaps) {
-   window.ymaps.geolocation.get({ provider: "browser", mapStateAutoApply: true })
-    .then((result: any) => {
-     const coords = result.geoObjects.get(0).geometry.getCoordinates();
-     updateMapLocation(coords);
-     setIsLocating(false);
-    })
-    .catch(() => {
-     setIsLocating(false);
-     locateByBrowser();
-    });
-  } else {
-   locateByBrowser();
+ // Custom Zoom Controls
+ const handleZoomIn = () => {
+  if (mapInstance.current) {
+   mapInstance.current.setZoom(mapInstance.current.getZoom() + 1);
   }
  };
 
- const locateByBrowser = () => {
-  if (!navigator.geolocation) { setIsLocating(false); return; }
-  navigator.geolocation.getCurrentPosition(
-   async (pos) => {
-    const coords = [pos.coords.latitude, pos.coords.longitude];
-    if (useYandex) {
-     updateMapLocation(coords);
-    } else {
-     // Reverse geocode via Nominatim
-     try {
-      const res = await fetch(
-       `https://nominatim.openstreetmap.org/reverse?lat=${coords[0]}&lon=${coords[1]}&format=json&accept-language=ru`,
-       { headers: { "Accept-Language": "ru" } }
-      );
-      const data = await res.json();
-      if (data.display_name) {
-       const addr = formatNominatimAddress(data);
-       setSearchQuery(addr);
-       onAddressSelect(addr);
-       if (onAddressDetailsSelect) {
-        onAddressDetailsSelect({
-         full: addr,
-         road: data.address?.road || data.address?.pedestrian || data.address?.suburb,
-         house: data.address?.house_number,
-         city: data.address?.city || data.address?.town || data.address?.village
-        });
-       }
-      }
-     } catch { /* ignore */ }
-    }
-    setIsLocating(false);
-   },
-   () => setIsLocating(false),
-   { timeout: 8000 }
-  );
- };
-
- const updateMapLocation = (coords: number[], doReverseGeocode = true) => {
-  if (!mapInstance.current || !markerInstance.current) return;
-  mapInstance.current.setCenter(coords, 16, { duration: 300 });
-  markerInstance.current.geometry.setCoordinates(coords);
-  if (doReverseGeocode) reverseGeocodeYandex(coords);
- };
-
- const geocodeYandex = async (addr: string) => {
-  if (!window.ymaps?.geocode || !addr || !addr.trim()) return;
-  try {
-   const res = await window.ymaps.geocode(addr);
-   const obj = res.geoObjects.get(0);
-   if (obj) {
-    const coords = obj.geometry.getCoordinates();
-    if (mapInstance.current && markerInstance.current) {
-     mapInstance.current.setCenter(coords, 16);
-     markerInstance.current.geometry.setCoordinates(coords);
-    }
-   }
-  } catch (e) {
-   console.error("Geocode error for:", addr, e);
-   // Silent fail if it's just a generic API error or empty result
+ const handleZoomOut = () => {
+  if (mapInstance.current) {
+   mapInstance.current.setZoom(mapInstance.current.getZoom() - 1);
   }
  };
 
- const reverseGeocodeYandex = async (coords: number[]) => {
-  if (!window.ymaps?.geocode) return;
-  try {
-   const res = await window.ymaps.geocode(coords);
-   const obj = res.geoObjects.get(0);
-   if (obj) {
-    const address = obj.getAddressLine();
-    let road = obj.getThoroughfare();
-    if (!road && obj.getPremise) road = obj.getPremise();
-    const house = obj.getPremiseNumber();
-    const cityList = obj.getLocalities ? obj.getLocalities() : [];
-    const city = cityList && cityList.length > 0 ? cityList[0] : (obj.getAdministrativeAreas ? obj.getAdministrativeAreas()[0] : undefined);
-
-    setSearchQuery(address);
-    onAddressSelect(address);
-    if (onAddressDetailsSelect) {
-     onAddressDetailsSelect({ full: address, road, house, city });
-    }
-   }
-  } catch (e) {
-   console.error("Reverse geocode error", e);
-  }
- };
-
- const formatNominatimAddress = (data: any): string => {
-  const a = data.address || {};
-  const parts: string[] = [];
-  if (a.road) parts.push(a.road);
-  if (a.house_number) parts.push(a.house_number);
-  const city = a.city || a.town || a.village || a.suburb || "";
-  if (city && city !== a.road) parts.push(city);
-  return parts.length > 0 ? parts.join(", ") : data.display_name;
- };
-
- // 3. Nominatim fetch — Moscow only (bounded viewbox)
- const fetchNominatim = useCallback(async (query: string) => {
-  try {
-   // Moscow bounding box: lon 36.8–38.0, lat 55.4–56.0
-   const params = new URLSearchParams({
-    q: `${query}, Москва`,
-    format: "json",
-    addressdetails: "1",
-    limit: "10",
-    "accept-language": "ru",
-    countrycodes: "ru",
-    viewbox: "36.8,56.0,38.0,55.4",
-    bounded: "1",
-   });
-   const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?${params}`,
-    { headers: { "Accept-Language": "ru", "User-Agent": "smuslest-app/1.0" } }
-   );
-   const data: Suggestion[] = await res.json();
-
-   const uniqueSuggestions: Suggestion[] = [];
-   const seen = new Set<string>();
-
-   for (const item of data) {
-    const a = item.address || {};
-    const road = (a.road || a.pedestrian || "").trim();
-    const num = a.house_number ? `, д. ${a.house_number.trim()}` : "";
-    const main = (road + num) || item.display_name.split(',')[0].trim();
-    const sub = (a.suburb || a.city || "Москва").trim();
-
-    // Normalize string for checking identical values
-    const key = `${main}|${sub}`.toLowerCase().replace(/\s+/g, ' ').replace(/ё/g, 'е');
-
-    if (!seen.has(key) && main) {
-     seen.add(key);
-     uniqueSuggestions.push(item);
-    }
-   }
-
-   const finalSuggestions = uniqueSuggestions.slice(0, 6);
-   setSuggestions(finalSuggestions);
-   setShowSuggestions(finalSuggestions.length > 0);
-  } catch (e) {
-   console.error("Nominatim error", e);
-   setSuggestions([]);
-  }
- }, []);
-
- // 4. Suggestions always via Nominatim (ymaps.suggest needs paid API key)
- const fetchSuggestions = useCallback(async (query: string) => {
+ // Search Suggestions fetch
+ const fetchSuggestions = async (query: string) => {
   if (query.length < 2) {
    setSuggestions([]);
-   setShowSuggestions(false);
    return;
   }
-  setIsLoadingSuggestions(true);
-  await fetchNominatim(query);
-  setIsLoadingSuggestions(false);
- }, [fetchNominatim]);
+  try {
+   const params = new URLSearchParams({ q: query });
+   const res = await fetch(`/api/address/search?${params}`);
+   const data = await res.json();
+   setSuggestions(data);
+  } catch (e) {
+   console.error("Fetch suggestions error:", e);
+  }
+ };
 
- // Debounce input
  const handleInputChange = (val: string) => {
   setSearchQuery(val);
-  onAddressSelect(val);
-
+  setShowSuggestions(true);
   if (debounceRef.current) clearTimeout(debounceRef.current);
-  if (val.length < 2) {
-   setSuggestions([]);
-   setShowSuggestions(false);
-   return;
-  }
   debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
  };
 
- const selectSuggestion = (item: Suggestion & { _ymapsItem?: any }) => {
-  const address = formatNominatimAddress(item as any) || item.display_name;
-  setSearchQuery(address);
-  onAddressSelect(address);
-  setSuggestions([]);
-  setShowSuggestions(false);
-
-  // Move map marker to selected address
-  if (useYandex && window.ymaps) {
-   geocodeYandex(address);
-  } else if (item.lat && item.lon && mapInstance.current && markerInstance.current) {
-   const coords = [parseFloat(item.lat), parseFloat(item.lon)];
-   updateMapLocation(coords, false);
-  }
- };
-
- const clearSearch = () => {
-  setSearchQuery("");
-  setSuggestions([]);
-  setShowSuggestions(false);
-  onAddressSelect("");
-  inputRef.current?.focus();
- };
-
- const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === "Enter") {
-   if (suggestions.length > 0) {
-    selectSuggestion(suggestions[0] as any);
-   } else if (useYandex) {
-    geocodeYandex(searchQuery);
-   }
-   setSuggestions([]);
-   setShowSuggestions(false);
-  }
-  if (e.key === "Escape") {
-   setSuggestions([]);
-   setShowSuggestions(false);
-  }
- };
-
- const getDisplayName = (item: Suggestion): string => {
-  const a = item.address || {};
-  const road = (a.road || a.pedestrian || "").trim();
-  const num = a.house_number ? `, д. ${a.house_number.trim()}` : "";
-  return (road + num) || item.display_name.split(',')[0].trim();
- };
-
- const getSubtitle = (item: Suggestion): string => {
-  const a = item.address || {};
-  // Show district (suburb) as subtitle context
-  return (a.suburb || a.city || "Москва").trim();
- };
-
  return (
-  <div className={cn("flex flex-col gap-4 w-full h-full min-h-[400px] relative font-montserrat", className)}>
-   {/* Search Bar */}
+  <div className={cn("relative w-full h-full flex flex-col min-h-[400px]", className)}>
    {!hideSearch && (
-    <div className="relative z-[1001]">
-     <div className="relative flex items-center">
-      <Search className="absolute left-4 w-5 h-5 text-smusl-gray/40 pointer-events-none" />
+    <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-2">
+     <div className="relative group">
+      <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+       <Search className="w-5 h-5 text-gray-400 group-focus-within:text-[#9146ff] transition-colors" />
+      </div>
       <input
        ref={inputRef}
        type="text"
        value={searchQuery}
        onChange={(e) => handleInputChange(e.target.value)}
-       onKeyDown={handleKeyDown}
-       onFocus={() => {
-        if (suggestions.length > 0) setShowSuggestions(true);
-       }}
-       placeholder="Введите адрес доставки..."
-       autoComplete="off"
-       className="w-full h-14 pl-12 pr-28 bg-smusl-beige rounded-2xl border-2 border-transparent focus:border-smusl-terracotta focus:bg-white transition-all text-sm font-bold outline-none placeholder:font-normal placeholder:text-smusl-gray/50"
-      />
-      <div className="absolute right-3 flex items-center gap-1">
-       {isLoadingSuggestions && (
-        <Loader2 className="w-4 h-4 animate-spin text-smusl-terracotta/50" />
-       )}
-       {searchQuery && (
-        <button
-         type="button"
-         onClick={clearSearch}
-         className="p-2 hover:bg-smusl-clay rounded-xl transition-colors"
-        >
-         <X className="w-4 h-4 text-smusl-gray/50" />
-        </button>
-       )}
-       <button
-        type="button"
-        onClick={() => {
-         if (useYandex) geocodeYandex(searchQuery);
-         setSuggestions([]);
+       onFocus={() => setShowSuggestions(true)}
+       onKeyDown={(e) => {
+        if (e.key === "Enter") {
+         geocodeAddressRef.current(searchQuery);
          setShowSuggestions(false);
-        }}
-        className="p-2 hover:bg-smusl-clay rounded-xl text-smusl-terracotta transition-colors"
-        title="Найти"
-       >
-        <Search className="w-4 h-4" />
-       </button>
+        }
+       }}
+       placeholder="Поиск адреса..."
+       className="w-full bg-white/95 backdrop-blur-md border border-gray-200/50 rounded-2xl pl-12 pr-12 py-4 text-[15px] font-[500] text-gray-900 placeholder:text-gray-400 shadow-[0_8px_30px_rgb(0,0,0,0.06)] focus:outline-none focus:ring-2 focus:ring-[#9146ff]/20 focus:border-[#9146ff] transition-all"
+      />
+      {searchQuery && (
        <button
-        type="button"
-        onClick={autoLocate}
-        className="p-2 hover:bg-smusl-clay rounded-xl text-smusl-terracotta transition-colors"
-        title="Моё местоположение"
+        onClick={() => {
+         setSearchQuery("");
+         setSuggestions([]);
+        }}
+        className="absolute inset-y-0 right-4 flex items-center"
        >
-        {isLocating ? (
-         <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-         <Navigation className="w-4 h-4" />
-        )}
+        <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
        </button>
-      </div>
+      )}
      </div>
 
-     {/* Suggestions Dropdown */}
      {showSuggestions && suggestions.length > 0 && (
       <div
        ref={suggestRef}
-       className="absolute top-full left-0 right-0 mt-2 z-[1002] overflow-hidden"
+       className="bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
       >
-       <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.13)] border border-smusl-light-gray/20 overflow-hidden">
-        {/* Header */}
-        <div className="px-4 py-2.5 bg-smusl-beige/60 border-b border-smusl-light-gray/20 flex items-center gap-2">
-         <MapPin className="w-3.5 h-3.5 text-smusl-terracotta/70" />
-         <span className="text-[11px] font-bold text-smusl-brown/50 uppercase tracking-widest">Москва</span>
-        </div>
-        <div className="overflow-y-auto" style={{ maxHeight: 260 }}>
-         {suggestions.map((item, i) => {
-          const main = getDisplayName(item);
-          const sub = getSubtitle(item);
-          return (
-           <button
-            key={i}
-            type="button"
-            onMouseDown={(e) => {
-             e.preventDefault();
-             selectSuggestion(item as any);
-            }}
-            className="w-full px-4 py-3 text-left flex items-center gap-3 border-b border-smusl-light-gray/15 last:border-0 transition-all group hover:bg-gradient-to-r hover:from-smusl-beige hover:to-transparent"
-           >
-            <div className="w-9 h-9 rounded-[10px] bg-smusl-terracotta/8 flex items-center justify-center shrink-0 group-hover:bg-smusl-terracotta/15 transition-colors border border-smusl-terracotta/10">
-             <MapPin className="w-4 h-4 text-smusl-terracotta" />
-            </div>
-            <div className="flex flex-col min-w-0 flex-1">
-             <span className="text-[13px] font-[700] text-smusl-brown leading-tight truncate group-hover:text-smusl-terracotta transition-colors">
-              {main}
-             </span>
-             {sub && (
-              <span className="text-[11px] text-smusl-gray/60 leading-tight truncate mt-0.5 font-medium">
-               {sub}
-              </span>
-             )}
-            </div>
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-             <div className="w-6 h-6 rounded-lg bg-smusl-terracotta/10 flex items-center justify-center">
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-               <path d="M2 5h6M5.5 2.5L8 5l-2.5 2.5" stroke="#C17B5A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-             </div>
-            </div>
-           </button>
-          );
-         })}
-        </div>
-       </div>
+       {suggestions.map((s, idx) => (
+        <button
+         key={idx}
+         onClick={() => {
+          handleAddressSelect({
+           full: s.display_name,
+           road: s.address?.road || "",
+           house: s.address?.house_number || "",
+           city: s.address?.city || "",
+          });
+          setShowSuggestions(false);
+          if (s.lat && s.lon) {
+           updateMapLocationRef.current([parseFloat(s.lat), parseFloat(s.lon)], false);
+          }
+         }}
+         className="w-full flex items-start gap-3 px-4 py-3.5 hover:bg-gray-50 text-left border-b last:border-0 border-gray-100 transition-colors"
+        >
+         <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+         <div className="flex flex-col">
+          <span className="text-[14px] font-[600] text-gray-900 leading-tight">
+           {s.address?.title || s.display_name.split(',')[0]}
+          </span>
+          <span className="text-[12px] font-[400] text-gray-500 mt-0.5">
+           {s.address?.subtitle || s.display_name}
+          </span>
+         </div>
+        </button>
+       ))}
       </div>
      )}
     </div>
    )}
 
-   {/* Map Canvas (only when Yandex available) */}
-   {useYandex ? (
-    <div className="relative flex-1 rounded-[2.5rem] overflow-hidden border-2 border-smusl-light-gray/30 bg-[#f8f6f2] z-0">
-     {!isLoaded && (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-smusl-beige/80">
-       <Loader2 className="w-10 h-10 text-smusl-terracotta animate-spin" />
-       <span className="text-sm font-bold text-smusl-terracotta">Загрузка карты...</span>
-      </div>
-     )}
-     <div ref={mapRef} className="w-full h-full" />
-     {isLoaded && mapInstance.current && (
-      <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-20">
-       <button
-        onClick={() => mapInstance.current.setZoom(mapInstance.current.getZoom() + 1, { duration: 200 })}
-        className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center text-lg font-black text-smusl-brown hover:bg-smusl-beige transition-all active:scale-90"
-       >+</button>
-       <button
-        onClick={() => mapInstance.current.setZoom(mapInstance.current.getZoom() - 1, { duration: 200 })}
-        className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center text-lg font-black text-smusl-brown hover:bg-smusl-beige transition-all active:scale-90"
-       >-</button>
-      </div>
-     )}
+   <div className="flex-1 w-full bg-[#f3f0ea] rounded-2xl overflow-hidden relative border border-gray-100 shadow-inner">
+    {/* Map Mount Point */}
+    <div ref={mapRef} className="absolute inset-0 z-0" />
+
+    {/* Custom Map Controls */}
+    <div className="absolute right-4 top-4 z-[500] flex flex-col items-center shadow-[0_4px_12px_rgba(0,0,0,0.08)] rounded-xl overflow-hidden bg-white/95 backdrop-blur-sm border border-black/5">
+     <button
+      onClick={handleZoomIn}
+      className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-gray-50 transition-colors border-b border-black/5 text-[#333]"
+      title="Приблизить"
+     >
+      <Plus className="w-5 h-5 stroke-[2.5px]" />
+     </button>
+     <button
+      onClick={handleZoomOut}
+      className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-gray-50 transition-colors text-[#333]"
+      title="Отдалить"
+     >
+      <Minus className="w-5 h-5 stroke-[2.5px]" />
+     </button>
     </div>
-   ) : (
-    /* No-map fallback: just a styled illustration */
-    <div className="relative flex-1 rounded-[2.5rem] overflow-hidden border-2 border-smusl-light-gray/30 bg-smusl-beige/40 z-0 flex flex-col items-center justify-center gap-4 min-h-[200px]">
-     <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-lg">
-      <MapPin className="w-10 h-10 text-smusl-terracotta" strokeWidth={1.5} />
+
+    {/* Static Center Pin Overlay */}
+    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[500]">
+     <div className={`relative flex flex-col items-center transition-transform duration-200 ${isMoving ? '-translate-y-4' : '-translate-y-2'}`}>
+      <div className="w-9 h-9 bg-[#FF3366] rounded-full shadow-[0_4px_16px_rgba(255,51,102,0.4)] flex items-center justify-center border-[3px] border-white z-10">
+       <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+      </div>
+      <div className="w-1 h-3.5 bg-gradient-to-b from-[#FF3366] to-transparent -mt-0.5 z-0"></div>
+      <div className={`w-4 h-1.5 bg-black/20 rounded-[50%] blur-[2px] transition-all duration-200 ${isMoving ? 'scale-75 opacity-50 mt-4' : 'scale-100 opacity-100 mt-1'}`}></div>
      </div>
-     <p className="text-[14px] font-bold text-smusl-brown/70 text-center px-8 leading-relaxed">
-      Введите адрес выше — мы предложим варианты
-     </p>
-     {searchQuery && (
-      <div className="mt-2 px-6 py-3 bg-white rounded-2xl shadow border border-smusl-light-gray/30 max-w-[300px] text-center">
-       <span className="text-[13px] font-bold text-smusl-brown">{searchQuery}</span>
-      </div>
-     )}
+    </div>
+    {!isLoaded && (
+     <div className="absolute inset-0 flex items-center justify-center bg-[#f3f0ea] z-[1001]">
+      <Loader2 className="w-8 h-8 text-smusl-terracotta animate-spin" />
+      <span className="ml-3 text-sm font-medium text-gray-600">Загрузка карты 2GIS...</span>
+     </div>
+    )}
+
+   </div>
+
+   {error && (
+    <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium shadow-lg animate-in fade-in slide-in-from-bottom-2">
+     {error}
     </div>
    )}
-
-   <p className="text-[11px] text-smusl-gray/50 italic px-2 text-center">
-    {useYandex
-     ? "* Кликните на карту или передвиньте метку для выбора адреса"
-     : "* Начните вводить адрес и выберите вариант из списка"}
-   </p>
-
-   {/* CSS to hide Yandex branding/copyrights for a cleaner 2026-style UI */}
-   <style jsx global>{`
-    [class*="ymaps-2-1"][class*="-map-copyrights-promo"],
-    [class*="ymaps-2-1"][class*="-copyright-promo-container"],
-    [class*="ymaps-2-1"][class*="-copyright__wrap"],
-    [class*="ymaps-2-1"][class*="-any-links-container"],
-    [class*="ymaps-2-1"][class*="-zoom"],
-    [class*="ymaps-2-1"][class*="-float-button"],
-    [class*="ymaps-2-1"][class*="-gotomaps"],
-    [class*="ymaps-2-1"][class*="-gototaxi"],
-    [class*="ymaps-2-1"][class*="-gotoyandex"],
-    [class*="ymaps-2-1"][class*="-balloon__close-button"],
-    [class*="ymaps-2-1"][class*="-route-panel"] {
-     display: none !important;
-     visibility: hidden !important;
-     pointer-events: none !important;
-    }
-   `}</style>
   </div>
  );
 }

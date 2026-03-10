@@ -5,33 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { useUIStore, useUserStore, useStoreData } from "@/store/hooks";
 
-// --- Local user store (localStorage) ---
-interface LocalUser { name: string; email: string; passwordHash: string; }
-
-function hashPassword(password: string): string {
- // Simple deterministic hash for demo purposes (not cryptographically secure)
- let hash = 0;
- for (let i = 0; i < password.length; i++) {
-  const char = password.charCodeAt(i);
-  hash = ((hash << 5) - hash) + char;
-  hash = hash & hash;
- }
- return hash.toString(36) + password.length.toString(36);
-}
-
-function getUsers(): LocalUser[] {
- try {
-  const raw = localStorage.getItem("smuslest_users");
-  return raw ? JSON.parse(raw) : [];
- } catch { return []; }
-}
-
-function saveUsers(users: LocalUser[]) {
- localStorage.setItem("smuslest_users", JSON.stringify(users));
-}
-
-// ----------------------------------------
-
 const LoginModal: React.FC = () => {
  const uiStore = useUIStore();
  const userStore = useUserStore();
@@ -54,55 +27,63 @@ const LoginModal: React.FC = () => {
   setError("");
   setIsLoading(true);
 
-  // Simulate slight delay for UX
-  await new Promise(r => setTimeout(r, 500));
-
   try {
    if (isLogin) {
-    // ── Login ──
-    const users = getUsers();
-    const user = users.find(u => u.email.toLowerCase() === formData.email.toLowerCase());
-    if (!user) {
-     setError("Пользователь с таким email не найден");
+    const { signIn } = await import("next-auth/react");
+    const res = await signIn("credentials", {
+     redirect: false,
+     email: formData.email,
+     password: formData.password,
+    });
+
+    if (res?.error) {
+     setError(res.error === "CredentialsSignin" ? "Неверный логин или пароль" : res.error);
      return;
     }
-    if (user.passwordHash !== hashPassword(formData.password)) {
-     setError("Неверный пароль");
-     return;
-    }
-    // Success: mark as logged in
-    localStorage.setItem("smuslest_session", JSON.stringify({ name: user.name, email: user.email }));
-    setUserName(user.name);
+
     setAuthModalOpen(false);
-    window.location.href = "/profile";
+
+    // Success: NextAuth handles the session. 
+    // If it's the admin from env, redirect to admin panel
+    const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "admin@smusl.ru").toLowerCase();
+    if (formData.email.toLowerCase() === adminEmail) {
+     window.location.href = "/admin";
+    } else {
+     window.location.href = "/profile";
+    }
    } else {
     // ── Register ──
-    if (formData.name.trim().length < 2) {
-     setError("Введите ваше имя (минимум 2 символа)");
+    const regRes = await fetch("/api/auth/register", {
+     method: "POST",
+     headers: { "Content-Type": "application/json" },
+     body: JSON.stringify({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password
+     })
+    });
+
+    const regData = await regRes.json();
+
+    if (!regRes.ok) {
+     setError(regData.error || "Ошибка при регистрации");
      return;
     }
-    if (!formData.email.includes("@")) {
-     setError("Введите корректный email");
+
+    // Auto sign in after registration
+    const { signIn } = await import("next-auth/react");
+    const res = await signIn("credentials", {
+     redirect: false,
+     email: formData.email,
+     password: formData.password,
+    });
+
+    if (res?.error) {
+     setError("Аккаунт создан, но войти автоматически не удалось. Пожалуйста, войдите вручную.");
+     setIsLogin(true);
      return;
     }
-    if (formData.password.length < 4) {
-     setError("Пароль должен быть не менее 4 символов");
-     return;
-    }
-    const users = getUsers();
-    if (users.find(u => u.email.toLowerCase() === formData.email.toLowerCase())) {
-     setError("Пользователь с таким email уже зарегистрирован");
-     return;
-    }
-    const newUser: LocalUser = {
-     name: formData.name.trim(),
-     email: formData.email.toLowerCase(),
-     passwordHash: hashPassword(formData.password),
-    };
-    saveUsers([...users, newUser]);
-    // Auto login
-    localStorage.setItem("smuslest_session", JSON.stringify({ name: newUser.name, email: newUser.email }));
-    setUserName(newUser.name);
+
     setAuthModalOpen(false);
     window.location.href = "/profile";
    }
@@ -130,7 +111,7 @@ const LoginModal: React.FC = () => {
      animate={{ opacity: 1 }}
      exit={{ opacity: 0 }}
      onClick={() => setAuthModalOpen(false)}
-     className="fixed inset-0 bg-[#3A332E]/60"
+     className="fixed inset-0 bg-[#3A332E]/60 blur-sm"
     />
 
     <motion.div
@@ -147,7 +128,6 @@ const LoginModal: React.FC = () => {
      </button>
 
      <div className="p-8 sm:p-10 pt-12">
-      {/* Header */}
       <div className="text-center mb-8">
        <div className="w-14 h-14 rounded-2xl bg-smusl-terracotta/10 flex items-center justify-center mx-auto mb-4">
         <User className="w-7 h-7 text-smusl-terracotta" />
@@ -160,28 +140,24 @@ const LoginModal: React.FC = () => {
        </p>
       </div>
 
-      {/* Google button (visual only — real OAuth requires server) */}
       <button
        type="button"
-       disabled
-       className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-[#EBEBEB] rounded-2xl font-bold text-[14px] text-[#4A403A]/40 cursor-not-allowed mb-3"
+       onClick={() => import("next-auth/react").then(m => m.signIn("google"))}
+       className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-[#EBEBEB] rounded-2xl font-bold text-[14px] text-[#4A403A] hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98] mb-3"
       >
        <GoogleIcon />
        <span>Продолжить через Google</span>
-       <span className="text-[11px] font-normal ml-1">(скоро)</span>
       </button>
 
-      {/* Apple button (visual only — real OAuth requires server) */}
       <button
        type="button"
-       disabled
-       className="w-full flex items-center justify-center gap-3 py-3.5 bg-black border-2 border-black rounded-2xl font-bold text-[14px] text-[#A1A1A1] cursor-not-allowed mb-6"
+       onClick={() => import("next-auth/react").then(m => m.signIn("apple"))}
+       className="w-full flex items-center justify-center gap-3 py-3.5 bg-black border-2 border-black rounded-2xl font-bold text-[14px] text-white hover:bg-zinc-900 transition-all active:scale-[0.98] mb-6 shadow-xl shadow-black/10"
       >
-       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-[#A1A1A1]">
+       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white">
         <path d="M16.364 12.879c-.024-2.585 2.112-3.83 2.208-3.886-1.206-1.763-3.078-2.002-3.744-2.032-1.587-.16-3.096.936-3.912.936-.816 0-2.064-.912-3.384-.888-1.728.024-3.324.996-4.212 2.544-1.812 3.132-.468 7.764 1.308 10.32 .864 1.248 1.908 2.652 3.252 2.604 1.296-.048 1.788-.828 3.324-.828 1.524 0 1.98.828 3.336.804 1.404-.024 2.292-1.272 3.144-2.52.984-1.44 1.392-2.832 1.416-2.904-.036-.012-2.712-1.044-2.736-4.152zM14.904 8.783c.708-.852 1.188-2.04 1.056-3.216-1.008.036-2.256.672-2.988 1.536-.576.66-1.152 1.884-.996 3.036 1.128.084 2.22-.552 2.928-1.356z" />
        </svg>
        <span>Продолжить через Apple</span>
-       <span className="text-[11px] font-normal ml-1">(скоро)</span>
       </button>
 
       <div className="relative mb-6 text-center">
@@ -193,7 +169,6 @@ const LoginModal: React.FC = () => {
        </span>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-3">
        {!isLogin && (
         <div className="relative group">
