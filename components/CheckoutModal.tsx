@@ -426,12 +426,14 @@ export default function CheckoutModal() {
         </div>
 
         <motion.div
-         initial={{ y: "10%" }}
+         layout="position"
+         initial={{ y: "100%" }}
          animate={{ y: 0 }}
          className={cn(
           "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto flex-1 bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.1)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar",
           isEditingAddress ? "h-[85vh] sm:h-full p-5 sm:p-10" : "p-5 pb-[env(safe-area-inset-bottom)] sm:h-full sm:p-10"
          )}
+         transition={{ type: "spring", damping: 25, stiffness: 180 }}
         >
          {/* Mobile Compact View */}
          <div className={cn("sm:hidden flex flex-col gap-4", isEditingAddress ? "hidden" : "flex")}>
