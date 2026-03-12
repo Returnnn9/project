@@ -285,7 +285,6 @@ export default function CheckoutModal() {
 
     <motion.div
      key="modal"
-     layout
      initial={{ opacity: 0, y: "100%" }}
      animate={{ opacity: 1, y: 0 }}
      exit={{ opacity: 0, y: "100%" }}
@@ -311,7 +310,7 @@ export default function CheckoutModal() {
       </button>
      )}
 
-     <AnimatePresence mode="wait">
+     <AnimatePresence mode="popLayout" initial={false}>
 
       {/* ───── STEP 1: Способ получения ───── */}
       {step === 1 && (
@@ -385,7 +384,6 @@ export default function CheckoutModal() {
             variants={itemVariants}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            layout
             onClick={() => {
              updateAddress(addr, "delivery");
              if (status === "authenticated") {
@@ -453,7 +451,7 @@ export default function CheckoutModal() {
         </div>
 
         <motion.div
-         layout="position"
+         
          drag="y"
          dragConstraints={{ top: 0, bottom: 0 }}
          dragElastic={0.06}
@@ -471,7 +469,7 @@ export default function CheckoutModal() {
          initial={{ y: "100%" }}
          animate={{ y: 0 }}
          className={cn(
-          "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto flex-1 bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
+          "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
           isEditingAddress ? "h-[85vh] sm:h-full p-6 sm:p-10" : "p-6 pb-[calc(20px+env(safe-area-inset-bottom))] sm:h-full sm:p-10"
          )}
          transition={{ type: "spring" as const, damping: 28, stiffness: 220 }}
@@ -528,7 +526,7 @@ export default function CheckoutModal() {
            </h2>
           </div>
 
-          <motion.div layout className="flex-1 overflow-y-auto no-scrollbar pb-6 mt-4 space-y-4">
+          <motion.div className="flex-1 overflow-y-auto no-scrollbar pb-6 mt-4 space-y-4">
            <div className="relative">
             <div
              className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-4 cursor-pointer select-none border border-transparent hover:border-gray-200 transition-colors"
@@ -603,6 +601,7 @@ export default function CheckoutModal() {
                    setSelectedCoords([parseFloat(s.lat), parseFloat(s.lon)]);
                   }
                   setSuggestions([]);
+                  setIsEditingAddress(false);
                  }}
                  className="w-full text-left px-5 py-3.5 flex flex-col group hover:bg-[#F8F9FA] transition-colors border-b border-gray-50 last:border-0"
                 >
@@ -692,6 +691,7 @@ export default function CheckoutModal() {
           <MapPicker
            hideSearch={true}
            showGeolocate={false}
+           interactive={false}
            initialAddress={selectedPickup ? `${selectedPickup.city}, ${selectedPickup.address}` : ""}
            onAddressSelect={() => { }}
            onError={setMapError}
@@ -701,7 +701,7 @@ export default function CheckoutModal() {
         </div>
 
         <motion.div
-         layout="position"
+         
          drag="y"
          dragConstraints={{ top: 0, bottom: 0 }}
          dragElastic={0.08}
@@ -716,10 +716,10 @@ export default function CheckoutModal() {
            setIsEditingAddress(true);
           }
          }}
-         initial={{ y: "10%" }}
+         initial={{ y: "100%" }}
          animate={{ y: 0 }}
          className={cn(
-          "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto flex-1 bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
+          "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
           isEditingAddress ? "h-[85vh] sm:h-full p-6 sm:p-10" : "p-6 pb-[calc(20px+env(safe-area-inset-bottom))] sm:h-full sm:p-10"
          )}
          transition={{ type: "spring" as const, damping: 28, stiffness: 220 }}

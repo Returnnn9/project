@@ -22,6 +22,7 @@ interface MapPickerProps {
  hideSearch?: boolean;
  showGeolocate?: boolean;
  externalCoords?: [number, number] | null;
+ interactive?: boolean;
 }
 
 interface Suggestion {
@@ -52,6 +53,7 @@ export default function MapPicker({
  hideSearch,
  showGeolocate = false,
  externalCoords,
+ interactive = true,
 }: MapPickerProps) {
  const API_KEY = process.env.NEXT_PUBLIC_2GIS_API_KEY || "";
 
@@ -178,6 +180,11 @@ export default function MapPicker({
     zoom: 16,
     key: API_KEY,
     zoomControl: false,
+    drag: interactive,
+    scrollZoom: interactive,
+    doubleClickZoom: interactive,
+    touchZoom: interactive,
+    disableClickZoom: !interactive,
    });
 
    mapInstance.current = map;
@@ -370,25 +377,27 @@ export default function MapPicker({
    <div className="flex-1 w-full bg-[#f3f0ea] rounded-2xl overflow-hidden relative border border-gray-100 shadow-inner">
 
     <div ref={mapRef} className="absolute inset-0 z-0" />
-    <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[500] flex flex-col items-center shadow-[0_4px_12px_rgba(0,0,0,0.08)] rounded-xl overflow-hidden bg-white/95 backdrop-blur-sm border border-black/5">
-     <button
-      onClick={handleZoomIn}
-      className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-gray-50 transition-colors border-b border-black/5 text-[#333]"
-      title="Приблизить"
-     >
-      <Plus className="w-5 h-5 stroke-[2.5px]" />
-     </button>
-     <button
-      onClick={handleZoomOut}
-      className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-gray-50 transition-colors text-[#333]"
-      title="Отдалить"
-     >
-      <Minus className="w-5 h-5 stroke-[2.5px]" />
-     </button>
-    </div>
+    {interactive && (
+     <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[500] flex flex-col items-center shadow-[0_4px_12px_rgba(0,0,0,0.08)] rounded-xl overflow-hidden bg-white/95 backdrop-blur-sm border border-black/5">
+      <button
+       onClick={handleZoomIn}
+       className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-gray-50 transition-colors border-b border-black/5 text-[#333]"
+       title="Приблизить"
+      >
+       <Plus className="w-5 h-5 stroke-[2.5px]" />
+      </button>
+      <button
+       onClick={handleZoomOut}
+       className="w-10 h-10 flex items-center justify-center bg-transparent hover:bg-gray-50 transition-colors text-[#333]"
+       title="Отдалить"
+      >
+       <Minus className="w-5 h-5 stroke-[2.5px]" />
+      </button>
+     </div>
+    )}
 
     {/* Floating Geolocation Button */}
-    {showGeolocate && (
+    {showGeolocate && interactive && (
      <button
       onClick={geolocate}
       disabled={isLocating}
@@ -404,15 +413,17 @@ export default function MapPicker({
     )}
 
     {/* Static Center Pin Overlay */}
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[500]">
-     <div className={`relative flex flex-col items-center transition-transform duration-200 ${isMoving ? '-translate-y-4' : '-translate-y-2'}`}>
-      <div className="w-9 h-9 bg-[#3A332E] rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.3)] flex items-center justify-center border-2 border-white z-10 transition-colors">
-       <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+    {interactive && (
+     <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[500]">
+      <div className={`relative flex flex-col items-center transition-transform duration-200 ${isMoving ? '-translate-y-4' : '-translate-y-2'}`}>
+       <div className="w-9 h-9 bg-[#3A332E] rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.3)] flex items-center justify-center border-2 border-white z-10 transition-colors">
+        <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+       </div>
+       <div className="w-1 h-3.5 bg-gradient-to-b from-[#3A332E] to-transparent -mt-0.5 z-0"></div>
+       <div className={`w-4 h-1.5 bg-black/20 rounded-[50%] blur-[2px] transition-all duration-200 ${isMoving ? 'scale-75 opacity-50 mt-4' : 'scale-100 opacity-100 mt-1'}`}></div>
       </div>
-      <div className="w-1 h-3.5 bg-gradient-to-b from-[#3A332E] to-transparent -mt-0.5 z-0"></div>
-      <div className={`w-4 h-1.5 bg-black/20 rounded-[50%] blur-[2px] transition-all duration-200 ${isMoving ? 'scale-75 opacity-50 mt-4' : 'scale-100 opacity-100 mt-1'}`}></div>
      </div>
-    </div>
+    )}
     {!isLoaded && (
      <div className="absolute inset-0 flex items-center justify-center bg-[#f3f0ea] z-[1001]">
       <Loader2 className="w-8 h-8 text-smusl-terracotta animate-spin" />

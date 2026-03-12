@@ -213,7 +213,6 @@ export default function AddressModal() {
 
     <motion.div
      key="modal"
-     layout
      initial={{ opacity: 0, y: "100%" }}
      animate={{ opacity: 1, y: 0 }}
      exit={{ opacity: 0, y: "100%" }}
@@ -239,7 +238,7 @@ export default function AddressModal() {
       </button>
      )}
 
-     <AnimatePresence mode="wait">
+     <AnimatePresence mode="popLayout" initial={false}>
 
       {/* ───── STEP 1: Способ получения ───── */}
       {step === 1 && (
@@ -313,7 +312,6 @@ export default function AddressModal() {
             variants={itemVariants}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            layout
             onClick={() => {
              updateAddress(addr, "delivery");
              handleClose();
@@ -367,6 +365,7 @@ export default function AddressModal() {
           <MapPicker
            hideSearch={true}
            showGeolocate={false}
+           interactive={false}
            initialAddress={selectedPickup ? `${selectedPickup.city}, ${selectedPickup.address}` : ""}
            onAddressSelect={() => { }}
            onError={setMapError}
@@ -390,10 +389,10 @@ export default function AddressModal() {
            setIsEditingAddress(true);
           }
          }}
-         initial={{ y: "10%" }}
+         initial={{ y: "100%" }}
          animate={{ y: 0 }}
          className={cn(
-          "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto flex-1 bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
+          "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
           isEditingAddress ? "h-[85vh] sm:h-full p-6 sm:p-10" : "p-6 pb-[calc(20px+env(safe-area-inset-bottom))] sm:h-full sm:p-10"
          )}
          transition={{ type: "spring" as const, damping: 28, stiffness: 220 }}
@@ -456,7 +455,7 @@ export default function AddressModal() {
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1 no-scrollbar pb-4">
            <AnimatePresence mode="popLayout">
             {PICKUP_POINTS.filter(p => p.city === selectedCity).map((p) => (
-             <motion.button key={p.address} variants={itemVariants} layout onClick={() => setSelectedPickup(p)} className={cn("w-full px-6 py-4 rounded-[1.8rem] border transition-all flex items-center justify-between group", selectedPickup?.address === p.address ? "border-[#CF8F73] bg-[#CF8F73] shadow-sm text-white" : "border-gray-100 bg-white hover:border-gray-300")}>
+             <motion.button key={p.address} variants={itemVariants} onClick={() => setSelectedPickup(p)} className={cn("w-full px-6 py-4 rounded-[1.8rem] border transition-all flex items-center justify-between group", selectedPickup?.address === p.address ? "border-[#CF8F73] bg-[#CF8F73] shadow-sm text-white" : "border-gray-100 bg-white hover:border-gray-300")}>
               <span className="text-[18px] font-extrabold tracking-tight">{p.address}</span>
               <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors", selectedPickup?.address === p.address ? "border-white" : "border-gray-200")}>
                {selectedPickup?.address === p.address && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
@@ -516,7 +515,7 @@ export default function AddressModal() {
          initial={{ y: "100%" }}
          animate={{ y: 0 }}
          className={cn(
-          "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto flex-1 bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
+          "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
           isEditingAddress ? "h-[85vh] sm:h-full p-6 sm:p-10" : "p-6 pb-[calc(20px+env(safe-area-inset-bottom))] sm:h-full sm:p-10"
          )}
          transition={{ type: "spring" as const, damping: 28, stiffness: 220 }}
@@ -591,7 +590,14 @@ export default function AddressModal() {
              {suggestions.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-2 bg-white rounded-[1.2rem] shadow-2xl border border-gray-100 overflow-hidden max-h-[240px] overflow-y-auto absolute w-full left-0 z-50 py-1">
                {suggestions.map((s, idx) => (
-                <button key={idx} onClick={() => { skipNextFetch.current = true; setTempAddress(s.display_name); setHouse((s.address as any)?.house_number || ""); setSuggestions([]); if (s.lat && s.lon) setSelectedCoords([parseFloat(s.lat), parseFloat(s.lon)]) }} className="w-full text-left px-5 py-3.5 hover:bg-gray-50 transition-colors border-b last:border-0 border-gray-50 flex flex-col">
+                <button key={idx} onClick={() => { 
+                  skipNextFetch.current = true; 
+                  setTempAddress(s.display_name); 
+                  setHouse((s.address as any)?.house_number || ""); 
+                  setSuggestions([]); 
+                  if (s.lat && s.lon) setSelectedCoords([parseFloat(s.lat), parseFloat(s.lon)]);
+                  setIsEditingAddress(false);
+                }} className="w-full text-left px-5 py-3.5 hover:bg-gray-50 transition-colors border-b last:border-0 border-gray-50 flex flex-col">
                  <span className="text-[15px] font-extrabold text-[#333] leading-tight">{(s.address as any)?.title || s.display_name}</span>
                  <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">{(s.address as any)?.subtitle || selectedCity}</span>
                 </button>

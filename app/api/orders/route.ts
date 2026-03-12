@@ -27,21 +27,26 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
- try {
-  await ensureFile();
-  const newOrder: Order = await req.json();
+  try {
+    await ensureFile();
+    const newOrder: Order = await req.json();
 
-  const data = await fs.readFile(dataFile, 'utf-8');
-  const orders: Order[] = JSON.parse(data);
+    // Basic validation
+    if (!newOrder.items || !newOrder.address || !newOrder.total) {
+      return NextResponse.json({ error: 'Missing required fields: items, address, or total' }, { status: 400 });
+    }
 
-  // Add order to the beginning
-  orders.unshift(newOrder);
+    const data = await fs.readFile(dataFile, 'utf-8');
+    const orders: Order[] = JSON.parse(data);
 
-  await fs.writeFile(dataFile, JSON.stringify(orders, null, 2));
+    // Add order to the beginning
+    orders.unshift(newOrder);
 
-  return NextResponse.json(newOrder, { status: 201 });
- } catch (error) {
-  console.error('Error saving order:', error);
-  return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
- }
+    await fs.writeFile(dataFile, JSON.stringify(orders, null, 2));
+
+    return NextResponse.json(newOrder, { status: 201 });
+  } catch (error) {
+    console.error('Error saving order:', error);
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+  }
 }

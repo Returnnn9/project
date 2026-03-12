@@ -36,8 +36,8 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
       <span className={cn(
        "font-extrabold text-[#4A423D] truncate max-w-full",
        isMobile ? "text-[17px]" : "text-[20px]"
-      )} title={address || "ул. Ижорская, 3"}>
-       {address || "ул. Ижорская, 3"}
+      )} title={address || "Адрес не выбран"}>
+       {address || "Адрес не выбран"}
       </span>
      </h2>
     </div>
@@ -165,7 +165,6 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
     )}
    </div>
 
-   {/* Checkout Footer */}
    {
     cart.length > 0 && (
      <div className="mt-6 space-y-5 shrink-0">
