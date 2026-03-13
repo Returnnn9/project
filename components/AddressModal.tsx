@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react"
 import { useUIStore, useUserStore, useStoreData } from "@/store/hooks"
-import { X, ChevronDown, MapPin, ArrowLeft, Loader2, Edit3, CheckCircle2 } from "lucide-react"
+import { X, ChevronDown, MapPin, ArrowLeft, Loader2, Edit3, CheckCircle2, Navigation } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import MapPicker from "./MapPicker"
 import { cn } from "@/lib/utils"
@@ -347,7 +347,7 @@ export default function AddressModal() {
          whileHover={{ scale: 1.02 }}
          whileTap={{ scale: 0.98 }}
          onClick={() => setStep(3)}
-         className="mt-6 w-full h-[64px] bg-[#CF8F73] text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#CF8F73]/80 transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 shrink-0"
+         className="mt-6 w-full h-[64px] bg-[#3A332E] text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#2A2420] transition-all active:scale-95 shadow-xl shadow-black/10 shrink-0"
         >
          Новый адрес
         </motion.button>
@@ -386,8 +386,6 @@ export default function AddressModal() {
           if (offset.y > 100 || velocity.y > 400) {
            if (isEditingAddress) {
             setIsEditingAddress(false);
-           } else {
-            handleClose();
            }
           } else if (offset.y < -100 || velocity.y < -400) {
            setIsEditingAddress(true);
@@ -423,7 +421,7 @@ export default function AddressModal() {
           <button
            onClick={handleSavePickup}
            disabled={!selectedPickup}
-           className="w-full h-[68px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mt-1"
+           className="w-full h-[68px] bg-[#3A332E] disabled:bg-[#3A332E]/40 text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#2A2420] transition-all active:scale-95 shadow-xl shadow-black/10 mt-1"
           >
            Да, всё верно
           </button>
@@ -509,8 +507,6 @@ export default function AddressModal() {
           if (offset.y > 100 || velocity.y > 400) {
            if (isEditingAddress) {
             setIsEditingAddress(false);
-           } else {
-            handleClose();
            }
           } else if (offset.y < -100 || velocity.y < -400) {
            setIsEditingAddress(true);
@@ -546,7 +542,7 @@ export default function AddressModal() {
           <button
            onClick={handleSaveDelivery}
            disabled={!tempAddress}
-           className="w-full h-[68px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mt-1"
+           className="w-full h-[68px] bg-[#3A332E] disabled:bg-[#3A332E]/40 text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#2A2420] transition-all active:scale-95 shadow-xl shadow-black/10 mt-1"
           >
            Всё верно
           </button>
@@ -627,7 +623,7 @@ export default function AddressModal() {
            </div>
           </div>
 
-          <button onClick={handleSaveDelivery} disabled={!tempAddress} className="mt-auto w-full h-[64px] sm:h-[72px] bg-[#3A332E] disabled:bg-[#3A332E]/40 text-white rounded-[1.5rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#3A332E]/20 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0">
+          <button onClick={handleSaveDelivery} disabled={!tempAddress} className="mt-auto w-full h-[64px] sm:h-[72px] bg-[#3A332E] disabled:bg-[#3A332E]/40 text-white rounded-[1.5rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-black/10 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0">
            {isEditingAddress && window.innerWidth < 640 ? 'Готово' : 'Всё верно'}
           </button>
          </div>

@@ -401,7 +401,7 @@ export default function MapPicker({
      <button
       onClick={geolocate}
       disabled={isLocating}
-      className="absolute right-4 bottom-28 z-[500] w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-black/5 hover:bg-gray-50 active:scale-95 transition-all text-[#333] disabled:opacity-50"
+      className="absolute right-4 bottom-6 z-[500] w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-black/5 hover:bg-gray-50 active:scale-95 transition-all text-[#3A332E] disabled:opacity-50"
       title="Где я"
      >
       {isLocating ? (
