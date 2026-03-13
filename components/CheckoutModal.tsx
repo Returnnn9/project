@@ -481,11 +481,14 @@ export default function CheckoutModal() {
          
          {/* Mobile Compact View */}
          <div className={cn("sm:hidden flex flex-col gap-4", isEditingAddress ? "hidden" : "flex")}>
-          <motion.button
+          <motion.div
            whileHover={{ scale: 1.01 }}
            whileTap={{ scale: 0.98 }}
            onClick={() => setIsEditingAddress(true)}
-           className="w-full p-5 bg-[#F8F8F8] rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all cursor-text"
+           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsEditingAddress(true); }}
+           role="button"
+           tabIndex={0}
+           className="w-full p-5 bg-[#F8F8F8] rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all cursor-text outline-none focus-visible:ring-2 focus-visible:ring-[#3A332E]/20"
           >
            <div className="flex flex-col gap-1 overflow-hidden pr-4">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Куда везем?</span>
@@ -495,7 +498,7 @@ export default function CheckoutModal() {
            </div>
            <div className="flex items-center gap-3 shrink-0">
             <button
-             onClick={handleGeolocate}
+             onClick={(e) => { e.stopPropagation(); handleGeolocate(); }}
              className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#3A332E] hover:bg-gray-50 transition-colors"
              title="Моё местоположение"
             >
@@ -505,7 +508,7 @@ export default function CheckoutModal() {
              <Edit3 className="w-4 h-4" />
             </div>
            </div>
-          </motion.button>
+          </motion.div>
           <button
            onClick={handleNextFromDelivery}
            disabled={!tempAddress}
@@ -738,11 +741,14 @@ export default function CheckoutModal() {
 
          {/* Mobile Compact View */}
          <div className={cn("sm:hidden flex flex-col gap-4", isEditingAddress ? "hidden" : "flex")}>
-          <motion.button
+          <motion.div
            whileHover={{ scale: 1.01 }}
            whileTap={{ scale: 0.98 }}
            onClick={() => setIsEditingAddress(true)}
-           className="w-full p-5 bg-[#F8F8F8] rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsEditingAddress(true); }}
+           role="button"
+           tabIndex={0}
+           className="w-full p-5 bg-[#F8F8F8] rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#3A332E]/20"
           >
            <div className="flex flex-col gap-1 overflow-hidden pr-4">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Пункт выдачи</span>
@@ -752,7 +758,7 @@ export default function CheckoutModal() {
            </div>
            <div className="flex items-center gap-3 shrink-0">
             <button
-             onClick={handleGeolocate}
+             onClick={(e) => { e.stopPropagation(); handleGeolocate(); }}
              className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#3A332E] hover:bg-gray-50 transition-colors"
              title="Моё местоположение"
             >
@@ -762,7 +768,7 @@ export default function CheckoutModal() {
              <Edit3 className="w-4 h-4" />
             </div>
            </div>
-          </motion.button>
+          </motion.div>
           <button
            onClick={handleNextFromPickup}
            disabled={!selectedPickup}

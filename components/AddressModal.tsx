@@ -402,11 +402,14 @@ export default function AddressModal() {
          <div className="w-12 h-1.5 bg-gray-200/50 rounded-full mx-auto mb-4 sm:hidden shrink-0" />
          
          <div className={cn("sm:hidden flex flex-col gap-4", isEditingAddress ? "hidden" : "flex")}>
-          <motion.button
+          <motion.div
            whileHover={{ scale: 1.02 }}
            whileTap={{ scale: 0.98 }}
            onClick={() => setIsEditingAddress(true)}
-           className="w-full p-5 bg-[#F8F8F8] rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsEditingAddress(true); }}
+           role="button"
+           tabIndex={0}
+           className="w-full p-5 bg-[#F8F8F8] rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#3A332E]/20"
           >
            <div className="flex flex-col gap-1 overflow-hidden pr-4">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Пункт выдачи</span>
@@ -417,7 +420,7 @@ export default function AddressModal() {
            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 text-[#3A332E]">
             <Edit3 className="w-4 h-4" />
            </div>
-          </motion.button>
+          </motion.div>
           <button
            onClick={handleSavePickup}
            disabled={!selectedPickup}
@@ -523,11 +526,14 @@ export default function AddressModal() {
          <div className="w-12 h-1.5 bg-gray-200/50 rounded-full mx-auto mb-4 sm:hidden shrink-0" />
          
          <div className={cn("sm:hidden flex flex-col gap-4", isEditingAddress ? "hidden" : "flex")}>
-          <motion.button
+          <motion.div
            whileHover={{ scale: 1.01 }}
            whileTap={{ scale: 0.98 }}
            onClick={() => setIsEditingAddress(true)}
-           className="w-full p-5 bg-[#F8F8F8] rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all cursor-text"
+           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsEditingAddress(true); }}
+           role="button"
+           tabIndex={0}
+           className="w-full p-5 bg-[#F8F8F8] rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all cursor-text outline-none focus-visible:ring-2 focus-visible:ring-[#3A332E]/20"
           >
            <div className="flex flex-col gap-1 overflow-hidden pr-4">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Куда везем?</span>
@@ -538,7 +544,7 @@ export default function AddressModal() {
            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 text-[#3A332E]">
             <Edit3 className="w-4 h-4" />
            </div>
-          </motion.button>
+          </motion.div>
           <button
            onClick={handleSaveDelivery}
            disabled={!tempAddress}
