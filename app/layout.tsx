@@ -66,7 +66,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
  return (
-  <html lang="ru" className={`${manrope.variable} ${greatVibes.variable}`}>
+  <html lang="ru" className={`${manrope.variable} ${greatVibes.variable}`} suppressHydrationWarning>
    <body className="antialiased font-manrope bg-[#CF8F73]">
 
     <Providers>

@@ -80,10 +80,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ onAdd, index = 0, ...product 
 
     <button
      onClick={(e) => { e.stopPropagation(); onAdd() }}
-     className="w-full h-12 xs:h-14 sm:h-16 mt-auto bg-[#CF8F73] rounded-[1rem] flex items-center justify-center gap-2 text-white hover:bg-[#C27E63] transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.96] shadow-[0_6px_16px_rgba(207,143,115,0.25)] hover:shadow-[0_8px_24px_rgba(207,143,115,0.4)] select-none touch-manipulation transform-gpu"
+     className="w-full h-12 xs:h-14 sm:h-16 mt-auto bg-[#CF8F73] rounded-[1.1rem] flex items-center justify-center gap-1.5 sm:gap-2 text-white hover:bg-[#C27E63] transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.96] shadow-[0_6px_16px_rgba(207,143,115,0.25)] hover:shadow-[0_8px_24px_rgba(207,143,115,0.4)] select-none touch-manipulation transform-gpu px-1 xs:px-2"
     >
-     <ShoppingBag className="w-4 h-4 xs:w-5 xs:h-5 shrink-0 pointer-events-none drop-shadow-sm" />
-     <span className="text-[14px] xs:text-[16px] sm:text-[18px] font-bold pointer-events-none drop-shadow-sm">Добавить в корзину</span>
+     <ShoppingBag className="w-4 h-4 xs:w-5 xs:h-4 sm:w-6 sm:h-6 shrink-0 pointer-events-none drop-shadow-sm" />
+     <span className="text-[14px] xs:text-[15px] sm:text-[18px] font-bold pointer-events-none drop-shadow-sm whitespace-nowrap">
+      <span className="sm:hidden">В корзину</span>
+      <span className="hidden sm:inline">Добавить в корзину</span>
+     </span>
     </button>
    </div>
   </motion.div>

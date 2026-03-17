@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useUIStore, useCartStore, useUserStore, useStoreData, useRootStore } from "@/store/hooks"
 import { X, ChevronRight, ChevronDown, Truck, MapPin, ArrowLeft, User, Phone, CheckCircle2, XCircle, Loader2, Edit3, CreditCard, Navigation } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -107,6 +107,17 @@ export default function CheckoutModal() {
  const [entrance, setEntrance] = useState('')
  const [floor, setFloor] = useState('')
  const [apartment, setApartment] = useState('')
+
+ const phoneInputRef = useRef<HTMLInputElement>(null)
+
+ // Auto-focus phone number in Step 1
+ useEffect(() => {
+  if (isCheckoutOpen && step === 1 && phoneInputRef.current) {
+   setTimeout(() => {
+    phoneInputRef.current?.focus()
+   }, 400) // Delay to wait for modal transition
+  }
+ }, [isCheckoutOpen, step])
 
  // Address search hook
  const {
@@ -347,23 +358,24 @@ export default function CheckoutModal() {
          </h2>
          <div className="space-y-4">
           <div className="bg-[#F8F8F8] rounded-[1.2rem] px-6 py-4 border border-transparent focus-within:border-gray-300 transition-colors">
+           <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Телефон</span>
+           <input
+            ref={phoneInputRef}
+            type="tel"
+            value={userPhone}
+            onChange={(e) => setUserPhone(e.target.value)}
+            placeholder="+7 (999) 000-00-00"
+            className="bg-transparent border-none outline-none text-[16px] font-bold text-[#3A332E] placeholder:text-gray-300 w-full"
+           />
+          </div>
+          <div className="bg-[#F8F8F8] rounded-[1.2rem] px-6 py-4 border border-transparent focus-within:border-gray-300 transition-colors">
            <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Имя</span>
            <input
             type="text"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             placeholder="Иван"
-            className="bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300 w-full"
-           />
-          </div>
-          <div className="bg-[#F8F8F8] rounded-[1.2rem] px-6 py-4 border border-transparent focus-within:border-gray-300 transition-colors">
-           <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Телефон</span>
-           <input
-            type="tel"
-            value={userPhone}
-            onChange={(e) => setUserPhone(e.target.value)}
-            placeholder="+7 (999) 000-00-00"
-            className="bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300 w-full"
+            className="bg-transparent border-none outline-none text-[16px] font-bold text-[#3A332E] placeholder:text-gray-300 w-full"
            />
           </div>
          </div>

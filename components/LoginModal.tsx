@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
+import { X, Phone, Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { useUIStore, useUserStore, useStoreData } from "@/store/hooks";
 
 const LoginModal: React.FC = () => {
@@ -165,11 +165,23 @@ const LoginModal: React.FC = () => {
         <div className="w-full border-t border-[#4A403A]/10" />
        </div>
        <span className="relative px-4 bg-white text-[#4A403A]/40 text-xs font-bold uppercase tracking-widest">
-        или через почту
+        или по номеру
        </span>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
+       <div className="relative group">
+        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4A403A]/30 group-focus-within:text-smusl-terracotta transition-colors" />
+        <input
+         type="text"
+         placeholder="Номер телефона"
+         required
+         value={formData.email}
+         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+         className="w-full pl-12 pr-6 py-4 rounded-2xl bg-[#4A403A]/5 border-2 border-transparent focus:border-smusl-terracotta/30 focus:bg-white transition-all outline-none text-[#4A403A] font-medium placeholder:text-[#4A403A]/30"
+        />
+       </div>
+
        {!isLogin && (
         <div className="relative group">
          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4A403A]/30 group-focus-within:text-smusl-terracotta transition-colors" />
@@ -183,18 +195,6 @@ const LoginModal: React.FC = () => {
          />
         </div>
        )}
-
-       <div className="relative group">
-        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4A403A]/30 group-focus-within:text-smusl-terracotta transition-colors" />
-        <input
-         type="email"
-         placeholder="Email"
-         required
-         value={formData.email}
-         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-         className="w-full pl-12 pr-6 py-4 rounded-2xl bg-[#4A403A]/5 border-2 border-transparent focus:border-smusl-terracotta/30 focus:bg-white transition-all outline-none text-[#4A403A] font-medium placeholder:text-[#4A403A]/30"
-        />
-       </div>
 
        <div className="relative group">
         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4A403A]/30 group-focus-within:text-smusl-terracotta transition-colors" />

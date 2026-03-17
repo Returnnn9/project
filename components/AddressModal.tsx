@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useUIStore, useUserStore, useStoreData } from "@/store/hooks"
-import { X, ChevronDown, MapPin, ArrowLeft, Loader2, Edit3, CheckCircle2, Navigation } from "lucide-react"
+import { X, ChevronDown, MapPin, ArrowLeft, Loader2, Edit3, CheckCircle2, Navigation, Phone, User as UserIcon } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import MapPicker from "./MapPicker"
 import { cn } from "@/lib/utils"
@@ -78,8 +78,13 @@ export default function AddressModal() {
  const setAddressModalOpen = (o: boolean) => uiStore.setAddressModalOpen(o)
  const updateAddress = (a: string, t: "delivery" | "pickup") => userStore.updateAddress(a, t)
 
- const [step, setStep] = useState<1 | 2 | 3>(1)
+ const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1)
  const [deliveryType, setDeliveryType] = useState<"delivery" | "pickup" | null>(null)
+ const userName = useStoreData(userStore, s => s.getUserName())
+ const userPhone = useStoreData(userStore, s => s.getUserPhone())
+ const setUserName = (n: string) => userStore.setUserName(n)
+ const setUserPhone = (p: string) => userStore.setUserPhone(p)
+
  const [tempAddress, setTempAddress] = useState(address)
  const [selectedPickup, setSelectedPickup] = useState<PickupPoint | null>(null)
  const [mapError, setMapError] = useState<string | null>(null)
@@ -108,22 +113,22 @@ export default function AddressModal() {
   searchTimeout
  } = useAddressSearch(selectedCity);
 
- useEffect(() => {
-  if (skipNextFetch.current) {
-   skipNextFetch.current = false
-   return
-  }
+  useEffect(() => {
+   if (skipNextFetch.current) {
+    skipNextFetch.current = false
+    return
+   }
 
-  if (step === 3 && deliveryType === "delivery" && tempAddress.length >= 2) {
-   if (searchTimeout.current) clearTimeout(searchTimeout.current)
-   searchTimeout.current = setTimeout(() => {
-    fetchSuggestions(tempAddress)
-   }, 400)
-  } else {
-   setSuggestions([])
-  }
-  return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current) }
- }, [tempAddress, step, deliveryType, selectedCity, fetchSuggestions])
+   if (step === 4 && deliveryType === "delivery" && tempAddress.length >= 2) {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(() => {
+     fetchSuggestions(tempAddress)
+    }, 400)
+   } else {
+    setSuggestions([])
+   }
+   return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current) }
+  }, [tempAddress, step, deliveryType, selectedCity, fetchSuggestions])
 
  const reset = () => {
   setStep(1)
@@ -138,8 +143,19 @@ export default function AddressModal() {
   setEntrance('')
   setFloor('')
   setApartment('')
-  setIsEditingAddress(false)
- }
+   setIsEditingAddress(false)
+  }
+
+  // Auto-focus for Phone field
+  const phoneInputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+   if (isAddressModalOpen && step === 1) {
+    const timer = setTimeout(() => {
+     phoneInputRef.current?.focus()
+    }, 400) // Account for modal animation
+    return () => clearTimeout(timer)
+   }
+  }, [isAddressModalOpen, step])
 
  // Reset modal to Step 1 when it opens
  useEffect(() => {
@@ -249,31 +265,96 @@ export default function AddressModal() {
       <X className="w-5 h-5" />
      </button>
 
-     {step > 1 && (
-      <button
-       onClick={() => {
-        if (isEditingAddress) {
-         setIsEditingAddress(false);
-         return;
-        }
-        if (step === 3 && userStore.getSavedAddresses().length > 0) {
-         setStep(2);
-        } else {
-         setStep(1);
-        }
-       }}
-       className="absolute top-6 left-6 z-50 p-2.5 bg-gray-50/80 backdrop-blur-md rounded-full text-[#3A332E] hover:bg-gray-100 transition-all sm:hidden shadow-sm"
-      >
-       <ArrowLeft className="w-5 h-5" />
-      </button>
-     )}
+      {step > 1 && (
+       <button
+        onClick={() => {
+         if (isEditingAddress) {
+          setIsEditingAddress(false);
+          return;
+         }
+         if (step === 4 && userStore.getSavedAddresses().length > 0) {
+          setStep(3);
+         } else {
+          setStep(step - 1 as any);
+         }
+        }}
+        className="absolute top-6 left-6 z-50 p-2.5 bg-gray-50/80 backdrop-blur-md rounded-full text-[#3A332E] hover:bg-gray-100 transition-all sm:hidden shadow-sm"
+       >
+        <ArrowLeft className="w-5 h-5" />
+       </button>
+      )}
 
      <AnimatePresence mode="wait">
 
-      {/* ───── STEP 1: Способ получения ───── */}
+      {/* ───── STEP 1: User Info ───── */}
       {step === 1 && (
        <motion.div
-        key="step1"
+        key="step1-user-info"
+        variants={stepVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="flex flex-col sm:flex-row h-full w-full flex-1"
+       >
+        <div className="flex-1 p-5 sm:p-10 flex flex-col justify-center overflow-y-auto w-full">
+         <div className="flex items-center justify-between mb-8">
+          <h2 className="text-[22px] sm:text-[26px] font-extrabold text-[#3A332E] tracking-tight">
+           Как к вам обращаться?
+          </h2>
+          <button
+           onClick={handleClose}
+           className="hidden sm:block p-2 text-gray-400 hover:text-[#3A332E] transition-colors"
+          >
+           <X className="w-6 h-6" />
+          </button>
+         </div>
+
+         <div className="space-y-4">
+          <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-4 focus-within:border-gray-300 border border-transparent">
+           <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ваше имя</span>
+           <div className="flex items-center gap-2">
+            <UserIcon className="w-5 h-5 text-gray-400" />
+            <input
+             type="text"
+             value={userName}
+             onChange={(e) => setUserName(e.target.value)}
+             placeholder="Например, Иван"
+             className="w-full bg-transparent border-none outline-none text-[17px] font-extrabold text-[#3A332E] placeholder:text-gray-300"
+            />
+           </div>
+          </div>
+
+          <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-4 focus-within:border-gray-300 border border-transparent">
+           <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Телефон</span>
+           <div className="flex items-center gap-2">
+            <Phone className="w-5 h-5 text-gray-400" />
+            <input
+             ref={phoneInputRef}
+             type="tel"
+             value={userPhone}
+             onChange={(e) => setUserPhone(e.target.value)}
+             placeholder="+7 (XXX) XXX-XX-XX"
+             className="w-full bg-transparent border-none outline-none text-[17px] font-extrabold text-[#3A332E] placeholder:text-gray-300"
+            />
+           </div>
+          </div>
+
+          <button
+           onClick={() => setStep(2)}
+           disabled={!userName || !userPhone}
+           className="w-full h-[64px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mt-6"
+          >
+           Далее
+          </button>
+         </div>
+        </div>
+       </motion.div>
+      )}
+
+      {/* ───── STEP 2: Способ получения ───── */}
+      {step === 2 && (
+       <motion.div
+        key="step2-delivery-type"
         variants={stepVariants}
         initial="initial"
         animate="animate"
@@ -297,9 +378,9 @@ export default function AddressModal() {
           <DeliveryTypeSelector onSelect={(type) => {
            setDeliveryType(type);
            if (type === "delivery" && userStore.getSavedAddresses().length > 0) {
-            setStep(2);
+            setStep(3);
            } else {
-            setStep(type === "delivery" ? 3 : 2);
+            setStep(type === "delivery" ? 4 : 3);
            }
           }} />
          </div>
@@ -307,89 +388,89 @@ export default function AddressModal() {
        </motion.div>
       )}
 
-      {/* ───── STEP 2: Saved Addresses (Delivery) or Pickup Selection ───── */}
-      {step === 2 && deliveryType === "delivery" && (
-       <motion.div
-        key="step2-saved"
-        variants={stepVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="flex flex-col h-full w-full p-6 sm:p-12"
-       >
-        <div className="flex items-center justify-between mb-8">
-         <div className="flex items-center gap-4">
-          <button onClick={() => setStep(1)} className="p-1 text-[#3A332E]">
-           <ArrowLeft className="w-6 h-6" />
-          </button>
-          <h2 className="text-[24px] sm:text-[28px] font-extrabold text-[#3A332E] tracking-tight">Выбрать адрес</h2>
-         </div>
-         <button onClick={handleClose} className="p-1 text-gray-300 hover:text-[#3A332E] transition-colors hidden sm:block">
-          <X className="w-6 h-6" />
-         </button>
-        </div>
-
+       {/* ───── STEP 3: Saved Addresses (Delivery) or Pickup Selection ───── */}
+       {step === 3 && deliveryType === "delivery" && (
         <motion.div
-         variants={containerVariants}
-         initial="hidden"
-         animate="visible"
-         className="flex-1 overflow-y-auto px-1 no-scrollbar space-y-3"
+         key="step3-saved"
+         variants={stepVariants}
+         initial="initial"
+         animate="animate"
+         exit="exit"
+         className="flex flex-col h-full w-full p-6 sm:p-12"
         >
-         <AnimatePresence mode="popLayout">
-          {userStore.getSavedAddresses().map((addr, idx) => (
-           <motion.button
-            key={addr}
-            variants={itemVariants}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={() => {
-             const details = parseAddress(addr);
-             setTempAddress(details.street);
-             setHouse(details.house);
-             setEntrance(details.entrance);
-             setFloor(details.floor);
-             setApartment(details.apartment);
-             updateAddress(addr, "delivery");
-             handleClose();
-            }}
-            className={cn(
-             "w-full px-6 py-5 rounded-[1.5rem] border transition-all flex items-center justify-between group",
-             address === addr ? "border-[#CF8F73] bg-[#CF8F73]/5 shadow-sm" : "border-gray-100 bg-white hover:border-gray-200"
-            )}
-           >
-            <div className="flex flex-col items-start gap-1 flex-1 min-w-0 mr-4">
-             <span className={cn(
-              "text-[16px] font-[800] transition-colors text-left truncate w-full",
-              address === addr ? "text-[#CF8F73]" : "text-[#3A332E]"
-             )}>{addr}</span>
-             <span className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">Москва</span>
-            </div>
-            <div className={cn(
-             "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
-             address === addr ? "border-[#CF8F73] bg-[#CF8F73]" : "border-gray-200"
-            )}>
-             {address === addr && <div className="w-2 h-2 rounded-full bg-white" />}
-            </div>
-           </motion.button>
-          ))}
-         </AnimatePresence>
+         <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+           <button onClick={() => setStep(2)} className="p-1 text-[#3A332E]">
+            <ArrowLeft className="w-6 h-6" />
+           </button>
+           <h2 className="text-[24px] sm:text-[28px] font-extrabold text-[#3A332E] tracking-tight">Выбрать адрес</h2>
+          </div>
+          <button onClick={handleClose} className="p-1 text-gray-300 hover:text-[#3A332E] transition-colors hidden sm:block">
+           <X className="w-6 h-6" />
+          </button>
+         </div>
+
+         <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex-1 overflow-y-auto px-1 no-scrollbar space-y-3"
+         >
+          <AnimatePresence mode="popLayout">
+           {userStore.getSavedAddresses().map((addr, idx) => (
+            <motion.button
+             key={addr}
+             variants={itemVariants}
+             whileHover={{ scale: 1.01 }}
+             whileTap={{ scale: 0.99 }}
+             onClick={() => {
+              const details = parseAddress(addr);
+              setTempAddress(details.street);
+              setHouse(details.house);
+              setEntrance(details.entrance);
+              setFloor(details.floor);
+              setApartment(details.apartment);
+              updateAddress(addr, "delivery");
+              handleClose();
+             }}
+             className={cn(
+              "w-full px-6 py-5 rounded-[1.5rem] border transition-all flex items-center justify-between group",
+              address === addr ? "border-[#CF8F73] bg-[#CF8F73]/5 shadow-sm" : "border-gray-100 bg-white hover:border-gray-200"
+             )}
+            >
+             <div className="flex flex-col items-start gap-1 flex-1 min-w-0 mr-4">
+              <span className={cn(
+               "text-[16px] font-[800] transition-colors text-left truncate w-full",
+               address === addr ? "text-[#CF8F73]" : "text-[#3A332E]"
+              )}>{addr}</span>
+              <span className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">Москва</span>
+             </div>
+             <div className={cn(
+              "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
+              address === addr ? "border-[#CF8F73] bg-[#CF8F73]" : "border-gray-200"
+             )}>
+              {address === addr && <div className="w-2 h-2 rounded-full bg-white" />}
+             </div>
+            </motion.button>
+           ))}
+          </AnimatePresence>
+         </motion.div>
+
+         <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setStep(4)}
+          className="mt-6 w-full h-[64px] bg-[#CF8F73] text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 shrink-0"
+         >
+          Новый адрес
+         </motion.button>
         </motion.div>
-
-        <motion.button
-         whileHover={{ scale: 1.02 }}
-         whileTap={{ scale: 0.98 }}
-         onClick={() => setStep(3)}
-         className="mt-6 w-full h-[64px] bg-[#CF8F73] text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 shrink-0"
-        >
-         Новый адрес
-        </motion.button>
-       </motion.div>
-      )}
+       )}
 
 
-      {step === 2 && deliveryType === "pickup" && (
-       <motion.div
-        key="step2-pickup"
+       {step === 3 && deliveryType === "pickup" && (
+        <motion.div
+         key="step3-pickup"
         variants={stepVariants}
         initial="initial"
         animate="animate"
@@ -465,7 +546,7 @@ export default function AddressModal() {
          <div className={cn("flex-col h-full", isEditingAddress ? "flex" : "hidden sm:flex")}>
           <div className="flex items-center justify-between mb-5 sm:mb-8 shrink-0">
            <div className="flex items-center gap-4">
-            <button onClick={() => { if (isEditingAddress && window.innerWidth < 640) { setIsEditingAddress(false) } else { setStep(1) } }} className="p-1 text-[#3A332E]">
+            <button onClick={() => { if (isEditingAddress && window.innerWidth < 640) { setIsEditingAddress(false) } else { setStep(2) } }} className="p-1 text-[#3A332E]">
              <ArrowLeft className="w-6 h-6" />
             </button>
             <h2 className="text-[22px] sm:text-[24px] font-bold text-[#3A332E] tracking-tight">Точка самовывоза</h2>
@@ -501,7 +582,6 @@ export default function AddressModal() {
             ))}
            </AnimatePresence>
           </motion.div>
-
           <button onClick={handleSavePickup} disabled={!selectedPickup} className="mt-6 w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0">
            {isEditingAddress && window.innerWidth < 640 ? 'Готово' : 'Всё верно'}
           </button>
@@ -510,10 +590,11 @@ export default function AddressModal() {
        </motion.div>
       )}
 
-      {/* ───── STEP 3: Delivery Details ───── */}
-      {step === 3 && deliveryType === "delivery" && (
-       <motion.div
-        key="step3-delivery"
+
+       {/* ───── STEP 4: Delivery Details ───── */}
+       {step === 4 && deliveryType === "delivery" && (
+        <motion.div
+         key="step4-delivery"
         variants={stepVariants}
         initial="initial"
         animate="animate"
@@ -589,7 +670,7 @@ export default function AddressModal() {
          <div className={cn("flex-col h-full", isEditingAddress ? "flex" : "hidden sm:flex")}>
           <div className="flex items-center justify-between mb-6 sm:mb-8 shrink-0">
            <div className="flex items-center gap-4">
-            <button onClick={() => { if (isEditingAddress && window.innerWidth < 640) { setIsEditingAddress(false) } else { setStep(1) } }} className="p-1 text-[#3A332E]">
+             <button onClick={() => { if (isEditingAddress && window.innerWidth < 640) { setIsEditingAddress(false) } else { setStep(2) } }} className="p-1 text-[#3A332E]">
              <ArrowLeft className="w-6 h-6" />
             </button>
             <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#3A332E] tracking-tight">Введите адрес</h2>

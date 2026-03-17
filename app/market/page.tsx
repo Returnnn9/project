@@ -168,9 +168,9 @@ export default function Home() {
          animate={{ opacity: [0, 0.4, 0] }}
          transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
         />
-        <div className="flex items-center gap-3 relative z-10">
-         <div className="relative">
-          <ShoppingCart className="w-6 h-6" />
+        <div className="flex items-center gap-2 sm:gap-3 relative z-10 min-w-0">
+         <div className="relative shrink-0">
+          <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
           <motion.div
            initial={{ scale: 0 }}
            animate={{ scale: 1 }}
@@ -180,9 +180,9 @@ export default function Home() {
            {cart.reduce((sum, item) => sum + item.quantity, 0)}
           </motion.div>
          </div>
-         <span className="font-bold text-[17px]">В корзину</span>
+         <span className="font-bold text-[15px] sm:text-[17px] truncate">В корзину</span>
         </div>
-        <span className="font-black text-[18px] relative z-10">
+        <span className="font-black text-[16px] sm:text-[18px] relative z-10 shrink-0 ml-2">
          {cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString("ru-RU")} ₽
         </span>
        </motion.button>

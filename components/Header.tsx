@@ -50,14 +50,14 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
        onClick={() => setAddressModalOpen(true)}
        className="flex flex-col items-start text-left group transition-opacity hover:opacity-80"
       >
-       <span className="text-[13px] sm:text-[14px] font-[800] text-[#3A332E] leading-tight mb-0.5 sm:mb-1 uppercase tracking-tight">
+       <span className="text-[11px] sm:text-[13px] font-[900] text-[#3A332E] leading-none mb-0.5 sm:mb-1 uppercase tracking-tight">
         {deliveryType === "pickup" ? "Самовывоз" : (deliveryType === "delivery" ? "Доставка на дом" : "Способ получения")}
        </span>
        <div className="flex items-center gap-1 sm:gap-1.5">
-        <span className="text-[14px] sm:text-[15px] font-[500] text-[#3A332E]/70 max-w-[140px] xs:max-w-[180px] sm:max-w-[240px] md:max-w-[320px] truncate">
+        <span className="text-[13px] sm:text-[15px] font-[300] text-[#3A332E]/50 max-w-[140px] xs:max-w-[190px] sm:max-w-[260px] md:max-w-[340px] truncate tracking-tight leading-tight">
          {address || "Нажмите, чтобы выбрать"}
         </span>
-        <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#3A332E]/40 group-hover:text-smusl-terracotta transition-colors" />
+        <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-[#3A332E]/30 group-hover:text-smusl-terracotta transition-colors" />
        </div>
       </button>
 
