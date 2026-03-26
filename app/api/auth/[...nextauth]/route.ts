@@ -5,6 +5,15 @@ import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { verifyOtp } from "@/lib/otp-store";
+
+// Normalize Russian phone to 7XXXXXXXXXX
+function normalizePhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 11 && (digits.startsWith('7') || digits.startsWith('8'))) return '7' + digits.slice(1);
+  if (digits.length === 10 && digits.startsWith('9')) return '7' + digits;
+  return digits;
+}
 
 export const authOptions: AuthOptions = {
  adapter: PrismaAdapter(prisma) as any,
@@ -17,6 +26,8 @@ export const authOptions: AuthOptions = {
    clientId: process.env.APPLE_ID || "placeholder",
    clientSecret: process.env.APPLE_SECRET || "placeholder",
   }),
+
+  // ── Legacy credentials (admin only) ─────────────────────
   CredentialsProvider({
    name: "credentials",
    credentials: {
@@ -133,6 +144,74 @@ export const authOptions: AuthOptions = {
     };
    },
   }),
+
+  // ── Phone OTP Provider ──────────────────────────────────
+  // Flow: user enters phone → receives SMS code → enters code here
+  // Works for both new and returning users (phone = unique identifier)
+  CredentialsProvider({
+   id: 'phone-otp',
+   name: 'Phone OTP',
+   credentials: {
+    phone: { label: 'Phone', type: 'text' },
+    code:  { label: 'Code',  type: 'text' },
+    name:  { label: 'Name',  type: 'text' },
+   },
+   async authorize(credentials) {
+    if (!credentials?.phone || !credentials?.code) {
+     throw new Error('Укажите номер и код');
+    }
+
+    const phone = normalizePhone(credentials.phone);
+    const result = verifyOtp(phone, credentials.code);
+
+    if (!result.ok) {
+     const msgs: Record<string, string> = {
+      not_found:       'Код не найден. Запросите новый.',
+      expired:         'Код устарел. Запросите новый.',
+      incorrect:       'Неверный код',
+      too_many_attempts: 'Слишком много попыток. Запросите новый код.',
+     };
+     throw new Error(msgs[result.reason] || 'Ошибка подтверждения');
+    }
+
+    // OTP valid — find or create user in the database
+    const syntheticEmail = `${phone}@sms.local`;
+    let user;
+
+    try {
+     user = await prisma.user.findUnique({
+      where: { email: syntheticEmail }
+     });
+
+     if (!user) {
+      user = await prisma.user.create({
+       data: {
+        email: syntheticEmail,
+        name: credentials?.name?.trim() || phone,
+        role: 'USER'
+       }
+      });
+     }
+    } catch (e) {
+     console.error("Database error creating OTP user:", e);
+     // Fallback to in-memory pseudo-user if DB is completely down
+     user = {
+      id: `fallback:${phone}`,
+      email: syntheticEmail,
+      name: credentials?.name?.trim() || phone,
+      role: 'USER'
+     };
+    }
+
+    return {
+     id: user.id,
+     phone,
+     name: user.name,
+     email: user.email,
+     role: user.role,
+    };
+   },
+  }),
  ],
  session: {
   strategy: "jwt",
@@ -145,23 +224,37 @@ export const authOptions: AuthOptions = {
  callbacks: {
   async jwt({ token, user, trigger, session }) {
    if (user) {
-    token.role = (user as any).role;
-    token.twoFactorEnabled = (user as any).twoFactorEnabled;
+    token.role = (user as any).role ?? 'USER';
+    token.twoFactorEnabled = (user as any).twoFactorEnabled ?? false;
+    // ← forward phone for OTP-authenticated users
+    if ((user as any).phone) {
+     token.phone = (user as any).phone;
+    }
    }
 
-   // Support dynamic updates (e.g. after enabling 2FA)
+   // Support dynamic updates (e.g. profile edits, 2FA toggle)
    if (trigger === "update" && session) {
-    token.role = session.role ?? token.role;
-    token.twoFactorEnabled = session.twoFactorEnabled ?? token.twoFactorEnabled;
+    if (session.role  !== undefined) token.role  = session.role;
+    if (session.twoFactorEnabled !== undefined) token.twoFactorEnabled = session.twoFactorEnabled;
+    if (session.phone !== undefined) token.phone = session.phone;
+    if (session.name  !== undefined) token.name  = session.name;
    }
 
    return token;
   },
   async session({ session, token }) {
    if (session.user) {
-    (session.user as any).id = token.sub;
-    (session.user as any).role = token.role;
-    (session.user as any).twoFactorEnabled = token.twoFactorEnabled;
+    (session.user as any).id   = token.sub;
+    (session.user as any).role = token.role ?? 'USER';
+    (session.user as any).twoFactorEnabled = token.twoFactorEnabled ?? false;
+    // ← expose phone in session for components that need it
+    if (token.phone) {
+     (session.user as any).phone = token.phone;
+     // Use phone as display name if no real name is set
+     if (!session.user.name || session.user.name === token.phone) {
+      session.user.name = String(token.phone);
+     }
+    }
    }
    return session;
   },

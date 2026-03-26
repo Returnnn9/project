@@ -130,6 +130,8 @@ export class UserStore extends EventEmitter {
    total,
    date: new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }),
    address: this.address,
+   userName: this.userName || undefined,
+   userPhone: this.userPhone || undefined,
   };
 
   this.orderHistory = [order, ...this.orderHistory];
@@ -139,7 +141,7 @@ export class UserStore extends EventEmitter {
    ...this.notifications,
   ];
 
-  // Persist order globally to backend
+  // Persist order globally to backend (includes userName & userPhone for SMS + admin panel)
   if (typeof window !== "undefined") {
    fetch('/api/orders', {
     method: 'POST',

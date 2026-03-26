@@ -3,9 +3,7 @@ import { Manrope, Great_Vibes, Montserrat } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/store/StoreProvider";
 import { Providers } from "@/components/Providers";
-import dynamic from "next/dynamic";
-const LoginModal = dynamic(() => import("@/components/LoginModal"));
-const AddressModal = dynamic(() => import("@/components/AddressModal"));
+import GlobalModals from "@/components/GlobalModals";
 
 const manrope = Manrope({
  subsets: ["latin", "cyrillic"],
@@ -72,8 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <Providers>
      <StoreProvider>
       {children}
-      <LoginModal />
-      <AddressModal />
+      <GlobalModals />
      </StoreProvider>
     </Providers>
    </body>

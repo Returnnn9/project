@@ -66,8 +66,6 @@ const stepVariants: any = {
  }
 }
 
-
-
 export default function AddressModal() {
  const uiStore = useUIStore()
  const userStore = useUserStore()
@@ -740,8 +738,7 @@ export default function AddressModal() {
             </AnimatePresence>
            </div>
 
-           {/* Details Grid removed */}
-          </div>
+           </div>
 
           <button onClick={handleSaveDelivery} disabled={!tempAddress} className="mt-auto w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0">
            {isEditingAddress && window.innerWidth < 640 ? 'Готово' : 'Всё верно'}

@@ -165,8 +165,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
     )}
    </div>
 
-   {
-    cart.length > 0 && (
+    {cart.length > 0 && (
      <div className="mt-6 space-y-5 shrink-0">
       <div className="flex items-end justify-between px-2">
        <span className="text-[14px] font-[900] text-[#8D8681] uppercase tracking-[0.2em] pb-1">итого</span>

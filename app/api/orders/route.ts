@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { Order } from '@/store/types';
+import { sendSms, buildOrderSms } from '@/lib/alfasms';
 
 const dataFile = path.join(process.cwd(), 'data/orders.json');
 
@@ -32,8 +33,8 @@ export async function POST(req: Request) {
     const newOrder: Order = await req.json();
 
     // Basic validation
-    if (!newOrder.items || !newOrder.address || !newOrder.total) {
-      return NextResponse.json({ error: 'Missing required fields: items, address, or total' }, { status: 400 });
+    if (!newOrder.items || !newOrder.total) {
+      return NextResponse.json({ error: 'Missing required fields: items or total' }, { status: 400 });
     }
 
     const data = await fs.readFile(dataFile, 'utf-8');
@@ -43,6 +44,20 @@ export async function POST(req: Request) {
     orders.unshift(newOrder);
 
     await fs.writeFile(dataFile, JSON.stringify(orders, null, 2));
+
+    // Send SMS confirmation to customer (fire-and-forget — order save is never blocked)
+    if (newOrder.userPhone) {
+      const smsText = buildOrderSms({
+        orderId: newOrder.id,
+        userName: newOrder.userName || 'Клиент',
+        total: newOrder.total,
+        address: newOrder.address || '',
+        itemCount: newOrder.items.length,
+      });
+      sendSms(newOrder.userPhone, smsText).catch(err =>
+        console.error('[AlfaSMS] Unhandled SMS error:', err)
+      );
+    }
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error) {

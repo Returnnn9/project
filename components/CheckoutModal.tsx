@@ -67,8 +67,6 @@ const stepVariants: any = {
  }
 }
 
-
-
 export default function CheckoutModal() {
  const uiStore = useUIStore()
  const userStore = useUserStore()
@@ -727,8 +725,7 @@ export default function CheckoutModal() {
             )}
            </div>
 
-           {/* Details Grid removed */}
-          </motion.div>
+           </motion.div>
 
           <button
            onClick={() => {

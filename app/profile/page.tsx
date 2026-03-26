@@ -153,9 +153,15 @@ export default function ProfilePage() {
   }
  }, [])
 
- const displayName = isAuthenticated ? (session?.user?.name || "Пользователь") : "Гость"
- const isLoading = isLoadingSession || (isPageLoading && !isAuthenticated)
- const favoriteProducts = products.filter((p: any) => favorites.includes(p.id))
+  let displayName = isAuthenticated ? (session?.user?.name || "Пользователь") : "Гость";
+  const localName = userStore.getUserName();
+  if (isAuthenticated && displayName && /^[\d\s\-\+\(\)]+$/.test(displayName)) {
+    displayName = localName || "Пользователь";
+  } else if (isAuthenticated && localName && localName !== displayName && !/^[\d\s\-\+\(\)]+$/.test(localName)) {
+    displayName = localName;
+  }
+  const isLoading = isLoadingSession || (isPageLoading && !isAuthenticated)
+  const favoriteProducts = products.filter((p: Product) => favorites.includes(p.id))
  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
  const handleLogout = async () => {
