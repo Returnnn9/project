@@ -130,8 +130,10 @@ const LoginModal: React.FC = () => {
   };
 
   const phoneDigits = rawDigits(phone);
+  const ADMIN_PHONE = '79222222222';
+  const isAdmin = phoneDigits === ADMIN_PHONE;
   const isPhoneValid = phoneDigits.length === 11;
-  const isOtpComplete = otp.length === 4;
+  const isOtpComplete = isAdmin ? otp.length >= 4 : otp.length === 4;
 
   /* ── Step 1: send OTP ── */
   const handleSend = async () => {
@@ -141,6 +143,13 @@ const LoginModal: React.FC = () => {
       return;
     }
     setError("");
+    
+    if (isAdmin) {
+      setOtp("");
+      setStep("code");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await fetch("/api/auth/otp/send", {
@@ -201,13 +210,13 @@ const LoginModal: React.FC = () => {
     }
   };
 
-  /* Auto-verify when all 4 digits entered */
+  /* Auto-verify when all 4 digits entered (Skip for admin password) */
   useEffect(() => {
-    if (isOtpComplete && step === "code") {
+    if (!isAdmin && isOtpComplete && step === "code") {
       handleVerify();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [otp]);
+  }, [otp, isAdmin]);
 
   if (!isAuthModalOpen) return null;
 
@@ -429,15 +438,34 @@ const LoginModal: React.FC = () => {
                 </button>
 
                 <motion.h2 initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="text-[28px] sm:text-[32px] font-[900] text-[#3A332E] text-center mb-2 tracking-tight">
-                  Введите код
+                  {isAdmin ? "Вход для админа" : "Введите код"}
                 </motion.h2>
                 <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-[#3A332E]/50 text-[15px] text-center mb-8 font-medium leading-snug">
-                  Отправили SMS на{" "}
-                  <span className="text-[#3A332E] font-bold">{phone}</span>
+                  {isAdmin ? (
+                    <>Введите секретный пароль для <span className="text-[#3A332E] font-bold">{phone}</span></>
+                  ) : (
+                    <>Отправили SMS на <span className="text-[#3A332E] font-bold">{phone}</span></>
+                  )}
                 </motion.p>
 
                 <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-                  <OtpBoxes value={otp} onChange={setOtp} />
+                  {isAdmin ? (
+                    <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-4 flex items-center gap-3 border-2 border-transparent focus-within:border-[#CF8F73]/40 focus-within:bg-white transition-all shadow-sm">
+                      <input
+                        type="password"
+                        value={otp}
+                        placeholder="Пароль администратора"
+                        autoFocus
+                        onChange={(e) => setOtp(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && isOtpComplete) handleVerify();
+                        }}
+                        className="bg-transparent border-none outline-none text-[17px] font-bold text-[#3A332E] placeholder:text-[#3A332E]/25 w-full text-center tracking-[0.3em]"
+                      />
+                    </div>
+                  ) : (
+                    <OtpBoxes value={otp} onChange={setOtp} />
+                  )}
                 </motion.div>
 
                 {error && (
@@ -469,21 +497,23 @@ const LoginModal: React.FC = () => {
                   )}
                 </motion.button>
 
-                {/* Resend */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-5 text-center text-[13px] font-medium">
-                  {remaining > 0 ? (
-                    <span className="text-[#3A332E]/30">
-                      Повторить через {remaining} сек.
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => { setOtp(""); handleSend(); }}
-                      className="text-[#CF8F73] hover:underline font-bold"
-                    >
-                      Отправить код повторно
-                    </button>
-                  )}
-                </motion.div>
+                {/* Resend (Only for non-admin) */}
+                {!isAdmin && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-5 text-center text-[13px] font-medium">
+                    {remaining > 0 ? (
+                      <span className="text-[#3A332E]/30">
+                        Повторить через {remaining} сек.
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => { setOtp(""); handleSend(); }}
+                        className="text-[#CF8F73] hover:underline font-bold"
+                      >
+                        Отправить код повторно
+                      </button>
+                    )}
+                  </motion.div>
+                )}
               </motion.div>
             )}
 
