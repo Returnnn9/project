@@ -43,12 +43,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const code = createOtp(normalized);
+    const code = await createOtp(normalized);
     lastSent.set(normalized, now);
 
-    // Bypass AlfaSMS for test numbers (e.g., ending in 0000)
-    // Makes development unblocked when API is down or key is bad
-    if (normalized.endsWith('0000')) {
+    // Bypass AlfaSMS for test numbers ONLY in development (ends in 0000)
+    if (process.env.NODE_ENV !== 'production' && normalized.endsWith('0000')) {
       console.log(`[OTP] Bypass SMS for test number ${normalized}. Code: ${code}`);
       return NextResponse.json({ ok: true, dev: true });
     }

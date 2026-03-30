@@ -9,10 +9,10 @@ import { verifyOtp } from "@/lib/otp-store";
 
 // Normalize Russian phone to 7XXXXXXXXXX
 function normalizePhone(raw: string): string {
-  const digits = raw.replace(/\D/g, '');
-  if (digits.length === 11 && (digits.startsWith('7') || digits.startsWith('8'))) return '7' + digits.slice(1);
-  if (digits.length === 10 && digits.startsWith('9')) return '7' + digits;
-  return digits;
+ const digits = raw.replace(/\D/g, '');
+ if (digits.length === 11 && (digits.startsWith('7') || digits.startsWith('8'))) return '7' + digits.slice(1);
+ if (digits.length === 10 && digits.startsWith('9')) return '7' + digits;
+ return digits;
 }
 
 export const authOptions: AuthOptions = {
@@ -144,17 +144,13 @@ export const authOptions: AuthOptions = {
     };
    },
   }),
-
-  // ── Phone OTP Provider ──────────────────────────────────
-  // Flow: user enters phone → receives SMS code → enters code here
-  // Works for both new and returning users (phone = unique identifier)
   CredentialsProvider({
    id: 'phone-otp',
    name: 'Phone OTP',
    credentials: {
     phone: { label: 'Phone', type: 'text' },
-    code:  { label: 'Code',  type: 'text' },
-    name:  { label: 'Name',  type: 'text' },
+    code: { label: 'Code', type: 'text' },
+    name: { label: 'Name', type: 'text' },
    },
    async authorize(credentials) {
     if (!credentials?.phone || !credentials?.code) {
@@ -162,19 +158,19 @@ export const authOptions: AuthOptions = {
     }
 
     const phone = normalizePhone(credentials.phone);
-    const result = verifyOtp(phone, credentials.code);
+    const result = await verifyOtp(phone, credentials.code);
 
     if (!result.ok) {
      const msgs: Record<string, string> = {
-      not_found:       'Код не найден. Запросите новый.',
-      expired:         'Код устарел. Запросите новый.',
-      incorrect:       'Неверный код',
+      not_found: 'Код не найден. Запросите новый.',
+      expired: 'Код устарел. Запросите новый.',
+      incorrect: 'Неверный код',
       too_many_attempts: 'Слишком много попыток. Запросите новый код.',
      };
      throw new Error(msgs[result.reason] || 'Ошибка подтверждения');
     }
 
-    // OTP valid — find or create user in the database
+
     const syntheticEmail = `${phone}@sms.local`;
     let user;
 
@@ -234,22 +230,22 @@ export const authOptions: AuthOptions = {
 
    // Support dynamic updates (e.g. profile edits, 2FA toggle)
    if (trigger === "update" && session) {
-    if (session.role  !== undefined) token.role  = session.role;
+    if (session.role !== undefined) token.role = session.role;
     if (session.twoFactorEnabled !== undefined) token.twoFactorEnabled = session.twoFactorEnabled;
     if (session.phone !== undefined) token.phone = session.phone;
-    if (session.name  !== undefined) token.name  = session.name;
+    if (session.name !== undefined) token.name = session.name;
    }
 
    return token;
   },
   async session({ session, token }) {
    if (session.user) {
-    (session.user as any).id   = token.sub;
-    (session.user as any).role = token.role ?? 'USER';
-    (session.user as any).twoFactorEnabled = token.twoFactorEnabled ?? false;
+    session.user.id = token.sub as string;
+    session.user.role = token.role ?? 'USER';
+    session.user.twoFactorEnabled = token.twoFactorEnabled ?? false;
     // ← expose phone in session for components that need it
     if (token.phone) {
-     (session.user as any).phone = token.phone;
+     session.user.phone = token.phone;
      // Use phone as display name if no real name is set
      if (!session.user.name || session.user.name === token.phone) {
       session.user.name = String(token.phone);

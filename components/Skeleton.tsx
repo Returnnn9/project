@@ -21,8 +21,6 @@ export const ProductCardSkeleton = () => (
      </div>
      <Skeleton className="h-4 xs:h-[18px] sm:h-[18px] xl:h-[22px] w-20 bg-[#F0EAE4] rounded-[4px] mt-1" />
     </div>
-
-    {/* Row 2: Weight & Stock */}
     <div className="flex items-center justify-between mt-1">
      <Skeleton className="h-3 xs:h-3.5 sm:h-3.5 xl:h-4 w-8 bg-[#F0EAE4] rounded-[4px]" />
      <Skeleton className="h-3 xs:h-3.5 sm:h-[13px] xl:h-4 w-20 bg-[#F0EAE4] rounded-[4px]" />

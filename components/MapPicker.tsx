@@ -38,11 +38,35 @@ interface Suggestion {
  };
 }
 
+interface MapGLInstance {
+ center: [number, number];
+ setCenter(center: [number, number]): void;
+ getCenter(): [number, number];
+ setZoom(zoom: number): void;
+ getZoom(): number;
+ on(event: string, handler: () => void): void;
+ destroy(): void;
+}
+
 declare global {
  interface Window {
-  mapgl: any;
+  mapgl: {
+   Map: new (container: HTMLElement, options: {
+    center: [number, number];
+    zoom: number;
+    key: string;
+    zoomControl?: boolean;
+    drag?: boolean;
+    scrollZoom?: boolean;
+    doubleClickZoom?: boolean;
+    touchZoom?: boolean;
+    disableClickZoom?: boolean;
+   }) => MapGLInstance;
+  };
  }
 }
+
+const API_KEY = process.env.NEXT_PUBLIC_2GIS_API_KEY ?? "";
 
 export default function MapPicker({
  initialAddress,
@@ -55,13 +79,12 @@ export default function MapPicker({
  externalCoords,
  interactive = true,
 }: MapPickerProps) {
- const API_KEY = process.env.NEXT_PUBLIC_2GIS_API_KEY || "";
 
  const [isLoaded, setIsLoaded] = useState(false);
  const [error, setError] = useState<string | null>(null);
 
  const mapRef = useRef<HTMLDivElement>(null);
- const mapInstance = useRef<any>(null);
+ const mapInstance = useRef<MapGLInstance | null>(null);
  const lastReportedCoords = useRef<[number, number] | null>(null);
 
  const [searchQuery, setSearchQuery] = useState(initialAddress || "");
@@ -74,6 +97,13 @@ export default function MapPicker({
  const inputRef = useRef<HTMLInputElement>(null);
  const suggestRef = useRef<HTMLDivElement>(null);
  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+ // Cleanup debounce timer on unmount
+ useEffect(() => {
+  return () => {
+   if (debounceRef.current) clearTimeout(debounceRef.current);
+  };
+ }, []);
 
  // Sync callbacks to refs to prevent map re-initialization on parent render
  const onAddressSelectRef = useRef(onAddressSelect);
@@ -122,7 +152,7 @@ export default function MapPicker({
  const updateMapLocationRef = useRef((coords: [number, number], doReverse = true) => {
   if (!mapInstance.current) return;
 
-  const center = [coords[1], coords[0]];
+  const center: [number, number] = [coords[1], coords[0]];
 
   if (!doReverse) {
    isProgrammatic.current = true;
@@ -173,7 +203,7 @@ export default function MapPicker({
 
   try {
    const initialCoords: [number, number] = externalCoords || [55.7558, 37.6173];
-   const center = [initialCoords[1], initialCoords[0]];
+   const center: [number, number] = [initialCoords[1], initialCoords[0]];
 
    const map = new window.mapgl.Map(mapRef.current, {
     center: center,
@@ -197,7 +227,7 @@ export default function MapPicker({
     setIsMoving(false);
     if (!isProgrammatic.current) {
      const newCenter = map.getCenter();
-     reverseGeocodeRef.current([newCenter[1], newCenter[0]]);
+     reverseGeocodeRef.current([newCenter[1], newCenter[0]] as [number, number]);
     }
    });
 
@@ -236,7 +266,7 @@ export default function MapPicker({
 
    if (deltaLat > 0.0001 || deltaLon > 0.0001) {
     isProgrammatic.current = true;
-    const center = [externalCoords[1], externalCoords[0]];
+    const center = [externalCoords[1], externalCoords[0]] as [number, number];
     mapInstance.current.setCenter(center);
     setTimeout(() => { isProgrammatic.current = false }, 500);
    }
@@ -341,9 +371,9 @@ export default function MapPicker({
        ref={suggestRef}
        className="bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
       >
-       {suggestions.map((s, idx) => (
+       {suggestions.map((s) => (
         <button
-         key={idx}
+         key={`${s.lat}-${s.lon}-${s.display_name}`}
          onClick={() => {
           handleAddressSelect({
            full: s.display_name,

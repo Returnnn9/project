@@ -42,7 +42,10 @@ export class RootStore {
     const hasSetAddress = hasSetAddressStr === "true";
 
     const rawSaved = localStorage.getItem("smuslest_saved_addresses") || getCookie("smuslest_saved_addresses");
-    const savedAddresses = this.safeParseJSONStatic<string[]>(rawSaved || "[]") || [];
+    let savedAddresses: string[] = [];
+    try {
+      savedAddresses = JSON.parse(rawSaved || "[]");
+    } catch {}
 
     this.userStore.init({
       favorites,
@@ -57,14 +60,6 @@ export class RootStore {
 
     if (!hasSetAddress) {
       this.uiStore.setAddressModalOpen(true);
-    }
-  }
-
-  private safeParseJSONStatic<T>(str: string): T | null {
-    try {
-      return JSON.parse(str);
-    } catch {
-      return null;
     }
   }
 

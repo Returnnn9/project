@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DGIS_KEY = process.env.NEXT_PUBLIC_2GIS_API_KEY;
+const DGIS_KEY = process.env.DGIS_API_KEY_SERVER || process.env.NEXT_PUBLIC_2GIS_API_KEY;
 
 interface DGISAddressComponent {
   street?: string;

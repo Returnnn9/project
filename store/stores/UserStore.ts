@@ -5,15 +5,13 @@ import type { RootStore } from "./RootStore";
 export class UserStore extends EventEmitter {
  private root: RootStore;
 
- private balance: number = 1250;
- private activeOrders: number = 1;
+ private balance: number = 0;
+ private activeOrders: number = 0;
  private address: string = "";
  private deliveryType: "delivery" | "pickup" | null = null;
  private hasSetAddress: boolean = false;
 
- private notifications: Notification[] = [
-  { id: 1, message: "Заказ #4049 передан курьеру", read: false },
- ];
+ private notifications: Notification[] = [];
  private userName: string = "";
  private userPhone: string = "";
  private favorites: number[] = [];
@@ -121,7 +119,7 @@ export class UserStore extends EventEmitter {
   this.emitChange();
  }
 
- checkout(cartItems: CartItem[], total: number): boolean {
+ async checkout(cartItems: CartItem[], total: number): Promise<boolean> {
   if (cartItems.length === 0) return false;
 
   const order: Order = {
@@ -134,24 +132,41 @@ export class UserStore extends EventEmitter {
    userPhone: this.userPhone || undefined,
   };
 
+  // Optimistic update
+  const prevOrderHistory = this.orderHistory;
+  const prevActiveOrders = this.activeOrders;
+  const prevNotifications = this.notifications;
+
   this.orderHistory = [order, ...this.orderHistory];
   this.activeOrders += 1;
   this.notifications = [
    { id: Date.now(), message: `Заказ на сумму ${total} ₽ успешно оформлен`, read: false },
    ...this.notifications,
   ];
-
-  // Persist order globally to backend (includes userName & userPhone for SMS + admin panel)
-  if (typeof window !== "undefined") {
-   fetch('/api/orders', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(order)
-   }).catch(err => console.error("Failed to persist order globally:", err));
-  }
-
   this.saveOrders();
   this.emitChange();
+
+  // Persist to backend — rollback on failure
+  if (typeof window !== "undefined") {
+   try {
+    const res = await fetch('/api/orders', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify(order),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+   } catch (err) {
+    console.error("[UserStore] Failed to persist order, rolling back:", err);
+    // Rollback optimistic update
+    this.orderHistory = prevOrderHistory;
+    this.activeOrders = prevActiveOrders;
+    this.notifications = prevNotifications;
+    this.saveOrders();
+    this.emitChange();
+    return false;
+   }
+  }
+
   return true;
  }
 

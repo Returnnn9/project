@@ -382,7 +382,9 @@ export default function AddressModal() {
          </div>
 
          <div className="space-y-4">
-          <DeliveryTypeSelector onSelect={(type) => {
+          <DeliveryTypeSelector 
+            selectedType={deliveryType}
+            onSelect={(type) => {
            setDeliveryType(type);
            if (type === "delivery" && userStore.getSavedAddresses().length > 0) {
             setStep(3);

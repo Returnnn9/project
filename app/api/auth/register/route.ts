@@ -10,8 +10,8 @@ export async function POST(req: Request) {
    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  if (password.length < 4) {
-   return NextResponse.json({ error: "Пароль должен быть не менее 4 символов" }, { status: 400 });
+  if (password.length < 8) {
+   return NextResponse.json({ error: "Пароль должен быть не менее 8 символов" }, { status: 400 });
   }
 
   // 1. Attempt Check for existence in both DB and Local

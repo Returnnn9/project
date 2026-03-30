@@ -18,11 +18,13 @@ model User {
   sessions      Session[]
   role             String    @default("USER")
   twoFactorSecret  String?
-  twoFactorEnabled Boolean   @default(false)
-  loginAttempts    Int       @default(0)
-  lockUntil        DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  twoFactorEnabled   Boolean   @default(false)
+  twoFactorAttempts  Int       @default(0)
+  twoFactorLockUntil DateTime?
+  loginAttempts      Int       @default(0)
+  lockUntil          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model Account {
@@ -59,3 +61,27 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  code      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  total     Float
+  date      String
+  address   String
+  status    String   @default("new")
+  userName  String?
+  userPhone String?
+  items     String   // Stored as JSON string due to SQLite limitations
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

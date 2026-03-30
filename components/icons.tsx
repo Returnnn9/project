@@ -50,7 +50,7 @@ export const ClockIcon = ({ size = 18, className = "" }: IconProps) => (
 
 export const ChefHatIcon = ({ size = 18, className = "" }: IconProps) => (
  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-  <path d="M6 13.81A6 6 0 1 1 18 13.8Au6 6 0 0 1 6 13.81Z" />
+  <path d="M6 13.81A6 6 0 1 1 18 13.8A6 6 0 0 1 6 13.81Z" />
   <path d="M9 13v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-7" />
   <path d="M9 16h6" />
  </svg>
