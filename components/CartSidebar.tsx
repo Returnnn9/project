@@ -94,19 +94,18 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
           </div>
          )}
 
-         {/* Foreground Draggable Card */}
-         <motion.div
-          drag={isMobile ? "x" : false}
-          dragConstraints={{ left: -110, right: 0 }}
-          dragElastic={0.05}
-          onDragEnd={(e, { offset }) => {
-           if (offset.x < -70) {
-            updateQuantity(item.id, -item.quantity);
-           }
-          }}
-          className="bg-[#FCF5EF] border border-[#4A403A]/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-[2.5rem] p-3.5 flex gap-4 overflow-hidden relative z-10 w-full items-center active:bg-[#FDF8F4] transition-colors"
-         >
-          <div className="relative flex-shrink-0 w-[100px] h-[100px] rounded-[1.8rem] overflow-hidden bg-[#F5E6DA]/50 border border-[#4A403A]/5">
+          <motion.div
+           drag={isMobile ? "x" : false}
+           dragConstraints={{ left: -110, right: 0 }}
+           dragElastic={0.05}
+           onDragEnd={(e, { offset }) => {
+            if (offset.x < -70) {
+             updateQuantity(item.id, -item.quantity);
+            }
+           }}
+           className="bg-[#FCF5EF] border border-[#4A403A]/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-[2.5rem] p-3 flex gap-3 overflow-hidden relative z-10 w-full items-center active:bg-[#FDF8F4] transition-colors"
+          >
+           <div className="relative flex-shrink-0 w-[90px] h-[90px] rounded-[1.8rem] overflow-hidden bg-[#F5E6DA]/50 border border-[#4A403A]/5">
            {item.image && (
             <Image
              src={item.image}
@@ -119,44 +118,39 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
            )}
           </div>
 
-          {/* Details */}
-          <div className="flex-1 flex flex-col justify-between py-1.5 min-w-0 h-full">
-           <div>
-            <h4 className="text-[16px] font-black text-[#4A423D] leading-[1.2] mb-1 line-clamp-2">
-             {item.name}
-            </h4>
-
-           </div>
-
-           <div className="flex items-center justify-between mt-auto">
-            {/* Quantity Pill */}
-            <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full p-1 border border-[#4A423D]/5 shadow-sm">
-             <button
-              onClick={() => updateQuantity(item.id, -1)}
-              className="w-8 h-8 flex items-center justify-center text-[20px] font-medium text-[#4A423D] hover:text-[#CF8D72] transition-colors active:scale-75"
-             >−</button>
-             <span className="w-6 text-center text-[14px] font-black text-[#4A423D]">
-              {item.quantity}
-             </span>
-             <button
-              onClick={() => updateQuantity(item.id, 1)}
-              className="w-8 h-8 flex items-center justify-center text-[20px] font-medium text-[#4A423D] hover:text-[#CF8D72] transition-colors active:scale-75"
-             >+</button>
-            </div>
-
-            {/* Price */}
-            <div className="text-right pr-2">
+           {/* Details */}
+           <div className="flex-1 flex flex-col justify-between py-1 min-w-0 h-full">
+            <div className="flex items-start justify-between gap-2">
+             <h4 className="text-[15px] font-black text-[#4A423D] leading-[1.2] line-clamp-2 flex-1">
+              {item.name}
+             </h4>
              <motion.span
-              key={item.quantity}
-              initial={{ scale: 0.95, opacity: 0.8 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="block text-[17px] font-black text-[#4A423D] tracking-tighter"
-             >
-              {(item.price * item.quantity).toLocaleString("ru-RU")} ₽
+               key={item.quantity}
+               initial={{ scale: 0.95, opacity: 0.8 }}
+               animate={{ scale: 1, opacity: 1 }}
+               className="text-[16px] font-black text-[#4A423D] tracking-tighter shrink-0 pt-0.5"
+              >
+               {(item.price * item.quantity).toLocaleString("ru-RU")} ₽
              </motion.span>
             </div>
+
+            <div className="flex items-center justify-start mt-auto">
+             {/* Quantity Pill */}
+             <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full p-0.5 border border-[#4A423D]/5 shadow-sm">
+              <button
+               onClick={() => updateQuantity(item.id, -1)}
+               className="w-7 h-7 flex items-center justify-center text-[18px] font-medium text-[#4A423D] hover:text-[#CF8D72] transition-colors active:scale-75"
+              >−</button>
+              <span className="w-5 text-center text-[13px] font-black text-[#4A423D]">
+               {item.quantity}
+              </span>
+              <button
+               onClick={() => updateQuantity(item.id, 1)}
+               className="w-7 h-7 flex items-center justify-center text-[18px] font-medium text-[#4A423D] hover:text-[#CF8D72] transition-colors active:scale-75"
+              >+</button>
+             </div>
+            </div>
            </div>
-          </div>
          </motion.div>
         </motion.div>
        ))}

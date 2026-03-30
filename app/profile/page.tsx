@@ -6,7 +6,7 @@ import Image from "next/image"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Clock, Heart, ShoppingBag, Minus, Plus, Trash2, LogOut, RotateCcw } from "lucide-react"
+import { ArrowLeft, Clock, Heart, ShoppingBag, Minus, Plus, Trash2, LogOut, RotateCcw, ArrowRight } from "lucide-react"
 import { Product, CartItem } from "@/store/types"
 import { useUIStore, useCartStore, useUserStore, useProductStore, useStoreData } from "@/store/hooks"
 import { useSession, signOut } from "next-auth/react"
@@ -409,13 +409,16 @@ export default function ProfilePage() {
            ))}
           </AnimatePresence>
          </div>
-         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between bg-[#FDFBF9] px-8 sm:px-12 py-10 sm:py-12 rounded-[3rem] shadow-xl shadow-[#D9C5B2]/10 gap-8 mt-8 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-smusl-terracotta/5 rounded-full blur-[80px] -mr-24 -mt-24" />
+         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between bg-white/70 backdrop-blur-xl px-10 sm:px-14 py-12 sm:py-14 rounded-[3.5rem] shadow-[0_20px_50px_rgba(205,139,112,0.1)] border border-white/60 gap-10 mt-12 relative overflow-hidden group hover:shadow-[0_25px_60px_rgba(205,139,112,0.15)] transition-all duration-500">
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#CD8B70]/10 rounded-full blur-[90px] -mr-32 -mt-32 transition-transform duration-700 group-hover:scale-110" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#CF8F73]/5 rounded-full blur-[70px] -ml-24 -mb-24" />
+          
           <div className="relative z-10 flex flex-col justify-center">
-           <span className="block text-[11px] font-bold text-[#4A403A]/20 uppercase tracking-[0.4em] mb-2 px-1">итого к оплате</span>
-           <div className="flex items-baseline gap-1 px-1">
-            <span className="text-[40px] sm:text-[56px] font-black text-[#4A403A] leading-none tracking-tighter">{cartTotal.toLocaleString("ru-RU")}</span>
-            <span className="text-[20px] sm:text-[28px] font-medium text-[#4A403A] ml-1">₽</span>
+           <span className="block text-[11px] font-[800] text-[#4A403A]/30 uppercase tracking-[0.4em] mb-3 px-1">итого к оплате</span>
+           <div className="flex items-baseline gap-1.5 px-1 animate-in slide-in-from-left duration-700">
+            <span className="text-[48px] sm:text-[64px] font-black text-[#4A403A] leading-none tracking-tighter drop-shadow-sm font-manrope">{cartTotal.toLocaleString("ru-RU")}</span>
+            <span className="text-[24px] sm:text-[32px] font-bold text-[#CD8B70] ml-1">₽</span>
            </div>
           </div>
           <Link href="/market" className="relative z-10 text-center px-12 sm:px-16 py-6 sm:py-7 bg-[#CD8B70] text-white rounded-[2rem] text-[16px] sm:text-[18px] font-black uppercase tracking-[0.2em] hover:brightness-105 hover:scale-[1.02] transition-all shadow-2xl shadow-[#CD8B70]/30 active:scale-95">
