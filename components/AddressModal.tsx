@@ -42,6 +42,7 @@ export default function AddressModal() {
 
  // Expanded address fields
  const [house, setHouse] = useState('')
+ const [corpus, setCorpus] = useState('')
  const [entrance, setEntrance] = useState('')
  const [floor, setFloor] = useState('')
  const [apartment, setApartment] = useState('')
@@ -75,21 +76,32 @@ export default function AddressModal() {
    return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current) }
   }, [tempAddress, step, deliveryType, selectedCity, fetchSuggestions])
 
- const reset = () => {
+ const reset = useCallback(() => {
   setStep(1)
   setDeliveryType(null)
-  setTempAddress(address)
+  if (address) {
+   const d = parseAddress(address)
+   setTempAddress(d.street || address)
+   setHouse(d.house || '')
+   setCorpus(d.corpus || '')
+   setEntrance(d.entrance || '')
+   setFloor(d.floor || '')
+   setApartment(d.apartment || '')
+  } else {
+   setTempAddress('')
+   setHouse('')
+   setCorpus('')
+   setEntrance('')
+   setFloor('')
+   setApartment('')
+  }
   setSelectedPickup(null)
   setMapError(null)
   setSelectedCity('Москва')
   setShowCityDropdown(false)
   setSelectedCoords(null)
-  setHouse('')
-  setEntrance('')
-  setFloor('')
-  setApartment('')
-   setIsEditingAddress(false)
-  }
+  setIsEditingAddress(false)
+ }, [address])
 
   // Auto-focus for Phone field
   const phoneInputRef = useRef<HTMLInputElement>(null)
@@ -107,7 +119,7 @@ export default function AddressModal() {
   if (isAddressModalOpen) {
    reset()
   }
- }, [isAddressModalOpen])
+ }, [isAddressModalOpen, reset])
 
  const handleGeolocate = () => {
   geolocate((addr, coords, matchedCity) => {
@@ -127,6 +139,7 @@ export default function AddressModal() {
    const fullAddress = formatAddress({
     street: tempAddress,
     house,
+    corpus,
     entrance,
     floor,
     apartment
@@ -179,6 +192,7 @@ export default function AddressModal() {
 
   setTempAddress(cleanAddr);
   setHouse(house);
+  setCorpus('');
   if (details.coords) {
    setSelectedCoords(details.coords);
   }
@@ -383,6 +397,7 @@ export default function AddressModal() {
               const details = parseAddress(addr);
               setTempAddress(details.street);
               setHouse(details.house);
+              setCorpus(details.corpus || '');
               setEntrance(details.entrance);
               setFloor(details.floor);
               setApartment(details.apartment);
@@ -415,7 +430,15 @@ export default function AddressModal() {
          <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => setStep(4)}
+          onClick={() => {
+           setTempAddress('');
+           setHouse('');
+           setCorpus('');
+           setEntrance('');
+           setFloor('');
+           setApartment('');
+           setStep(4);
+          }}
           className="mt-6 w-full h-[64px] bg-[#CF8F73] text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 shrink-0"
          >
           Новый адрес
@@ -616,7 +639,7 @@ export default function AddressModal() {
           </motion.div>
           <button
            onClick={handleSaveDelivery}
-           disabled={!tempAddress}
+           disabled={!tempAddress || !house || !entrance || !apartment}
            className="w-full h-[68px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mt-1"
           >
            Всё верно
@@ -669,6 +692,7 @@ export default function AddressModal() {
                  skipNextFetch.current = true;
                  setTempAddress(s.display_name);
                  setHouse((s.address as any)?.house_number || "");
+                 setCorpus("");
                  setSuggestions([]);
                  if (s.lat && s.lon) setSelectedCoords([parseFloat(s.lat), parseFloat(s.lon)]);
                  setIsEditingAddress(false);
@@ -684,12 +708,39 @@ export default function AddressModal() {
                ))}
               </motion.div>
              )}
-            </AnimatePresence>
-           </div>
+             </AnimatePresence>
+            </div>
+
+            <div className="flex flex-col gap-4 mt-2 pb-4">
+             <div className="flex gap-4">
+              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3 focus-within:border-gray-300 border border-transparent">
+               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Дом *</span>
+               <input type="text" value={house} onChange={(e) => setHouse(e.target.value)} placeholder="1" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
+              </div>
+              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3 focus-within:border-gray-300 border border-transparent">
+               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Корпус</span>
+               <input type="text" value={corpus} onChange={(e) => setCorpus(e.target.value)} placeholder="А" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
+              </div>
+             </div>
+             <div className="flex gap-3">
+              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent">
+               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Подъезд *</span>
+               <input type="text" value={entrance} onChange={(e) => setEntrance(e.target.value)} placeholder="1" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
+              </div>
+              <div className="flex-[0.8] bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent">
+               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Этаж</span>
+               <input type="text" value={floor} onChange={(e) => setFloor(e.target.value)} placeholder="0" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
+              </div>
+              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent">
+               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Кв. *</span>
+               <input type="text" value={apartment} onChange={(e) => setApartment(e.target.value)} placeholder="10" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
+              </div>
+             </div>
+            </div>
 
            </div>
 
-          <button onClick={handleSaveDelivery} disabled={!tempAddress} className="mt-auto w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0">
+          <button onClick={handleSaveDelivery} disabled={!tempAddress || !house || !entrance || !apartment} className="mt-auto w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0">
            {isEditingAddress && window.innerWidth < 640 ? 'Готово' : 'Всё верно'}
           </button>
          </div>

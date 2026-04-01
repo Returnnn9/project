@@ -3,6 +3,7 @@
 export interface AddressDetails {
   street: string;
   house: string;
+  corpus: string;
   entrance: string;
   floor: string;
   apartment: string;
@@ -14,6 +15,7 @@ export function parseAddress(fullAddress: string): AddressDetails {
   const details: AddressDetails = {
     street: '',
     house: '',
+    corpus: '',
     entrance: '',
     floor: '',
     apartment: ''
@@ -25,6 +27,7 @@ export function parseAddress(fullAddress: string): AddressDetails {
     parts.slice(1).forEach(part => {
       const p = part.toLowerCase();
       if (p.startsWith('д.')) details.house = part.replace(/^д\.\s*/i, '').trim();
+      else if (p.startsWith('корп.')) details.corpus = part.replace(/^корп\.\s*/i, '').trim();
       else if (p.startsWith('под.')) details.entrance = part.replace(/^под\.\s*/i, '').trim();
       else if (p.startsWith('эт.')) details.floor = part.replace(/^эт\.\s*/i, '').trim();
       else if (p.startsWith('кв.')) details.apartment = part.replace(/^кв\.\s*/i, '').trim();
@@ -40,6 +43,7 @@ export function formatAddress(details: Partial<AddressDetails> & { street: strin
   const parts = [
     details.street,
     details.house && `д. ${details.house}`,
+    details.corpus && `корп. ${details.corpus}`,
     details.entrance && `под. ${details.entrance}`,
     details.floor && `эт. ${details.floor}`,
     details.apartment && `кв. ${details.apartment}`
