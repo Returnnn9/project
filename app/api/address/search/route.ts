@@ -28,21 +28,20 @@ export async function GET(req: NextRequest) {
   const config = CITY_CONFIG[city] ?? CITY_CONFIG['Москва'];
 
   try {
-    // 1. 2GIS Suggest API — fast autocomplete, returns structured results
+    // 1. 2GIS Suggest API
     const suggestParams = new URLSearchParams({
       q: rawQ,
       key: DGIS_KEY || '',
       location: config.point,
-      radius: '30000',
-      fields: 'items.point,items.address,items.adm_div,items.type',
-      suggest_type: 'building,street',  // buildings & streets only
-      limit: '10',
+      radius: '50000',
+      fields: 'items.point,items.address,items.type',
+      limit: '12',
     });
 
     const suggestUrl = `https://suggest-api.2gis.com/2.0/suggest?${suggestParams.toString()}`;
     const suggestRes = await fetch(suggestUrl, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(7_000),
+      signal: AbortSignal.timeout(5_000),
     });
 
     if (suggestRes.ok) {
@@ -52,7 +51,7 @@ export async function GET(req: NextRequest) {
       if (items.length > 0) {
         const suggestions = parseSuggestItems(items, city);
         if (suggestions.length > 0) {
-          return NextResponse.json(deduplicate(suggestions).slice(0, 8));
+          return NextResponse.json(deduplicate(suggestions).slice(0, 10));
         }
       }
     }
@@ -62,11 +61,9 @@ export async function GET(req: NextRequest) {
       q: rawQ.toLowerCase().includes(city.toLowerCase()) ? rawQ : `${city}, ${rawQ}`,
       key: DGIS_KEY || '',
       location: config.point,
-      sort_point: config.point,
-      radius: '40000',
-      fields: 'items.point,items.address,items.adm_div,items.type',
-      type: 'street,building',
-      limit: '20',
+      radius: '50000',
+      fields: 'items.point,items.address,items.type',
+      limit: '15',
     });
 
     const catalogUrl = `https://catalog.api.2gis.com/3.0/items?${catalogParams.toString()}`;
@@ -80,7 +77,8 @@ export async function GET(req: NextRequest) {
     const suggestions = parseCatalogItems(catalogItems, city);
     return NextResponse.json(deduplicate(suggestions).slice(0, 8));
 
-  } catch {
+  } catch (err) {
+    console.error('[Search API Error]:', err);
     return NextResponse.json([]);
   }
 }

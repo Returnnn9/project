@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ success: true, user: { name: user.name, email: user.email } });
 
- } catch (err: any) {
+ } catch (err) {
   console.error("Registration error details:", err);
   return NextResponse.json({ error: "Внутренняя ошибка сервера при регистрации" }, { status: 500 });
  }

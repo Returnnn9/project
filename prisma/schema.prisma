@@ -3,7 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -79,7 +80,7 @@ model Order {
   status    String   @default("new")
   userName  String?
   userPhone String?
-  items     Json     // Native PostgreSQL JSON type
+  items     String   // SQLite uses String for JSON data
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

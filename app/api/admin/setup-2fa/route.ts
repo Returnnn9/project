@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateSecret, verify, generateURI } from "otplib";
-const QRCode = require("qrcode");
+import QRCode from "qrcode";
 
 export const runtime = "nodejs";
 

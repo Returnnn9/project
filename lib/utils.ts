@@ -1,6 +1,6 @@
 "use client";
 
-export function cn(...inputs: (string | boolean | undefined | null | { [key: string]: any })[]) {
+export function cn(...inputs: (string | boolean | undefined | null | { [key: string]: unknown })[]) {
  const classes: string[] = [];
 
  for (const input of inputs) {

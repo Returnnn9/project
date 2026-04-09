@@ -60,9 +60,6 @@ export async function POST(req: NextRequest) {
   const allowedOrigins = [
     process.env.NEXTAUTH_URL || '',
     process.env.AUTH_URL || '',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://smuslest.ru',
   ].filter(Boolean);
   const isTrustedOrigin = allowedOrigins.some(o => origin.startsWith(o));
   if (!isTrustedOrigin) {
@@ -99,8 +96,7 @@ export async function POST(req: NextRequest) {
         status: newOrder.status || 'new',
         userName: newOrder.userName,
         userPhone: newOrder.userPhone,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        items: newOrder.items as any, // Prisma.JsonArray after `prisma generate`
+        items: JSON.stringify(newOrder.items),
       }
     });
 
@@ -108,7 +104,7 @@ export async function POST(req: NextRequest) {
       ...savedOrder,
       userName: savedOrder.userName ?? undefined,
       userPhone: savedOrder.userPhone ?? undefined,
-      items: savedOrder.items as unknown as CartItem[],
+      items: JSON.parse(savedOrder.items) as CartItem[],
       status: savedOrder.status as Order['status'],
     };
 
