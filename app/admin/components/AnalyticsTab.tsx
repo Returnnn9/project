@@ -16,7 +16,7 @@ import {
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 import type { ChartOptions, TooltipItem } from 'chart.js';
-import { TrendingUp, ShoppingBag, CreditCard, RotateCw } from 'lucide-react';
+import { TrendingUp, ShoppingBag, CreditCard, RotateCw, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 ChartJS.register(
@@ -34,6 +34,7 @@ ChartJS.register(
 export default function AnalyticsTab() {
  const [orders, setOrders] = useState<Order[]>([]);
  const [isLoading, setIsLoading] = useState(true);
+ const [smsBalance, setSmsBalance] = useState<number | null>(null);
 
  const fetchOrders = async () => {
   setIsLoading(true);
@@ -50,8 +51,21 @@ export default function AnalyticsTab() {
   }
  };
 
+ const fetchSmsBalance = async () => {
+  try {
+   const res = await fetch('/api/admin/sms/balance');
+   if (res.ok) {
+    const data = await res.json();
+    setSmsBalance(data.balance);
+   }
+  } catch (error) {
+   console.error("Failed to fetch SMS balance:", error);
+  }
+ };
+
  useEffect(() => {
   fetchOrders();
+  fetchSmsBalance();
  }, []);
 
  // Derived data
@@ -173,6 +187,22 @@ export default function AnalyticsTab() {
       <CreditCard className="w-6 h-6 text-orange-500" />
      </div>
     </div>
+
+    {/* Card 4: SMS Balance */}
+    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex items-center justify-between group">
+     <div>
+      <p className="text-[#9C9188] text-[13px] font-bold uppercase tracking-widest mb-2">Баланс SMS.RU</p>
+      <div className="flex items-baseline gap-2">
+       <span className="text-[32px] font-black text-[#6B5D54] leading-none">
+        {smsBalance !== null ? smsBalance.toFixed(2) : '--'}
+       </span>
+       <span className="text-[18px] font-bold text-[#CD8B70]">₽</span>
+      </div>
+     </div>
+     <div className="w-14 h-14 rounded-full bg-[#CD8B70]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+      <Wallet className="w-6 h-6 text-[#CD8B70]" />
+     </div>
+    </div>
    </div>
 
    {/* Graph Component */}
@@ -180,7 +210,7 @@ export default function AnalyticsTab() {
     <div className="flex items-center justify-between mb-8">
      <h3 className="text-[20px] font-black text-[#6B5D54]">Динамика выручки (последние 7 дней)</h3>
      <button
-      onClick={fetchOrders}
+      onClick={() => { fetchOrders(); fetchSmsBalance(); }}
       className="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-full text-[#9C9188] transition-colors active:scale-95"
      >
       <RotateCw className={cn("w-5 h-5", isLoading && "animate-spin text-[#CD8B70]")} />

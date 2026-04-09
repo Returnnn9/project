@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { CartItem, Order } from '@/store/types';
 import { Prisma } from '@prisma/client';
-import { sendSms, buildOrderSms } from '@/lib/alfasms';
+import { sendSms, buildOrderSms } from '@/lib/sms';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 

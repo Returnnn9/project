@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       limit: '12',
     });
 
-    const suggestUrl = `https://suggest-api.2gis.com/2.0/suggest?${suggestParams.toString()}`;
+    const suggestUrl = `https://catalog.api.2gis.com/2.0/suggest?${suggestParams.toString()}`;
     const suggestRes = await fetch(suggestUrl, {
       cache: 'no-store',
       signal: AbortSignal.timeout(5_000),

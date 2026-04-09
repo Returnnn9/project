@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendSms } from '@/lib/alfasms';
+import { sendSms } from '@/lib/sms';
 import { createOtp, getOtpSendCooldown } from '@/lib/otp-store';
 import { normalizePhone } from '@/lib/phone';
 
