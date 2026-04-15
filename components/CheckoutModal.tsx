@@ -30,7 +30,7 @@ export default function CheckoutModal() {
  const setUserPhone = (p: string) => userStore.setUserPhone(p)
  const updateAddress = (a: string, t: "delivery" | "pickup") => userStore.updateAddress(a, t)
  const checkout = () => rootStore.checkout()
- const { data: session, status } = useSession()
+ const { status } = useSession()
 
  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1)
  const [deliveryType, setDeliveryType] = useState<DeliveryType>(null)
@@ -349,6 +349,20 @@ export default function CheckoutModal() {
           <p className="text-[13px] font-medium text-[#3A332E]/60 leading-snug">
            Соглашаюсь получать новости и специальные предложения
           </p>
+
+          {status !== 'authenticated' && (
+           <div className="mt-5 pt-5 border-t border-gray-100 text-center">
+            <p className="text-[12px] font-medium text-[#3A332E]/40 mb-3">
+             Уже есть аккаунт?
+            </p>
+            <button
+             onClick={() => { handleClose(); uiStore.setAuthModalOpen(true); }}
+             className="inline-flex items-center gap-2 px-6 py-3 rounded-[1rem] bg-[#3A332E] text-white text-[14px] font-[800] hover:bg-[#2A2420] active:scale-95 transition-all shadow-md"
+            >
+             Войти / Зарегистрироваться
+            </button>
+           </div>
+          )}
          </div>
 
          <button

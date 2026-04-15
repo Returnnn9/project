@@ -27,8 +27,8 @@ export default function SecurityTab() {
    setQrCodeUrl(data.qrCodeUrl);
    setSecret(data.secret);
    setIsSettingUp(true);
-  } catch (err: any) {
-   setError(err.message);
+  } catch (err: unknown) {
+   setError(err instanceof Error ? err.message : 'Ошибка загрузки QR-кода');
   } finally {
    setIsLoading(false);
   }
@@ -52,8 +52,8 @@ export default function SecurityTab() {
     setIsSettingUp(false);
     setSuccess(false);
    }, 2000);
-  } catch (err: any) {
-   setError(err.message);
+  } catch (err: unknown) {
+   setError(err instanceof Error ? err.message : 'Неверный код подтверждения');
   } finally {
    setIsLoading(false);
   }

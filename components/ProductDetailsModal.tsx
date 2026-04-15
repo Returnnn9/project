@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, ShoppingBag, Heart } from "lucide-react"
 import { useUIStore, useCartStore, useUserStore, useStoreData } from "@/store/hooks"
+import { Product } from "@/store/types"
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -15,8 +16,8 @@ export default function ProductDetailsModal() {
  const selectedProduct = useStoreData(uiStore, s => s.getSelectedProduct())
  const favorites = useStoreData(userStore, s => s.getFavorites())
 
- const setSelectedProduct = (p: any) => uiStore.setSelectedProduct(p)
- const addToCart = (p: any, q?: number) => cartStore.addToCart(p, q)
+ const setSelectedProduct = (p: Product | null) => uiStore.setSelectedProduct(p)
+ const addToCart = (p: Product, q?: number) => cartStore.addToCart(p, q)
  const toggleFavorite = (id: number) => userStore.toggleFavorite(id)
 
  const [quantity, setQuantity] = useState(1)

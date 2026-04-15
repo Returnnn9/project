@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useProductStore, useStoreData } from '@/store/hooks';
 import Image from 'next/image';
-import { Edit2, Trash2, Plus, ArrowLeft, Package, ShieldCheck as ShieldIcon, LogOut, Minus } from 'lucide-react';
+import { Edit2, Trash2, Plus, ArrowLeft, Package, ShieldCheck as ShieldIcon, Minus } from 'lucide-react';
 import Link from 'next/link';
 import ProductFormModal from './components/ProductFormModal';
 import SecurityTab from './components/SecurityTab';
@@ -25,6 +25,7 @@ export default function AdminPage() {
 
  useEffect(() => {
   productStore.fetchProducts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, []);
 
  const handleEdit = (product: Product) => {

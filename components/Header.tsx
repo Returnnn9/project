@@ -2,8 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import Image from "next/image"
-import { User, MapPin, Search, ChevronDown } from "lucide-react"
+import { User, Search, ChevronDown } from "lucide-react"
 import { useUIStore, useUserStore, useStoreData } from "@/store/hooks"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"

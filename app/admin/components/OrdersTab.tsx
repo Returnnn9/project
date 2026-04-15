@@ -7,7 +7,6 @@ import {
   User, 
   Phone, 
   MapPin, 
-  Calendar, 
   Clock, 
   ChevronRight, 
   CheckCircle2, 
@@ -15,8 +14,7 @@ import {
   Truck, 
   XCircle, 
   Filter,
-  Search,
-  ExternalLink
+  Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';

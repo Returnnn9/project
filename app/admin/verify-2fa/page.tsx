@@ -8,7 +8,7 @@ import { useSession, signOut } from "next-auth/react";
 
 export default function Verify2FAPage() {
  const router = useRouter();
- const { data: session, status } = useSession();
+ const { status } = useSession();
  const [code, setCode] = useState("");
  const [isLoading, setIsLoading] = useState(false);
  const [error, setError] = useState("");
@@ -36,8 +36,8 @@ export default function Verify2FAPage() {
 
    // Set cookie client-side too if needed, but API should handle it
    router.push("/admin");
-  } catch (err: any) {
-   setError(err.message);
+  } catch (err: unknown) {
+   setError(err instanceof Error ? err.message : 'Неверный код');
   } finally {
    setIsLoading(false);
   }
@@ -93,10 +93,7 @@ export default function Verify2FAPage() {
        whileHover={{ scale: 1.02, color: "#6B5D54" }}
        whileTap={{ scale: 0.98 }}
        type="button"
-       onClick={() => {
-        const { signOut } = require("next-auth/react");
-        signOut();
-       }}
+       onClick={() => signOut()}
        className="w-full text-[#9C9188] font-bold text-[14px] transition-colors flex items-center justify-center gap-2 pt-2 group"
       >
        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

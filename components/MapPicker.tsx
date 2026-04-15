@@ -92,8 +92,7 @@ const LEAFLET_JS_URL = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
 // CartoDB Voyager — clean, modern look, no API key required
 const TILE_URL =
   "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
 
 const DEFAULT_CENTER: [number, number] = [55.7558, 37.6173]; // Москва
 

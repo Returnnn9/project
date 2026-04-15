@@ -16,6 +16,7 @@ const LandingProducts = () => {
   if (products.length === 0) {
    productStore.fetchProducts();
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, []);
 
  const filteredProducts = products.filter(p => p.category === activeTab);

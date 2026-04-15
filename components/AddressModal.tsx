@@ -13,10 +13,12 @@ import DeliveryTypeSelector from "./DeliveryTypeSelector"
 import { parseAddress, formatAddress } from "@/lib/address"
 import { normalizePhone } from "@/lib/phone"
 import { containerVariants, itemVariants, stepVariants } from "@/lib/motion-variants"
+import { useSession } from "next-auth/react"
 
 export default function AddressModal() {
  const uiStore = useUIStore()
  const userStore = useUserStore()
+ const { status: authStatus } = useSession()
 
  const isAddressModalOpen = useStoreData(uiStore, s => s.getIsAddressModalOpen())
  const address = useStoreData(userStore, s => s.getAddress())
@@ -62,10 +64,8 @@ export default function AddressModal() {
   setSuggestions,
   clearSuggestions,
   isLoading: isLoadingSuggestions,
-  isLocating,
   skipNextFetch,
   debouncedSearch,
-  geolocate,
  } = useAddressSearch(selectedCity);
 
   // Debounced search is now handled inside useAddressSearch hook via debouncedSearch()
@@ -116,13 +116,7 @@ export default function AddressModal() {
   }
  }, [isAddressModalOpen, reset])
 
- const handleGeolocate = () => {
-  geolocate((addr, coords, matchedCity) => {
-   if (matchedCity) setSelectedCity(matchedCity);
-   setTempAddress(addr);
-   setSelectedCoords(coords);
-  });
- }
+
 
  const handleClose = () => {
   setAddressModalOpen(false)
@@ -308,6 +302,20 @@ export default function AddressModal() {
            , соглашаюсь на обработку персональных данных на условиях{" "}
            <a href="/privacy" className="text-[#CF8F73] underline underline-offset-2 hover:text-[#b87a60] transition-colors">политики конфиденциальности</a>
           </p>
+
+          {authStatus !== 'authenticated' && (
+           <div className="mt-5 pt-5 border-t border-gray-100 text-center">
+            <p className="text-[12px] font-medium text-[#3A332E]/40 mb-3">
+             Уже есть аккаунт?
+            </p>
+            <button
+             onClick={() => { handleClose(); uiStore.setAuthModalOpen(true); }}
+             className="inline-flex items-center gap-2 px-6 py-3 rounded-[1rem] bg-[#3A332E] text-white text-[14px] font-[800] hover:bg-[#2A2420] active:scale-95 transition-all shadow-md"
+            >
+             Войти / Зарегистрироваться
+            </button>
+           </div>
+          )}
          </div>
         </div>
        </motion.div>

@@ -14,7 +14,7 @@ import {
  Legend,
  Filler,
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import type { ChartOptions, TooltipItem } from 'chart.js';
 import { TrendingUp, ShoppingBag, CreditCard, RotateCw, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';

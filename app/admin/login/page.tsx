@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
  const router = useRouter();
- const [step, setStep] = useState<"credentials" | "2fa">("credentials");
+
  const [username, setUsername] = useState("");
  const [password, setPassword] = useState("");
  const [isLoading, setIsLoading] = useState(false);
@@ -31,8 +31,8 @@ export default function AdminLoginPage() {
 
    // Successful login - middleware will now handle redirect to /admin or /admin/verify-2fa
    router.push("/admin");
-  } catch (err: any) {
-   setError(err.message);
+  } catch (err: unknown) {
+   setError(err instanceof Error ? err.message : 'Неверный логин или пароль');
   } finally {
    setIsLoading(false);
   }

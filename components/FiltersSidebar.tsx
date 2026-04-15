@@ -5,18 +5,16 @@ interface FiltersSidebarProps {
  categories: string[];
  activeCategory: string;
  onCategorySelect: (category: string) => void;
- onlyDelivery: boolean;
- onDeliveryToggle: () => void;
+ onlyDelivery?: boolean;
+ onDeliveryToggle?: () => void;
 }
 
-import { ChevronDown, RotateCcw, Settings2 } from "lucide-react";
+import { ChevronDown, RotateCcw } from "lucide-react";
 
 const FiltersSidebar: React.FC<FiltersSidebarProps> = ({
  categories,
  activeCategory,
  onCategorySelect,
- onlyDelivery,
- onDeliveryToggle,
 }) => {
  const [isCategoryOpen, setIsCategoryOpen] = useState(true);
  const [inStock, setInStock] = useState(false);

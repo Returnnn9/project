@@ -6,7 +6,7 @@ import Image from "next/image"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Clock, Heart, ShoppingBag, Minus, Plus, Trash2, LogOut, RotateCcw, ArrowRight } from "lucide-react"
+import { ArrowLeft, Clock, Heart, ShoppingBag, Minus, Plus, Trash2, LogOut, RotateCcw } from "lucide-react"
 import { Product, CartItem } from "@/store/types"
 import { useUIStore, useCartStore, useUserStore, useProductStore, useStoreData } from "@/store/hooks"
 import { useSession, signOut } from "next-auth/react"
@@ -15,10 +15,7 @@ import { ProductCardSkeleton } from "@/components/Skeleton"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface LocalSession {
- name: string
- email: string
-}
+
 
 type TabLabel = "История заказов" | "Избранное" | "Корзина"
 
@@ -132,7 +129,7 @@ export default function ProfilePage() {
  const orderHistory = useStoreData(userStore, s => s.getOrderHistory())
 
  const setAuthModalOpen = (o: boolean) => uiStore.setAuthModalOpen(o)
- const setUserName = (n: string) => userStore.setUserName(n)
+
  const addToCart = (p: Product) => cartStore.addToCart(p)
  const addMultipleToCart = (p: Product[]) => cartStore.addMultipleToCart(p)
  const updateQuantity = (id: number, d: number) => cartStore.updateQuantity(id, d)
@@ -151,6 +148,7 @@ export default function ProfilePage() {
   if (products.length === 0) {
    productStore.fetchProducts()
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [])
 
  let displayName = isAuthenticated ? (session?.user?.name || "Пользователь") : "Гость";
