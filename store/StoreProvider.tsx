@@ -24,7 +24,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
       if (isAnyModalOpen) {
         document.body.style.overflow = 'hidden';
       } else {
-        document.body.style.overflow = 'unset';
+        document.body.style.overflow = '';
       }
     }
   };
@@ -35,7 +35,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
   return () => {
     unsubscribe();
     if (typeof document !== 'undefined') {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     }
   };
  }, []);

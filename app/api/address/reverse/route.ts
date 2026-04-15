@@ -1,35 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Prefer server-only key (not embedded in client bundle); fall back to public key for compatibility
-const DGIS_KEY = process.env.DGIS_API_KEY || process.env.NEXT_PUBLIC_2GIS_API_KEY;
+export const dynamic = 'force-dynamic';
 
-interface DGISAddressComponent {
-  street?: string;
-  name?: string;
-  number?: string;
-  type: string;
-}
-
-interface DGISItem {
-  type: string;
-  name?: string;
-  address_name?: string;
-  full_name?: string;
-  address?: {
-    components?: DGISAddressComponent[];
-    city?: string;
-  };
-  point: {
-    lat: number;
-    lon: number;
-  };
-}
-
-interface DGISResponse {
-  result: {
-    items: DGISItem[];
-  };
-}
+const NOMINATIM_HEADERS = {
+  'User-Agent': 'smuslest-delivery-app/1.0 (support@smuslest.ru)',
+  'Accept-Language': 'ru',
+};
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -40,99 +16,82 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing coordinates' }, { status: 400 });
   }
 
+  const lat = parseFloat(latParam);
+  const lon = parseFloat(lonParam);
+
+  if (isNaN(lat) || isNaN(lon)) {
+    return NextResponse.json({ error: 'Invalid coordinates' }, { status: 400 });
+  }
+
   try {
     const params = new URLSearchParams({
-      lon: lonParam,
-      lat: latParam,
-      key: DGIS_KEY || '',
-      fields: 'items.point,items.address',
-      limit: '2'
+      lat: lat.toString(),
+      lon: lon.toString(),
+      format: 'jsonv2',
+      addressdetails: '1',
+      zoom: '17', // street-level detail
+      'accept-language': 'ru',
     });
 
-    const response = await fetch(`https://catalog.api.2gis.com/3.0/items/geocode?${params.toString()}`, {
-      signal: AbortSignal.timeout(8_000), // 8 second hard timeout
-    });
-    const data: DGISResponse = await response.json();
-
-    if (!data?.result?.items || data.result.items.length === 0) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
-
-    // Find the best item: building first, then street, then first available
-    const item: DGISItem = data.result.items.find((i: DGISItem) => i.type === 'building') || 
-                           data.result.items.find((i: DGISItem) => i.type === 'street') ||
-                           data.result.items[0];
-
-    const addressObj = item.address || {};
-    const components: DGISAddressComponent[] = addressObj.components || [];
-
-    let road = '';
-    let houseNum = '';
-
-    // Find component by type directly
-    const streetComp = components.find((c: DGISAddressComponent) => c.type === 'street');
-    const numberComp = components.find((c: DGISAddressComponent) => c.type === 'street_number');
-
-    if (streetComp) {
-      road = streetComp.street || streetComp.name || '';
-    }
-    if (numberComp) {
-      houseNum = numberComp.number || '';
-    }
-
-    // SMART GUESSING: If no road/street from components, use item details
-    if (!road) {
-      if (item.type === 'street') {
-        road = item.name || item.address_name || '';
-      } else {
-        const isPlace = ['station', 'attraction', 'place', 'sights', 'park'].some(t => item.type?.includes(t));
-        if (isPlace) {
-          road = item.name || item.address_name || item.full_name || '';
-        } else if (item.address_name) {
-          const parts = item.address_name.split(',');
-          road = parts[0].trim();
-          if (parts.length > 1 && !houseNum) {
-            houseNum = parts[1].trim();
-          }
-        }
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?${params.toString()}`,
+      {
+        headers: NOMINATIM_HEADERS,
+        cache: 'no-store',
+        signal: AbortSignal.timeout(6_000),
       }
+    );
+
+    if (!res.ok) {
+      console.error('[Reverse] Nominatim error:', res.status);
+      return NextResponse.json({ error: 'Geocoder error' }, { status: 502 });
     }
 
-    // Normalize road name: Only add "улица" if it's explicitly a street and lacks a type keyword
-    let displayRoad = road;
-    if (displayRoad) {
-      const lowerRoad = road.toLowerCase();
-      const typeKeywords = ['проспект', 'шоссе', 'бульвар', 'переулок', 'набережная', 'аллея', 'площадь', 'тупик', 'проезд', 'тракт', 'линия', 'кольцо', 'метро', 'станция', 'парк', 'сквер'];
-      const hasType = typeKeywords.some(kw => lowerRoad.includes(kw));
-
-      if (!hasType && item.type === 'street') {
-        let cleanRoad = road.replace(/(^|\s)(ул|улица|пр|пр-т|проспект|пер|переулок|б-р|бульвар|ш|шоссе|наб|набережная|аллея|тракт)\.?\s+/gi, ' ').trim();
-        cleanRoad = cleanRoad.replace(/\s+(ул|улица|пр|пр-т|проспект|пер|переулок|б-р|бульвар|ш|шоссе|наб|набережная|аллея|тракт)\.?$/gi, '').trim();
-
-        if (cleanRoad.length > 0) {
-          cleanRoad = cleanRoad.charAt(0).toUpperCase() + cleanRoad.slice(1);
-          displayRoad = `улица ${cleanRoad}`;
-        }
-      } else {
-        displayRoad = displayRoad.charAt(0).toUpperCase() + displayRoad.slice(1);
-      }
+    const data = await res.json();
+    if (data.error) {
+      return NextResponse.json({ error: data.error }, { status: 404 });
     }
 
-    const title = houseNum ? `${displayRoad}, ${houseNum}` : displayRoad;
-    const city = addressObj.city || '';
+    const addr = data.address || {};
+
+    // Nominatim uses different keys for different road types
+    const rawRoad = addr.road || addr.pedestrian || addr.path || addr.footway || addr.cycleway || '';
+
+    // Normalize abbreviations
+    const road = rawRoad
+      .replace(/^ул\.\s*/i, 'улица ')
+      .replace(/^пр-т\s*/i, 'проспект ')
+      .replace(/^пр\.\s*/i, 'проспект ')
+      .replace(/^пер\.\s*/i, 'переулок ')
+      .replace(/^ш\.\s*/i, 'шоссе ')
+      .replace(/^б-р\s*/i, 'бульвар ')
+      .replace(/^пл\.\s*/i, 'площадь ')
+      .replace(/^наб\.\s*/i, 'набережная ')
+      .trim();
+
+    const house = addr.house_number || '';
+    const city = addr.city || addr.town || addr.village || '';
+    const district = addr.suburb || addr.city_district || '';
+
+    const title = house ? `${road}, ${house}` : road;
+    const subtitle = district ? `${district}, ${city}` : city;
+
+    // Compose a clean full address
+    const parts = [road, house].filter(Boolean);
+    const full = parts.length > 0 ? parts.join(', ') : data.display_name?.split(',')[0] || '';
 
     return NextResponse.json({
-      full: item.full_name || item.address_name || '',
-      road: displayRoad, // Consistent with search
-      house: houseNum,
-      city: city,
-      title: title,
-      subtitle: city,
-      lat: item.point?.lat,
-      lon: item.point?.lon
+      full,
+      road,
+      house,
+      city,
+      title,
+      subtitle,
+      lat,
+      lon,
     });
-  } catch (error) {
-    console.error('2GIS API V3 Reverse Geocode Error:', error);
+  } catch (err) {
+    console.error('[Reverse] Error:', err);
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
   }
 }

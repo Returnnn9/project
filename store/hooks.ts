@@ -6,12 +6,9 @@ export function useStoreData<TStore extends { subscribe: (l: () => void) => () =
  store: TStore,
  selector: (store: TStore) => TResult
 ): TResult {
- // Use a ref to keep track of the latest selector function.
- // This allows us to have a stable getSnapshot while still using the latest logic.
  const selectorRef = useRef(selector);
  selectorRef.current = selector;
-
- // Memoize getSnapshot so that it only changes if the store instance changes.
+ 
  const getSnapshot = useCallback(() => {
   return selectorRef.current(store);
  }, [store]);

@@ -39,8 +39,8 @@ export class ProductStore extends EventEmitter {
    this.products = data;
    this.isLoading = false;
    this.emitChange();
-  } catch (err: any) {
-   this.error = err.message;
+  } catch (err: unknown) {
+   this.error = err instanceof Error ? err.message : String(err);
    this.isLoading = false;
    this.emitChange();
   }
@@ -56,8 +56,8 @@ export class ProductStore extends EventEmitter {
    const newProduct: Product = await res.json();
    this.products = [...this.products, newProduct];
    this.emitChange();
-  } catch (err: any) {
-   this.error = err.message;
+  } catch (err: unknown) {
+   this.error = err instanceof Error ? err.message : String(err);
    this.emitChange();
    throw err;
   }
@@ -73,8 +73,8 @@ export class ProductStore extends EventEmitter {
    const updatedProduct: Product = await res.json();
    this.products = this.products.map(p => p.id === id ? updatedProduct : p);
    this.emitChange();
-  } catch (err: any) {
-   this.error = err.message;
+  } catch (err: unknown) {
+   this.error = err instanceof Error ? err.message : String(err);
    this.emitChange();
    throw err;
   }
@@ -88,8 +88,8 @@ export class ProductStore extends EventEmitter {
    if (!res.ok) throw new Error('Failed to delete product');
    this.products = this.products.filter(p => p.id !== id);
    this.emitChange();
-  } catch (err: any) {
-   this.error = err.message;
+  } catch (err: unknown) {
+   this.error = err instanceof Error ? err.message : String(err);
    this.emitChange();
    throw err;
   }

@@ -13,14 +13,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "placeholder",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "placeholder",
-    }),
-    AppleProvider({
-      clientId: process.env.APPLE_ID || "placeholder",
-      clientSecret: process.env.APPLE_SECRET || "placeholder",
-    }),
+  // Only register OAuth providers when credentials are properly configured
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })] : []),
+    ...(process.env.APPLE_ID && process.env.APPLE_SECRET ? [AppleProvider({
+      clientId: process.env.APPLE_ID,
+      clientSecret: process.env.APPLE_SECRET,
+    })] : []),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -37,12 +38,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const inputPassword = String(credentials.password).trim();
 
         if (inputEmail === adminEmailFromEnv && adminPasswordFromEnv && inputPassword === adminPasswordFromEnv) {
+          const adminUser = await prisma.user.upsert({
+            where: { email: adminEmailFromEnv },
+            update: {
+              role: "ADMIN",
+              name: "Admin",
+            },
+            create: {
+              email: adminEmailFromEnv,
+              name: "Admin",
+              role: "ADMIN",
+            }
+          });
+
           return {
-            id: "admin-env-id",
-            email: adminEmailFromEnv,
-            name: "Admin",
-            role: "ADMIN",
-            twoFactorEnabled: false,
+            id: adminUser.id,
+            email: adminUser.email,
+            name: adminUser.name,
+            role: adminUser.role,
+            twoFactorEnabled: adminUser.twoFactorEnabled,
           };
         }
 
@@ -98,12 +112,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const phone = normalizePhone(String(credentials.phone));
         const ADMIN_PHONE = process.env.ADMIN_PHONE ?? '';
-        const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? '';
+        // ADMIN_OTP_SECRET is a separate secret for admin phone bypass — never reuse ADMIN_PASSWORD
+        const ADMIN_OTP_SECRET = process.env.ADMIN_OTP_SECRET ?? '';
 
         const isAdminAuth = Boolean(
-          ADMIN_PHONE && ADMIN_PASSWORD &&
+          ADMIN_PHONE && ADMIN_OTP_SECRET &&
           phone === ADMIN_PHONE &&
-          credentials.code === ADMIN_PASSWORD
+          credentials.code === ADMIN_OTP_SECRET
         );
 
         if (!isAdminAuth) {

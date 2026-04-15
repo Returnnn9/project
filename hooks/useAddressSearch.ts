@@ -122,6 +122,5 @@ export function useAddressSearch(selectedCity: CityKey) {
     fetchSuggestions,
     debouncedSearch,
     geolocate,
-    searchTimeout,
   };
 }

@@ -191,7 +191,7 @@ export default function AnalyticsTab() {
     {/* Card 4: SMS Balance */}
     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex items-center justify-between group">
      <div>
-      <p className="text-[#9C9188] text-[13px] font-bold uppercase tracking-widest mb-2">Баланс SMS.RU</p>
+      <p className="text-[#9C9188] text-[13px] font-bold uppercase tracking-widest mb-2">Баланс AlfaSMS</p>
       <div className="flex items-baseline gap-2">
        <span className="text-[32px] font-black text-[#6B5D54] leading-none">
         {smsBalance !== null ? smsBalance.toFixed(2) : '--'}

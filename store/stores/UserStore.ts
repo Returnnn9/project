@@ -157,11 +157,15 @@ export class UserStore extends EventEmitter {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     // Use the server-assigned id (DB autoincrement) to replace the temp Date.now() id
     const savedOrder = await res.json();
-    if (savedOrder?.id) {
-     this.orderHistory = [{ ...order, id: savedOrder.id }, ...prevOrderHistory];
-     this.saveOrders();
-     this.emitChange();
-    }
+     if (savedOrder?.id) {
+      // Replace the temp-id entry with the real DB id — do NOT prepend to prevOrderHistory
+      // (prevOrderHistory already has it with the old id)
+      this.orderHistory = this.orderHistory.map(o =>
+       o.id === order.id ? { ...o, id: savedOrder.id } : o
+      );
+      this.saveOrders();
+      this.emitChange();
+     }
    } catch (err) {
     console.error("[UserStore] Failed to persist order, rolling back:", err);
     // Rollback optimistic update

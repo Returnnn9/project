@@ -6,9 +6,11 @@ const globalForPrisma = globalThis as unknown as {
 
 const getPrisma = (): PrismaClient => {
  if (!globalForPrisma.prisma) {
-  const url = process.env.DATABASE_URL || 'UNDEFINED';
-  const maskedUrl = url.replace(/:([^@]+)@/, ':***@');
-  console.log(`[Prisma] Initializing with URL: ${maskedUrl}`);
+  if (process.env.NODE_ENV !== 'production') {
+   const url = process.env.DATABASE_URL || 'UNDEFINED';
+   const maskedUrl = url.replace(/:([^@]+)@/, ':***@');
+   console.log(`[Prisma] Initializing with URL: ${maskedUrl}`);
+  }
   globalForPrisma.prisma = new PrismaClient();
  }
  return globalForPrisma.prisma;

@@ -34,8 +34,15 @@ export default function MarketPage() {
   }, [])
 
   const filteredProducts = products.filter((p: Product) => {
-    const matchesCategory = p.category.toLowerCase() === activeCategory.toLowerCase()
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const tokens = searchQuery.toLowerCase().split(' ').filter(Boolean)
+    const matchesSearch = tokens.length === 0 || tokens.every(t =>
+      p.name.toLowerCase().includes(t) ||
+      (p.description && p.description.toLowerCase().includes(t))
+    )
+    // When there's an active query, search across all categories
+    const matchesCategory = !searchQuery.trim()
+      ? p.category.toLowerCase() === activeCategory.toLowerCase()
+      : true
     return matchesCategory && matchesSearch
   })
 

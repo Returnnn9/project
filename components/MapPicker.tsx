@@ -17,6 +17,7 @@ export interface AddressDetails {
 
 interface MapPickerProps {
   initialAddress?: string;
+  city?: string; // e.g. 'Москва' | 'Санкт-Петербург' — passed to address search API
   onAddressSelect: (address: string) => void;
   onAddressDetailsSelect?: (details: AddressDetails) => void;
   onError?: (error: string | null) => void;
@@ -100,6 +101,7 @@ const DEFAULT_CENTER: [number, number] = [55.7558, 37.6173]; // Москва
 
 export default function MapPicker({
   initialAddress,
+  city = 'Москва',
   onAddressSelect,
   onAddressDetailsSelect,
   onError,
@@ -229,11 +231,11 @@ export default function MapPicker({
         doubleClickZoom: interactive,
         touchZoom: interactive,
         keyboard: false,
-        attributionControl: true,
+        attributionControl: false,
       });
 
       window.L.tileLayer(TILE_URL, {
-        attribution: TILE_ATTRIBUTION,
+        attribution: '',
         maxZoom: 19,
         subdomains: "abcd",
       }).addTo(map);
@@ -299,7 +301,8 @@ export default function MapPicker({
   const fetchSuggestions = async (query: string) => {
     if (query.length < 2) { setSuggestions([]); return; }
     try {
-      const res = await fetch(`/api/address/search?q=${encodeURIComponent(query)}`);
+      const params = new URLSearchParams({ q: query, city });
+      const res = await fetch(`/api/address/search?${params.toString()}`);
       setSuggestions(await res.json());
     } catch (e) {
       console.error("[MapPicker] suggestions error:", e);
@@ -369,35 +372,47 @@ export default function MapPicker({
           </div>
 
           {showSuggestions && suggestions.length > 0 && (
-            <div className="bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-              {suggestions.map((s) => (
-                <button
-                  key={`${s.lat}-${s.lon}-${s.display_name}`}
-                  onClick={() => {
-                    handleAddressSelect({
-                      full: s.display_name,
-                      road: s.address?.road || "",
-                      house: s.address?.house_number || "",
-                      city: s.address?.city || "",
-                    });
-                    setShowSuggestions(false);
-                    if (s.lat && s.lon) {
-                      updateMapLocationRef.current([parseFloat(s.lat), parseFloat(s.lon)], false);
-                    }
-                  }}
-                  className="w-full flex items-start gap-3 px-4 py-3.5 hover:bg-gray-50 text-left border-b last:border-0 border-gray-100 transition-colors"
-                >
-                  <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-[14px] font-[600] text-gray-900 leading-tight">
-                      {s.address?.title || s.display_name.split(",")[0]}
-                    </span>
-                    <span className="text-[12px] font-[400] text-gray-500 mt-0.5">
-                      {s.address?.subtitle || s.display_name}
-                    </span>
-                  </div>
-                </button>
-              ))}
+            <div className="bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.12)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+              {/* --- Results Header --- */}
+              <div className="px-4 py-2.5 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50/50 to-white">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em]">Результаты поиска</span>
+                <span className="px-2 py-0.5 bg-[#CF8F73]/10 text-[#CF8F73] rounded-full text-[10px] font-bold border border-[#CF8F73]/20">
+                  {suggestions.length}
+                </span>
+              </div>
+
+              <div className="max-h-[320px] overflow-y-auto overflow-x-hidden custom-scrollbar">
+                {suggestions.map((s) => (
+                  <button
+                    key={`${s.lat}-${s.lon}-${s.display_name}-${Math.random()}`}
+                    onClick={() => {
+                      handleAddressSelect({
+                        full: s.display_name,
+                        road: s.address?.road || "",
+                        house: s.address?.house_number || "",
+                        city: s.address?.city || "",
+                      });
+                      setShowSuggestions(false);
+                      if (s.lat && s.lon) {
+                        updateMapLocationRef.current([parseFloat(s.lat), parseFloat(s.lon)], false);
+                      }
+                    }}
+                    className="w-full flex items-start gap-4 px-4 py-4 hover:bg-[#CF8F73]/5 text-left border-b last:border-0 border-gray-50 transition-all duration-200 group active:scale-[0.99]"
+                  >
+                    <div className="mt-1 p-2 bg-gray-50 rounded-xl group-hover:bg-[#CF8F73]/10 transition-colors">
+                      <MapPin className="w-4 h-4 text-gray-400 group-hover:text-[#CF8F73] transition-colors" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[15px] font-[600] text-gray-900 leading-tight group-hover:text-[#CF8F73] transition-colors">
+                        {s.address?.title || s.display_name.split(",")[0]}
+                      </span>
+                      <span className="text-[12px] font-[400] text-gray-500 line-clamp-1">
+                        {s.address?.subtitle || s.display_name}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

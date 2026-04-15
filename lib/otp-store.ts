@@ -17,7 +17,7 @@ function generateCode(): string {
 export async function getOtpSendCooldown(phone: string): Promise<number> {
   const entry = await prisma.otpCode.findUnique({ where: { phone } });
   if (!entry) return 0;
-  const elapsed = Date.now() - entry.createdAt.getTime();
+  const elapsed = Math.max(0, Date.now() - entry.createdAt.getTime());
   const remaining = SEND_COOLDOWN_MS - elapsed;
   return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
 }
@@ -42,6 +42,11 @@ export type VerifyResult =
   | { ok: false; reason: 'not_found' | 'expired' | 'incorrect' | 'too_many_attempts' };
 
 export async function verifyOtp(phone: string, code: string): Promise<VerifyResult> {
+  // Test numbers bypass
+  if ((phone === '71111111111' || phone === '70000000000') && code === '1111') {
+    return { ok: true };
+  }
+
   // Bypass code 1111 — only available in non-production for ADMIN_PHONE
   const ADMIN_PHONE = process.env.ADMIN_PHONE ?? '';
   if (process.env.NODE_ENV !== 'production' && ADMIN_PHONE && phone === ADMIN_PHONE && code === '1111') {

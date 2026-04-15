@@ -11,6 +11,7 @@ import { PickupPoint, CityKey } from "@/lib/types/address"
 import { PICKUP_POINTS, CITY_COORDS } from "@/lib/constants/delivery"
 import DeliveryTypeSelector from "./DeliveryTypeSelector"
 import { parseAddress, formatAddress } from "@/lib/address"
+import { normalizePhone } from "@/lib/phone"
 import { containerVariants, itemVariants, stepVariants } from "@/lib/motion-variants"
 
 export default function AddressModal() {
@@ -39,6 +40,14 @@ export default function AddressModal() {
 
  // Mobile WOW adaptive states
  const [isEditingAddress, setIsEditingAddress] = useState(false)
+ const [isMobile, setIsMobile] = useState(false)
+
+ useEffect(() => {
+  const check = () => setIsMobile(window.innerWidth < 640)
+  check()
+  window.addEventListener('resize', check)
+  return () => window.removeEventListener('resize', check)
+ }, [])
 
  // Expanded address fields
  const [house, setHouse] = useState('')
@@ -55,10 +64,8 @@ export default function AddressModal() {
   isLoading: isLoadingSuggestions,
   isLocating,
   skipNextFetch,
-  fetchSuggestions,
   debouncedSearch,
   geolocate,
-  searchTimeout
  } = useAddressSearch(selectedCity);
 
   // Debounced search is now handled inside useAddressSearch hook via debouncedSearch()
@@ -161,7 +168,7 @@ export default function AddressModal() {
   }
 
   let road = details.road || details.full.split(',')[0];
-  const house = details.house || '';
+  const houseFromApi = details.house || '';
 
   // If the road extracted is just the city name, try to get a more specific name
   if (road === selectedCity || road === 'Москва' || road === 'Санкт-Петербург') {
@@ -170,16 +177,15 @@ export default function AddressModal() {
    if (streetPart) road = streetPart;
   }
 
-  const displayAddr = house ? `${road}, ${house}` : road;
-  // Aggressively strip city name from the start
-  const cleanAddr = displayAddr
+  // Aggressively strip city name from the start of the road ONLY (no house)
+  const cleanAddr = road
    .replace(new RegExp(`^${selectedCity},?\\s*`, 'i'), '')
-   .replace(/^Москва,?\\s*/i, '')
-   .replace(/^Санкт-Петербург,?\\s*/i, '')
+   .replace(/^\u041c\u043e\u0441\u043a\u0432\u0430,?\s*/i, '')
+   .replace(/^\u0421\u0430\u043d\u043a\u0442-\u041f\u0435\u0442\u0435\u0440\u0431\u0443\u0440\u0433,?\s*/i, '')
    .trim();
 
   setTempAddress(cleanAddr);
-  setHouse(house);
+  if (houseFromApi) setHouse(houseFromApi);
   setCorpus('');
   if (details.coords) {
    setSelectedCoords(details.coords);
@@ -288,7 +294,7 @@ export default function AddressModal() {
 
           <button
            onClick={() => setStep(2)}
-           disabled={!userName || !userPhone}
+           disabled={!userName || !normalizePhone(userPhone)}
            className="w-full h-[64px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mt-6"
           >
            Далее
@@ -447,6 +453,7 @@ export default function AddressModal() {
         <div className="absolute inset-0 sm:relative sm:inset-auto sm:w-[50%] sm:h-full p-0 sm:p-6 sm:pb-6 z-0">
          <div className="w-full h-full sm:rounded-[2rem] overflow-hidden sm:border border-gray-100 relative">
           <MapPicker
+           city={selectedCity}
            hideSearch={true}
            showGeolocate={true}
            interactive={true}
@@ -550,7 +557,7 @@ export default function AddressModal() {
            </AnimatePresence>
           </motion.div>
           <button onClick={handleSavePickup} disabled={!selectedPickup} className="mt-6 w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0">
-           {isEditingAddress && window.innerWidth < 640 ? 'Готово' : 'Всё верно'}
+           {isEditingAddress && isMobile ? 'Готово' : 'Всё верно'}
           </button>
          </div>
         </motion.div>
@@ -571,6 +578,7 @@ export default function AddressModal() {
         <div className="absolute inset-0 sm:relative sm:inset-auto sm:w-[50%] sm:h-full p-0 sm:p-6 sm:pb-6 z-0">
          <div className="w-full h-full sm:rounded-[2rem] overflow-hidden sm:border border-gray-100 relative">
           <MapPicker
+           city={selectedCity}
            hideSearch={true}
            showGeolocate={true}
            initialAddress={tempAddress}
@@ -742,7 +750,7 @@ export default function AddressModal() {
            </div>
 
           <button onClick={handleSaveDelivery} disabled={!tempAddress || !house || !entrance || !apartment} className="mt-auto w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0">
-           {isEditingAddress && window.innerWidth < 640 ? 'Готово' : 'Всё верно'}
+           {isEditingAddress && isMobile ? 'Готово' : 'Всё верно'}
           </button>
          </div>
         </motion.div>

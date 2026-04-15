@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
+// DEPRECATED
+export const runtime = "nodejs";
 
 export async function POST() {
- const response = NextResponse.json({ success: true });
- response.cookies.delete("admin_session");
- return response;
+  return new Response("Deprecated", { status: 410 });
 }

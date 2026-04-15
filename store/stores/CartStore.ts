@@ -50,20 +50,21 @@ export class CartStore extends EventEmitter {
  addMultipleToCart(products: Product[]): void {
   let newCart = [...this.cart];
   products.forEach((product) => {
+   const qty = product.quantity ?? 1;
    const existingIndex = newCart.findIndex((i) => i.id === product.id);
    if (existingIndex >= 0) {
     newCart[existingIndex] = {
      ...newCart[existingIndex],
-     quantity: newCart[existingIndex].quantity + 1,
+     quantity: newCart[existingIndex].quantity + qty,
     };
    } else {
     newCart.push({
      id: product.id,
      name: product.name,
-     image: product.image ?? "",
+     image: product.image ?? '',
      price: product.price,
      oldPrice: product.oldPrice,
-     quantity: 1,
+     quantity: qty,
     });
    }
   });

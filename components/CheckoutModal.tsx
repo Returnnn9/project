@@ -10,6 +10,7 @@ import { PickupPoint, CityKey } from "@/lib/types/address"
 import { PICKUP_POINTS, CITY_COORDS } from "@/lib/constants/delivery"
 import DeliveryTypeSelector from "./DeliveryTypeSelector"
 import { parseAddress, formatAddress, extractFromQuery } from "@/lib/address"
+import { normalizePhone } from "@/lib/phone"
 import { containerVariants, itemVariants, stepVariants } from "@/lib/motion-variants"
 
 type DeliveryType = "delivery" | "pickup" | null
@@ -47,6 +48,14 @@ export default function CheckoutModal() {
 
  // Mobile WOW adaptive states
  const [isEditingAddress, setIsEditingAddress] = useState(false)
+ const [isMobile, setIsMobile] = useState(false)
+
+ useEffect(() => {
+  const check = () => setIsMobile(window.innerWidth < 640)
+  check()
+  window.addEventListener('resize', check)
+  return () => window.removeEventListener('resize', check)
+ }, [])
 
  // Expanded address fields
  const [house, setHouse] = useState('')
@@ -70,30 +79,15 @@ export default function CheckoutModal() {
  const {
   suggestions,
   setSuggestions,
+  clearSuggestions,
   isLoading: isLoadingSuggestions,
   isLocating,
   skipNextFetch,
-  fetchSuggestions,
+  debouncedSearch,
   geolocate,
-  searchTimeout
  } = useAddressSearch(selectedCity);
 
- useEffect(() => {
-  if (skipNextFetch.current) {
-   skipNextFetch.current = false
-   return
-  }
 
-  if (step === 4 && deliveryType === "delivery" && tempAddress.length >= 2) {
-   if (searchTimeout.current) clearTimeout(searchTimeout.current)
-   searchTimeout.current = setTimeout(() => {
-    fetchSuggestions(tempAddress)
-   }, 400)
-  } else {
-   setSuggestions(prev => prev.length > 0 ? [] : prev)
-  }
-  return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current) }
- }, [tempAddress, step, deliveryType, selectedCity, fetchSuggestions, setSuggestions])
 
  const reset = useCallback(() => {
   setStep(1)
@@ -205,25 +199,24 @@ export default function CheckoutModal() {
   }
 
   let road = details.road || details.full.split(',')[0];
-  const house = details.house || '';
+  const houseFromApi = details.house || '';
 
-  // If the road extracted is just the city name, try to get a more specific name from 'full' or title
+  // If road is just the city name, get a more specific part
   if (road === selectedCity || road === 'Москва' || road === 'Санкт-Петербург') {
    const parts = details.full.split(',').map((p: string) => p.trim());
-   // Try to find a part that isn't the city
    const streetPart = parts.find((p: string) => p !== selectedCity && p !== 'Москва' && p !== 'Санкт-Петербург');
    if (streetPart) road = streetPart;
   }
 
-  const displayAddr = house ? `${road}, ${house}` : road;
-  // Aggressively strip city name from the start
+  const displayAddr = houseFromApi ? `${road}, ${houseFromApi}` : road;
+  // Strip city name from the start (fixed regex: single backslash)
   const cleanAddr = displayAddr
    .replace(new RegExp(`^${selectedCity},?\\s*`, 'i'), '')
-   .replace(/^Москва,?\\s*/i, '')
-   .replace(/^Санкт-Петербург,?\\s*/i, '')
+   .replace(/^Москва,?\s*/i, '')
+   .replace(/^Санкт-Петербург,?\s*/i, '')
    .trim();
 
-  const extracted = extractFromQuery(tempAddress, house);
+  const extracted = extractFromQuery(tempAddress, houseFromApi);
 
   setTempAddress(cleanAddr);
   setHouse(extracted.house);
@@ -360,7 +353,7 @@ export default function CheckoutModal() {
 
          <button
           onClick={() => setStep(2)}
-          disabled={!userName || !userPhone}
+          disabled={!userName || !normalizePhone(userPhone)}
           className="mt-8 w-full h-[64px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20"
          >
           Далее
@@ -604,7 +597,7 @@ export default function CheckoutModal() {
             <ArrowLeft className="w-6 h-6" />
            </button>
            <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#3A332E] tracking-tight">
-            {isEditingAddress && window.innerWidth < 640 ? 'Детали адреса' : 'Введите адрес'}
+             {isEditingAddress && isMobile ? 'Детали адреса' : 'Введите адрес'}
            </h2>
           </div>
 
@@ -645,7 +638,10 @@ export default function CheckoutModal() {
               <input
                type="text"
                value={tempAddress}
-               onChange={(e) => setTempAddress(e.target.value)}
+               onChange={(e) => {
+                setTempAddress(e.target.value)
+                debouncedSearch(e.target.value)
+               }}
                placeholder="Введите адрес"
                className="w-full bg-transparent border-none outline-none text-[17px] font-extrabold text-[#3A332E] placeholder:text-[#3A332E]/30"
               />
@@ -748,7 +744,7 @@ export default function CheckoutModal() {
            disabled={!tempAddress || !house || !entrance || !apartment}
            className="mt-4 sm:mt-auto w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.2rem] font-[800] text-[18px] sm:text-[20px] hover:bg-[#b87a60] transition-all shadow-xl shadow-[#CF8F73]/20 active:scale-95 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0"
           >
-           {isEditingAddress && window.innerWidth < 640 ? 'Готово' : 'Всё верно'}
+           {isEditingAddress && isMobile ? 'Готово' : 'Всё верно'}
           </button>
          </div>
         </motion.div>
@@ -952,7 +948,7 @@ export default function CheckoutModal() {
            disabled={!selectedPickup}
            className="mt-6 w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-[900] text-[18px] sm:text-[20px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 shrink-0 mb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:mb-0"
           >
-           {isEditingAddress && window.innerWidth < 640 ? 'Готово' : 'Всё верно'}
+           {isEditingAddress && isMobile ? 'Готово' : 'Всё верно'}
           </button>
          </div>
         </motion.div>

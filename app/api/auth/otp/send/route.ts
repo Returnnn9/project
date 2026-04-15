@@ -35,7 +35,12 @@ export async function POST(req: Request) {
 
     const code = await createOtp(normalized);
 
-    // Bypass SMS.RU for test numbers in development only
+    // Static test numbers bypass
+    if (normalized === '71111111111' || normalized === '70000000000') {
+      return NextResponse.json({ ok: true, dev: true });
+    }
+
+    // Bypass AlfaSMS for test numbers in development only
     if (process.env.NODE_ENV !== 'production' && normalized.endsWith('0000')) {
       console.log(`[OTP] Bypass SMS for test number ${normalized}. Code: ${code}`);
       return NextResponse.json({ ok: true, dev: true });

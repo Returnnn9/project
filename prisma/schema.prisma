@@ -96,3 +96,19 @@ model TotpUsed {
   @@unique([secret, code])
   @@index([usedAt])
 }
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  weight      String
+  price       Float
+  oldPrice    Float?
+  category    String
+  image       String
+  description String?
+  composition String?
+  quantity    Int      @default(0)
+  nutrition   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

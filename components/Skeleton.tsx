@@ -1,5 +1,4 @@
 "use client"
-import React from "react"
 
 export const Skeleton = ({ className }: { className?: string }) => (
  <div className={`animate-pulse bg-smusl-clay/40 rounded-xl ${className}`} />

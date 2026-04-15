@@ -26,7 +26,8 @@ export async function GET(req: NextRequest) {
       ...dbOrder,
       userName: dbOrder.userName ?? undefined,
       userPhone: dbOrder.userPhone ?? undefined,
-      items: dbOrder.items as unknown as CartItem[],
+      // items stored as JSON string — parse safely
+      items: (() => { try { return JSON.parse(String(dbOrder.items)) as CartItem[]; } catch { return []; } })(),
       status: dbOrder.status as Order['status'],
     }));
 
@@ -104,7 +105,8 @@ export async function POST(req: NextRequest) {
       ...savedOrder,
       userName: savedOrder.userName ?? undefined,
       userPhone: savedOrder.userPhone ?? undefined,
-      items: JSON.parse(savedOrder.items) as CartItem[],
+      // items is stored as a JSON string in the DB (String field, not Json)
+      items: (() => { try { return JSON.parse(String(savedOrder.items)) as CartItem[]; } catch { return []; } })(),
       status: savedOrder.status as Order['status'],
     };
 
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
       });
 
       sendSms(parsedOrder.userPhone, smsText).catch(err => {
-        console.error('[SMS.RU] Unhandled SMS error:', err);
+        console.error('[ALFASMS] Unhandled SMS error:', err);
       });
     }
 

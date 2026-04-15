@@ -130,7 +130,7 @@ const LoginModal: React.FC = () => {
   };
 
   const phoneDigits = rawDigits(phone);
-  const isPhoneValid = phoneDigits.length === 11;
+  const isPhoneValid = phoneDigits.length === 11 || phoneDigits === "71111"; // if they typed 1111, formatPhone adds 7 to the start so it's 71111
   // Admin detection is handled server-side (ADMIN_PHONE env var in auth.ts)
   const isAdmin = false;
   const isOtpComplete = otp.length === 4;

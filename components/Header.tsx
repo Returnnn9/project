@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
         {deliveryType === "pickup" ? "Самовывоз" : (deliveryType === "delivery" ? "Доставка на дом" : "Способ получения")}
        </span>
        <div className="flex items-center gap-1 sm:gap-1.5">
-        <span className="text-[13px] sm:text-[15px] font-[700] text-[#3A332E] max-w-[150px] xs:max-w|220px] sm:max-w|[300px] md:max-w|[500px] truncate tracking-tight leading-tight">
+        <span className="text-[13px] sm:text-[15px] font-[700] text-[#3A332E] max-w-[150px] sm:max-w-[300px] md:max-w-[500px] truncate tracking-tight leading-tight">
          {address || "Нажмите, чтобы выбрать"}
         </span>
         <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-[#3A332E]/30 group-hover:text-smusl-terracotta transition-colors" />
@@ -70,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
       >
        <User className={cn("w-5 h-5 shrink-0", isAuthenticated ? "text-[#CF8F73]" : "text-[#5B5047]/60")} />
        <span className="hidden sm:inline">
-        {isAuthenticated ? "Личный кабинет" : "Личный кабинет"}
+        {isAuthenticated ? "Личный кабинет" : "Войти"}
        </span>
       </Link>
      </div>
@@ -84,7 +84,10 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
        {categories.map((cat) => (
         <button
          key={cat.id}
-         onClick={() => setActiveCategory(cat.id)}
+         onClick={() => {
+          setActiveCategory(cat.id)
+          setSearchQuery('')
+         }}
          className={cn(
           "px-5 sm:px-6 py-2 sm:py-2.5 rounded-[1rem] text-[15px] sm:text-[16px] font-medium border-[1.5px] transition-all duration-200 whitespace-nowrap",
           activeCategory === cat.id
