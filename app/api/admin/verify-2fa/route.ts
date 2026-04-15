@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { verify } from "otplib";
+import { authenticator } from "otplib";
 
 export const runtime = "nodejs";
 
@@ -33,10 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Слишком много попыток. Подождите 15 минут." }, { status: 429 });
   }
 
-  const isValid = await verify({
-   token: code,
-   secret: user.twoFactorSecret
-  });
+  const isValid = authenticator.verify({ token: code, secret: user.twoFactorSecret });
 
   if (!isValid) {
    const newAttempts = (user.twoFactorAttempts || 0) + 1;

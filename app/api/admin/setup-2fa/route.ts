@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { generateSecret, verify, generateURI } from "otplib";
+import { authenticator } from "otplib";
 import QRCode from "qrcode";
 
 export const runtime = "nodejs";
@@ -13,12 +13,12 @@ export async function GET() {
    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const secret = generateSecret();
-  const otpauth = generateURI({
-   issuer: "Smusl Premium",
-   label: session.user.email || "Admin",
-   secret,
-  });
+  const secret = authenticator.generateSecret();
+  const otpauth = authenticator.keyuri(
+   session.user.email || "Admin",
+   "Smusl Premium",
+   secret
+  );
 
   const qrCodeUrl = await QRCode.toDataURL(otpauth);
 
@@ -51,10 +51,7 @@ export async function POST(req: Request) {
    return NextResponse.json({ error: "No secret found" }, { status: 400 });
   }
 
-  const isValid = await verify({
-   token: code,
-   secret: user.twoFactorSecret
-  });
+  const isValid = authenticator.verify({ token: code, secret: user.twoFactorSecret });
 
   if (!isValid) {
    return NextResponse.json({ error: "Неверный код подтверждения" }, { status: 400 });

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, ArrowLeft, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Verify2FAPage() {
  const router = useRouter();

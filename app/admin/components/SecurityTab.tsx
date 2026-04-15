@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Shield, ShieldCheck, ShieldAlert, Key, Smartphone, Info, Loader2 } from "lucide-react";
+import { Shield, ShieldCheck, Key, Smartphone, Info, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 export default function SecurityTab() {
