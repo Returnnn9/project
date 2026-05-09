@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Shield, ShieldCheck, Key, Smartphone, Info, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 
 export default function SecurityTab() {
  const { data: session, update } = useSession();
@@ -47,7 +48,7 @@ export default function SecurityTab() {
    if (!res.ok) throw new Error(data.error || "Неверный код подтверждения");
 
    setSuccess(true);
-   await update({ twoFactorEnabled: true }); // Update local session
+   await update({ twoFactorEnabled: true });
    setTimeout(() => {
     setIsSettingUp(false);
     setSuccess(false);
@@ -114,7 +115,7 @@ export default function SecurityTab() {
      <div className="flex flex-col sm:flex-row items-center gap-10">
       <div className="bg-white p-4 rounded-[2rem] shadow-xl border border-gray-50">
        {qrCodeUrl ? (
-        <img src={qrCodeUrl} alt="2FA QR Code" className="w-48 h-48" />
+        <Image src={qrCodeUrl} alt="2FA QR Code" width={192} height={192} className="w-48 h-48" unoptimized />
        ) : (
         <div className="w-48 h-48 flex items-center justify-center bg-gray-50 rounded-xl">
          <Loader2 className="w-8 h-8 animate-spin text-gray-300" />

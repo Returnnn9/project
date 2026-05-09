@@ -21,6 +21,7 @@
 
  --shadow-premium: 0 10px 30px rgba(74, 66, 61, 0.08);
  --shadow-hover: 0 20px 40px rgba(74, 66, 61, 0.12);
+ --shadow-terracotta: 0 12px 32px rgba(207, 141, 114, 0.25);
 
  --radius-r-lg: 24px;
  --radius-r-xl: 32px;
@@ -46,12 +47,31 @@
 
  html {
   scroll-behavior: smooth;
+  @apply font-manrope;
  }
 
  body {
-  @apply font-manrope text-base font-medium antialiased text-[#4A423D] bg-white;
+  @apply font-manrope text-base font-medium antialiased text-[#4A423D] bg-[#FDF8ED];
   letter-spacing: -0.01em;
   line-height: 1.5;
+  position: relative;
+ }
+
+ /* Premium Grain Texture Overly */
+ body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  user-select: none;
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  filter: contrast(120%);
+  mix-blend-mode: overlay;
  }
 
  h1,
@@ -64,19 +84,34 @@
 
 @layer utilities {
  .glass-card {
-  @apply bg-white/80 backdrop-blur-md border border-white/40 shadow-premium;
+  @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-premium;
  }
 
- .btn-primary {
-  @apply bg-smusl-terracotta text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:bg-[#b87a60] active:scale-95 text-center;
+ .glass-panel {
+  @apply bg-white/40 backdrop-blur-2xl border-white/20 shadow-premium;
  }
 
- .btn-secondary {
-  @apply bg-white text-smusl-brown px-6 py-3 rounded-xl font-bold border border-smusl-light-gray transition-all duration-300 hover:bg-smusl-beige active:scale-95 text-center;
+ .btn-premium {
+  @apply relative overflow-hidden transition-all duration-500 hover:-translate-y-0.5 active:translate-y-0 active:scale-95;
  }
 
- .input-field {
-  @apply bg-white border border-smusl-light-gray rounded-xl px-4 py-3 outline-none transition-all focus:border-smusl-terracotta focus:ring-1 focus:ring-smusl-terracotta;
+ .btn-shimmer::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+   to bottom right,
+   rgba(255, 255, 255, 0) 0%,
+   rgba(255, 255, 255, 0) 40%,
+   rgba(255, 255, 255, 0.4) 50%,
+   rgba(255, 255, 255, 0) 60%,
+   rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(45deg);
+  animation: shimmer 3s infinite;
  }
 
  .smooth-scroll,
@@ -90,36 +125,69 @@
   }
  }
 
- .anim-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+ .anim-soft-enter {
+  animation: softEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
  }
 }
 
-@keyframes fadeIn {
+@keyframes shimmer {
+ 0% { transform: translate(-100%, -100%) rotate(45deg); }
+ 100% { transform: translate(100%, 100%) rotate(45deg); }
+}
+
+@keyframes softEnter {
  from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(15px);
  }
-
  to {
   opacity: 1;
   transform: translateY(0);
  }
 }
 
-/* Removed Blueprint Effect */
-
-/* ══════════════════════════════════════════════════
-   SCROLL REVEAL UTILITIES
-   ══════════════════════════════════════════════════ */
-
-.scroll-reveal {
- opacity: 0;
- transform: translateY(20px);
- transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+@keyframes pulseSlow {
+ 0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.15; }
+ 50% { transform: scale(1.1) translate(20px, -10px); opacity: 0.25; }
 }
 
-.scroll-reveal.visible {
- opacity: 1;
- transform: translateY(0);
+@keyframes pulseSlower {
+ 0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.1; }
+ 50% { transform: scale(1.15) translate(-30px, 20px); opacity: 0.2; }
+}
+
+@keyframes floatScript {
+ 0%, 100% { transform: translateY(16px) rotate(-1deg); }
+ 50% { transform: translateY(0px) rotate(1deg); }
+}
+
+@keyframes floatScriptDelayed {
+ 0%, 100% { transform: translateY(20px) scale(1); }
+ 50% { transform: translateY(0px) scale(1.05); }
+}
+
+.animate-pulse-slow {
+ animation: pulseSlow 12s ease-in-out infinite;
+ will-change: transform, opacity;
+}
+
+.animate-pulse-slower {
+ animation: pulseSlower 18s ease-in-out infinite;
+ will-change: transform, opacity;
+}
+
+.animate-float-script {
+ animation: floatScript 6s ease-in-out infinite;
+ will-change: transform;
+}
+
+.animate-float-script-delayed {
+ animation: floatScriptDelayed 7s ease-in-out infinite;
+ will-change: transform;
+}
+
+/* Custom Selection Color */
+::selection {
+ background: #CF8D72;
+ color: white;
 }

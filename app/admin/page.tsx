@@ -1,43 +1,46 @@
 "use client";
-
 import React, { useEffect, useState } from 'react';
-import { useProductStore, useStoreData } from '@/store/hooks';
+import { useProductStore } from '@/store/hooks';
 import Image from 'next/image';
-import { Edit2, Trash2, Plus, ArrowLeft, Package, ShieldCheck as ShieldIcon, Minus } from 'lucide-react';
+import { Edit2, Trash2, Plus, ArrowLeft, Package, ShieldCheck as ShieldIcon, Minus, AlertTriangle, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import ProductFormModal from './components/ProductFormModal';
 import SecurityTab from './components/SecurityTab';
 import AnalyticsTab from './components/AnalyticsTab';
 import { Product } from '@/store/types';
 import { categories } from '@/data/products';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-import { TrendingUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 
 export default function AdminPage() {
+ const { data: session, status } = useSession();
  const [activeTab, setActiveTab] = useState<'products' | 'security' | 'analytics'>('analytics');
- const productStore = useProductStore();
- const products = useStoreData(productStore, s => s.getProducts()) || [];
- const isLoading = useStoreData(productStore, s => s.getIsLoading());
+ const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+
+ const products = useProductStore(s => s.products) || [];
+ const isLoading = useProductStore(s => s.isLoading);
+ const fetchProducts = useProductStore(s => s.fetchProducts);
+ const deleteProduct = useProductStore(s => s.deleteProduct);
+ const updateProduct = useProductStore(s => s.updateProduct);
 
  const [isModalOpen, setIsModalOpen] = useState(false);
  const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
 
  useEffect(() => {
-  productStore.fetchProducts();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
- }, []);
+  fetchProducts();
+ }, [fetchProducts]);
 
  const handleEdit = (product: Product) => {
   setEditingProduct(product);
   setIsModalOpen(true);
  };
 
- const handleDelete = async (id: number) => {
-  if (confirm('Вы уверены, что хотите удалить этот товар?')) {
-   await productStore.deleteProduct(id);
-  }
+ const handleDelete = async (product: Product) => {
+  setDeleteTarget(product);
  };
+
 
  const handleAddNew = () => {
   setEditingProduct(undefined);
@@ -60,20 +63,18 @@ export default function AdminPage() {
    formData.append("category", product.category);
    formData.append("quantity", newQuantity.toString());
 
-   if (product.image && !product.image.startsWith('blob:')) {
-    // We omit image if it's already uploaded. The API will fallback to existing image.
-   }
-
-   await productStore.updateProduct(product.id, formData);
+   await updateProduct(product.id, formData);
   } catch (error) {
    console.error("Failed to update quantity", error);
   }
  };
 
+ if (status === 'loading') return null;
+ if (!session?.user || session.user.role !== 'ADMIN') return null;
+
  return (
   <div className="min-h-screen bg-[#FAF8F5] font-manrope p-4 sm:p-8 lg:p-12">
    <div className="max-w-[1200px] mx-auto">
-    {/* Header */}
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
      <div>
       <Link href="/" className="inline-flex items-center gap-2 text-[#4A403A]/50 hover:text-[#B54442] transition-colors mb-4 text-[14px] font-bold uppercase tracking-widest">
@@ -95,7 +96,6 @@ export default function AdminPage() {
      </div>
     </div>
 
-    {/* Tabs */}
     <div className="flex flex-wrap items-center gap-2 mb-8 bg-white/50 p-1.5 rounded-2xl w-fit border border-gray-100">
      <button
       onClick={() => setActiveTab('analytics')}
@@ -120,7 +120,6 @@ export default function AdminPage() {
      </button>
     </div>
 
-    {/* Content */}
     {activeTab === 'analytics' ? (
      <AnalyticsTab />
     ) : activeTab === 'products' ? (
@@ -136,7 +135,6 @@ export default function AdminPage() {
        </button>
       </div>
 
-      {/* Mobile Cards View */}
       <div className="md:hidden flex flex-col divide-y divide-gray-50">
        {isLoading ? (
         <div className="p-8 text-center text-[#9C9188]">Загрузка товаров...</div>
@@ -145,7 +143,6 @@ export default function AdminPage() {
        ) : (
         products.map((product) => (
          <div key={product.id} className="p-5 flex flex-col gap-4">
-          {/* Top Info */}
           <div className="flex gap-4">
            <div className="relative w-20 h-20 shrink-0 rounded-2xl overflow-hidden bg-[#FAF8F5]">
             <Image src={product.image} alt={product.name} fill className="object-cover" />
@@ -160,9 +157,7 @@ export default function AdminPage() {
            </div>
           </div>
 
-          {/* Bottom Actions */}
           <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-           {/* Quantity Controls */}
            <div className="flex items-center gap-3 bg-gray-50 rounded-full p-1 border border-gray-100">
             <button
              onClick={() => handleQuantityChange(product, -1)}
@@ -186,7 +181,6 @@ export default function AdminPage() {
             </button>
            </div>
 
-           {/* Actions */}
            <div className="flex items-center gap-2">
             <button
              onClick={() => handleEdit(product)}
@@ -195,7 +189,7 @@ export default function AdminPage() {
              <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
-             onClick={() => handleDelete(product.id)}
+             onClick={() => handleDelete(product)}
              className="p-2 sm:p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors active:scale-95"
             >
              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -207,7 +201,6 @@ export default function AdminPage() {
        )}
       </div>
 
-      {/* Desktop Table View */}
       <div className="hidden md:block overflow-x-auto">
        <table className="w-full text-left border-collapse">
         <thead>
@@ -285,7 +278,7 @@ export default function AdminPage() {
                <Edit2 className="w-4 h-4" />
               </button>
               <button
-               onClick={() => handleDelete(product.id)}
+               onClick={() => handleDelete(product)}
                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
               >
                <Trash2 className="w-4 h-4" />
@@ -309,6 +302,49 @@ export default function AdminPage() {
     onClose={() => setIsModalOpen(false)}
     product={editingProduct}
    />
+
+   <AnimatePresence>
+    {deleteTarget && (
+     <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={() => setDeleteTarget(null)}
+     >
+      <motion.div
+       initial={{ scale: 0.9, opacity: 0, y: 20 }}
+       animate={{ scale: 1, opacity: 1, y: 0 }}
+       exit={{ scale: 0.9, opacity: 0 }}
+       onClick={(e) => e.stopPropagation()}
+       className="bg-white rounded-[2rem] p-8 max-w-[380px] w-full shadow-2xl"
+      >
+       <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mb-5 mx-auto">
+        <AlertTriangle className="w-7 h-7 text-red-400" />
+       </div>
+       <h3 className="text-[20px] font-black text-[#3A332E] text-center mb-2">Удалить товар?</h3>
+       <p className="text-[14px] text-[#9C9188] text-center mb-7 leading-relaxed">
+        «{deleteTarget.name}» будет удалён безвозвратно.
+       </p>
+       <div className="flex gap-3">
+        <button
+         onClick={() => setDeleteTarget(null)}
+         className="flex-1 h-12 rounded-xl font-bold text-[#6B5D54] bg-gray-50 hover:bg-gray-100 transition-colors"
+        >
+         Отмена
+        </button>
+        <button
+         onClick={async () => { await deleteProduct(deleteTarget.id); setDeleteTarget(null); }}
+         className="flex-1 h-12 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors"
+        >
+         Удалить
+        </button>
+       </div>
+      </motion.div>
+     </motion.div>
+    )}
+   </AnimatePresence>
   </div>
  );
 }
+

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export async function GET() {
  try {
@@ -16,7 +16,6 @@ export async function GET() {
    orderBy: { createdAt: 'asc' }
   });
   
-  // Format the output to match what the frontend expects
   const formattedProducts = products.map(p => ({
    ...p,
    nutrition: (() => {

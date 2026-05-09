@@ -3,22 +3,17 @@
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, ShoppingBag, Heart } from "lucide-react"
-import { useUIStore, useCartStore, useUserStore, useStoreData } from "@/store/hooks"
-import { Product } from "@/store/types"
-
-// ─── Component ───────────────────────────────────────────────────────────────
+import Image from "next/image"
+import { useUIStore, useCartStore, useUserStore } from "@/store/hooks"
 
 export default function ProductDetailsModal() {
- const uiStore = useUIStore()
- const cartStore = useCartStore()
- const userStore = useUserStore()
+ const selectedProduct = useUIStore(s => s.selectedProduct)
+ const setSelectedProduct = useUIStore(s => s.setSelectedProduct)
 
- const selectedProduct = useStoreData(uiStore, s => s.getSelectedProduct())
- const favorites = useStoreData(userStore, s => s.getFavorites())
+ const favorites = useUserStore(s => s.favorites)
+ const toggleFavorite = useUserStore(s => s.toggleFavorite)
 
- const setSelectedProduct = (p: Product | null) => uiStore.setSelectedProduct(p)
- const addToCart = (p: Product, q?: number) => cartStore.addToCart(p, q)
- const toggleFavorite = (id: number) => userStore.toggleFavorite(id)
+ const addToCart = useCartStore(s => s.addToCart)
 
  const [quantity, setQuantity] = useState(1)
 
@@ -36,136 +31,164 @@ export default function ProductDetailsModal() {
  const decrement = () => setQuantity(q => Math.max(1, q - 1))
  const increment = () => setQuantity(q => q + 1)
 
- const renderContent = () => {
+ const renderContent = (isMobile: boolean = false) => {
   if (!selectedProduct) return null
-  const isFavorite = favorites.includes(selectedProduct.id)
+  const isFavorite = Array.isArray(favorites) && favorites.includes(selectedProduct.id)
 
   return (
    <>
-    {/* Image & Buttons */}
-    <div className="w-full bg-[#EBE7E2] overflow-hidden aspect-[4/3] sm:aspect-[16/9] relative shrink-0 flex items-center justify-center group rounded-t-[2rem] sm:rounded-t-none">
+    <div className="w-full bg-white sm:bg-[#EBE7E2] overflow-hidden aspect-[4/3] sm:aspect-[16/9] relative shrink-0 flex items-center justify-center group sm:rounded-t-none transform-gpu">
+
+
+     {isMobile && (
+      <div className="absolute top-0 inset-x-0 z-20 flex justify-center pt-4 pb-2">
+       <div className="w-12 h-1.5 rounded-full bg-[#4A403A]/15 shadow-sm" />
+      </div>
+     )}
+
      {selectedProduct.image ? (
-      <motion.img
-       src={selectedProduct.image}
-       alt={selectedProduct.name}
-       className="w-full h-full object-cover sm:transition-transform sm:duration-700 sm:group-hover:scale-105"
-       initial={{ scale: 0.95, opacity: 0 }}
+      <motion.div
+       className="relative w-full h-full"
+       initial={{ scale: 1.05, opacity: 0 }}
        animate={{ scale: 1, opacity: 1 }}
-       transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-      />
+       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      >
+       <Image
+        src={selectedProduct.image}
+        alt={selectedProduct.name}
+        fill
+        sizes="(max-width: 640px) 100vw, 680px"
+        className="object-cover"
+        priority
+       />
+      </motion.div>
      ) : (
       <div className="w-full h-full bg-[#EBE7E2]" />
      )}
 
-     {/* Close Button */}
-     <button
+     <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
       onClick={handleClose}
-      className="absolute top-4 left-4 sm:top-5 sm:left-5 h-10 w-10 rounded-full bg-[#EBE7E2]/50 border border-[#4A403A]/10 shadow-sm flex items-center justify-center text-[#4A403A] hover:bg-[#EBE7E2] transition-colors z-10"
-     >
-      <X className="w-5 h-5 sm:w-6 sm:h-6" />
-     </button>
-
-     {/* Favorite Button */}
-     <button
-      onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedProduct.id); }}
-      className={`absolute top-4 right-4 sm:top-5 sm:right-5 h-10 w-10 rounded-full bg-[#EBE7E2]/50 border border-[#4A403A]/10 shadow-sm flex items-center justify-center transition-colors z-10 ${isFavorite ? "text-[#e94e4e] bg-[#EBE7E2]" : "text-[#4A403A]/40 hover:text-[#CF8F73] hover:bg-[#EBE7E2]"
+      className={`absolute top-4 left-4 sm:top-5 sm:left-5 h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-[#4A403A]/10 shadow-md flex items-center justify-center transition-all z-20 ${isMobile ? "bg-white/40 backdrop-blur-md text-[#4A403A]" : "bg-[#EBE7E2]/50 text-[#4A403A] hover:bg-white"
        }`}
      >
-      <Heart className="w-5 h-5" fill={isFavorite ? "currentColor" : "none"} />
-     </button>
+      <X className="w-5 h-5 sm:w-6 sm:h-6" />
+     </motion.button>
+
+     <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9, rotate: -15 }}
+      onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedProduct.id); }}
+      className={`absolute top-4 right-4 sm:top-5 sm:right-5 h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-[#4A403A]/10 shadow-md flex items-center justify-center transition-all z-20 ${isFavorite
+        ? "bg-[#e94e4e] text-white"
+        : (isMobile ? "bg-white/40 backdrop-blur-md text-[#4A403A]/40" : "bg-[#EBE7E2]/50 text-[#4A403A]/40 hover:text-[#CF8F73] hover:bg-white")
+       }`}
+     >
+      <Heart className="w-5 h-5 sm:w-6 sm:h-6" fill={isFavorite ? "currentColor" : "none"} />
+     </motion.button>
     </div>
 
-    {/* Content */}
-    <div className="flex flex-col p-5 sm:p-8 gap-5 sm:gap-6 flex-1 pb-8 sm:pb-8">
-     {/* Name + weight */}
-     <div>
-      <h1 className="text-[24px] sm:text-[32px] font-bold text-[#4A403A] leading-[1.1] mb-1">
+    <div className="flex flex-col p-6 sm:p-10 gap-6 sm:gap-8 flex-1 pb-10 sm:pb-12 bg-white transform-gpu">
+     <div className="space-y-1">
+      <h1 className="text-[28px] sm:text-[42px] font-black text-[#4A403A] leading-[1.1] tracking-tighter">
        {selectedProduct.name}
       </h1>
-      <p className="text-[14px] sm:text-[16px] font-medium text-[#4A403A]/60">{selectedProduct.weight}</p>
+      <div className="flex items-center gap-2">
+       <span className="text-[14px] sm:text-[16px] font-bold text-[#4A403A]/40 uppercase tracking-widest">{selectedProduct.weight}</span>
+       {selectedProduct.quantity != null && (
+        <>
+         <span className="w-1.5 h-1.5 rounded-full bg-[#4A403A]/10" />
+         <span className="text-[13px] sm:text-[14px] font-bold text-[#CF8F73]">В наличии {selectedProduct.quantity} шт</span>
+        </>
+       )}
+      </div>
      </div>
 
-     {/* Price */}
-     <div className="flex items-center gap-3">
-      <span className="px-5 sm:px-6 py-2.5 sm:py-3 bg-[#CF8F73] text-white text-[19px] sm:text-[24px] font-bold rounded-[1rem] shadow-sm shadow-[#CF8F73]/20">
-       {selectedProduct.price} ₽/шт
-      </span>
-      <span className="text-[13px] sm:text-[14px] font-medium text-[#4A403A]/50">в наличии 31 шт</span>
-     </div>
-
-     {/* Quantity + Add */}
-     <div className="flex items-center gap-3 sm:gap-4 select-none">
-      <div className="flex items-center gap-4 sm:gap-6 bg-[#FDF4EE] rounded-[1rem] sm:rounded-[1.2rem] px-5 sm:px-6 py-3 sm:py-3.5">
-       <button
-        onClick={decrement}
-        className="text-[24px] sm:text-[28px] font-light text-[#CF8F73] leading-none w-6 text-center hover:opacity-70 transition-opacity select-none touch-manipulation"
-       >
-        −
-       </button>
-       <span className="text-[19px] sm:text-[20px] font-bold text-[#4A403A] min-w-[20px] sm:min-w-[24px] text-center select-none cursor-default font-mono">
-        {quantity}
+     <div className="flex flex-col gap-3 sm:gap-4">
+      <div className="flex items-center gap-3 sm:gap-5">
+       <span className="shrink-0 px-5 sm:px-6 py-3 bg-[#CF8F73] text-white text-[20px] sm:text-[26px] font-black rounded-[1.2rem] shadow-lg shadow-[#CF8F73]/20 whitespace-nowrap">
+        {selectedProduct.price} ₽
        </span>
-       <button
-        onClick={increment}
-        className="text-[24px] sm:text-[28px] font-light text-[#CF8F73] leading-none w-6 text-center hover:opacity-70 transition-opacity select-none touch-manipulation"
+
+       <div className="flex items-center gap-4 sm:gap-6 bg-[#FDF4EE] rounded-[1.2rem] px-5 sm:px-7 py-3 border border-[#CF8F73]/5">
+        <button
+         onClick={decrement}
+         className="text-[22px] sm:text-[28px] font-light text-[#CF8F73] leading-none hover:opacity-100 opacity-60 transition-opacity w-6 flex items-center justify-center"
+        >
+         −
+        </button>
+        <span className="text-[17px] sm:text-[22px] font-black text-[#4A403A] min-w-[20px] text-center tabular-nums">
+         {quantity}
+        </span>
+        <button
+         onClick={increment}
+         className="text-[22px] sm:text-[28px] font-light text-[#CF8F73] leading-none hover:opacity-100 opacity-60 transition-opacity w-6 flex items-center justify-center"
+        >
+         +
+        </button>
+       </div>
+
+       <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={handleAddToCart}
+        className="hidden sm:flex flex-1 h-[64px] sm:h-[72px] bg-gradient-to-br from-[#DF997E] to-[#CD8B70] text-white rounded-[1.2rem] font-black text-[17px] items-center justify-center gap-3 shadow-[0_20px_40px_-12px_rgba(223,153,126,0.25)] transition-all duration-500 select-none touch-manipulation"
        >
-        +
-       </button>
+        <ShoppingBag className="w-6 h-6 shrink-0 drop-shadow-md" />
+        <span className="tracking-tight uppercase tracking-[0.05em] drop-shadow-md">Добавить в корзину</span>
+       </motion.button>
       </div>
 
-      <button
+      <motion.button
+       whileTap={{ scale: 0.98 }}
        onClick={handleAddToCart}
-       className="flex-1 h-[56px] sm:h-[68px] bg-[#CF8D72] text-white rounded-[1.2rem] font-bold text-[16px] sm:text-[18px] flex items-center justify-center gap-2 sm:gap-3 shadow-[0_8px_24px_rgba(207,141,114,0.35)] hover:shadow-[0_12px_32px_rgba(207,141,114,0.5)] hover:bg-[#C27E63] transition-all hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.98] select-none touch-manipulation transform-gpu"
+       className="sm:hidden w-full h-[56px] bg-gradient-to-br from-[#DF997E] to-[#CD8B70] text-white rounded-[1.2rem] font-black text-[15px] flex items-center justify-center gap-2.5 shadow-[0_20px_40px_-12px_rgba(223,153,126,0.25)] transition-all duration-500 select-none touch-manipulation"
       >
-       <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-white" />
-        <span className="drop-shadow-sm tracking-wide pointer-events-none">
-         <span className="sm:hidden">В корзину</span>
-         <span className="hidden sm:inline">Добавить в корзину</span>
-        </span>
-      </button>
+       <ShoppingBag className="w-5 h-5 shrink-0 drop-shadow-md" />
+       <span className="uppercase tracking-[0.05em] drop-shadow-md">Добавить в корзину</span>
+      </motion.button>
      </div>
 
-     {/* Nutrition */}
      {selectedProduct.nutrition && (
-      <div className="w-full bg-[#FEF4E8] rounded-[1.5rem] p-4 sm:p-6">
-       <p className="text-[10px] sm:text-[12px] font-black text-[#CF8F73] uppercase tracking-[0.15em] mb-3 sm:mb-4">
-        на 100 грамм
-       </p>
-       <div className="grid grid-cols-4 gap-3 sm:gap-4">
+      <div className="w-full bg-[#FEF4E8] rounded-[2rem] p-6 sm:p-8 border border-[#CF8F73]/5">
+       <span className="text-[10px] sm:text-[11px] font-black text-[#CF8F73]/50 uppercase tracking-[0.2em] block mb-4">
+        Энергетическая ценность / 100г
+       </span>
+       <div className="grid grid-cols-4 gap-4 sm:gap-6">
         {[
-         { label: "Ккал/кДж", val: selectedProduct.nutrition.kcal },
-         { label: "Белки, г", val: selectedProduct.nutrition.proteins },
-         { label: "Жиры, г", val: selectedProduct.nutrition.fats },
-         { label: "Углеводы, г", val: selectedProduct.nutrition.carbs },
+         { label: "Ккал", val: selectedProduct.nutrition.kcal },
+         { label: "Белки", val: selectedProduct.nutrition.proteins },
+         { label: "Жиры", val: selectedProduct.nutrition.fats },
+         { label: "Угл.", val: selectedProduct.nutrition.carbs },
         ].map((n, i) => (
-         <div key={i} className="flex flex-col gap-0.5 sm:gap-1">
-          <span className="text-[16px] sm:text-[22px] font-black text-[#CF8F73] leading-none">{n.val}</span>
-          <span className="text-[8px] sm:text-[10px] font-bold text-[#CF8F73]/40 uppercase leading-tight">{n.label}</span>
+         <div key={i} className="flex flex-col gap-0.5">
+          <span className="text-[18px] sm:text-[24px] font-black text-[#CF8F73] leading-none">{n.val}</span>
+          <span className="text-[9px] sm:text-[11px] font-bold text-[#CF8F73]/60 uppercase tracking-tighter leading-tight">{n.label}</span>
          </div>
         ))}
        </div>
       </div>
      )}
 
-     {/* Description */}
-     {selectedProduct.description && (
-      <div>
-       <h3 className="text-[17px] sm:text-[20px] font-bold text-[#4A403A] mb-1.5 sm:mb-2">Описание</h3>
-       <p className="text-[14px] sm:text-[16px] text-[#4A403A]/80 leading-[1.6] sm:leading-[1.7] font-medium">
-        {selectedProduct.description}
-       </p>
-      </div>
-     )}
+     <div className="grid gap-6 sm:gap-8">
+      {selectedProduct.description && (
+       <div className="space-y-2">
+        <h3 className="text-[14px] sm:text-[16px] font-black text-[#4A403A]/20 uppercase tracking-[0.15em]">Описание</h3>
+        <p className="text-[15px] sm:text-[17px] text-[#4A403A]/80 leading-relaxed font-bold tracking-tight">
+         {selectedProduct.description}
+        </p>
+       </div>
+      )}
 
-     {/* Composition */}
-     {selectedProduct.composition && (
-      <div className="pb-0 sm:pb-2">
-       <h3 className="text-[17px] sm:text-[20px] font-bold text-[#4A403A] mb-1.5 sm:mb-2">Состав</h3>
-       <p className="text-[13px] sm:text-[15px] text-[#4A403A]/60 leading-[1.5] sm:leading-[1.6] font-medium">
-        {selectedProduct.composition}
-       </p>
-      </div>
-     )}
+      {selectedProduct.composition && (
+       <div className="space-y-2">
+        <h3 className="text-[14px] sm:text-[16px] font-black text-[#4A403A]/20 uppercase tracking-[0.15em]">Состав</h3>
+        <p className="text-[13px] sm:text-[14px] text-[#4A403A]/50 leading-relaxed font-bold">
+         {selectedProduct.composition}
+        </p>
+       </div>
+      )}
+     </div>
     </div>
    </>
   )
@@ -175,46 +198,47 @@ export default function ProductDetailsModal() {
   <AnimatePresence>
    {selectedProduct && (
     <>
-     {/* Overlay */}
      <motion.div
       key="overlay"
-      className="fixed inset-0 z-[100] bg-[#3A332E]/60"
+      className="fixed inset-0 z-[200] bg-[#3A332E]/60 backdrop-blur-md"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: 0.3 }}
       onClick={handleClose}
      />
 
-     {/* Mobile: bottom sheet */}
      <motion.div
       key="modal-mobile"
-      className="fixed inset-x-0 bottom-0 z-[110] sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-[210] sm:hidden"
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ type: "spring", damping: 30, stiffness: 300, mass: 0.8 }}
+      drag="y"
+      dragConstraints={{ top: 0 }}
+      dragElastic={0.08}
+      onDragEnd={(_, info) => {
+       if (info.offset.y > 100 || info.velocity.y > 500) {
+        handleClose()
+       }
+      }}
      >
-      <div className="relative bg-[#F5E6DA] rounded-t-[2.5rem] shadow-2xl w-full max-h-[92dvh] overflow-y-auto flex flex-col font-montserrat pb-20">
-       {/* Drag handle */}
-       <div className="sticky top-0 z-20 flex justify-center pt-3 pb-2 bg-[#F5E6DA]/95">
-        <div className="w-12 h-1.5 rounded-full bg-[#4A403A]/15" />
-       </div>
-       {renderContent()}
+      <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl w-full max-h-[96dvh] overflow-y-auto flex flex-col font-manrope pb-10 transform-gpu will-change-transform">
+       {renderContent(true)}
       </div>
      </motion.div>
 
-     {/* Desktop: right drawer */}
      <motion.div
       key="modal-desktop"
-      className="fixed inset-y-0 right-0 z-[110] hidden sm:flex items-stretch"
+      className="fixed inset-y-0 right-0 z-[210] hidden sm:flex items-stretch"
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ type: "spring", damping: 35, stiffness: 300, mass: 1 }}
      >
-      <div className="relative bg-[#FDF8ED] shadow-2xl w-[min(680px,100vw)] h-full overflow-y-auto flex flex-col font-montserrat">
-       {renderContent()}
+      <div className="relative bg-white shadow-2xl w-[min(680px,100vw)] h-full overflow-y-auto flex flex-col font-manrope transform-gpu will-change-transform">
+       {renderContent(false)}
       </div>
      </motion.div>
     </>

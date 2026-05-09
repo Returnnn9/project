@@ -5,9 +5,9 @@ export const Skeleton = ({ className }: { className?: string }) => (
 )
 
 export const ProductCardSkeleton = () => (
- <div className="bg-[#FAF7F5] rounded-[1.2rem] sm:rounded-[1.5rem] border border-[#F2F2F2] h-full flex flex-col p-1.5 sm:p-3 shadow-sm">
+ <div className="bg-[#FAF7F5] rounded-[2.5rem] border border-[#F2F2F2] h-full flex flex-col p-3 sm:p-4 shadow-sm">
   <div className="p-1">
-   <Skeleton className="aspect-[4/3] w-full rounded-[0.8rem] sm:rounded-[1.1rem] bg-[#F0EAE4] mb-2 sm:mb-2" />
+   <Skeleton className="aspect-[4/3] w-full rounded-[1.8rem] bg-[#F0EAE4] mb-2 sm:mb-4" />
   </div>
 
 

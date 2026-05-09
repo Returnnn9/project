@@ -68,21 +68,22 @@ export default function AnalyticsTab() {
   fetchSmsBalance();
  }, []);
 
- // Derived data
+ const formatOrderDate = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) : '';
+
  const todayStr = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
- const todaysOrders = orders.filter(o => o.date === todayStr);
+ const todaysOrders = orders.filter(o => formatOrderDate(o.createdAt) === todayStr);
  const totalRevenueToday = todaysOrders.reduce((sum, o) => sum + o.total, 0);
 
- // Analytics Chart Data (Revenue by Date)
  const analyticsData = useMemo(() => {
   const datesMap: Record<string, number> = {};
-  // Reverse to show older dates first for graph if sorted descending by default
   [...orders].reverse().forEach(o => {
-   if (!datesMap[o.date]) datesMap[o.date] = 0;
-   datesMap[o.date] += o.total;
+   const dateKey = formatOrderDate(o.createdAt);
+   if (!datesMap[dateKey]) datesMap[dateKey] = 0;
+   datesMap[dateKey] += o.total;
   });
 
-  const labels = Object.keys(datesMap).slice(-7); // Last 7 days with data
+  const labels = Object.keys(datesMap).slice(-7);
   const data = labels.map(l => datesMap[l]);
 
   return {
@@ -145,9 +146,7 @@ export default function AnalyticsTab() {
 
  return (
   <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-   {/* Quick Stats Grid */}
    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-    {/* Card 1: Today's Revenue */}
     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex items-center justify-between group">
      <div>
       <p className="text-[#9C9188] text-[13px] font-bold uppercase tracking-widest mb-2">Выручка за сегодня</p>
@@ -161,7 +160,6 @@ export default function AnalyticsTab() {
      </div>
     </div>
 
-    {/* Card 2: Today's Orders */}
     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex items-center justify-between group">
      <div>
       <p className="text-[#9C9188] text-[13px] font-bold uppercase tracking-widest mb-2">Заказов сегодня</p>
@@ -175,7 +173,6 @@ export default function AnalyticsTab() {
      </div>
     </div>
 
-    {/* Card 3: Total All-time Orders */}
     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex items-center justify-between group">
      <div>
       <p className="text-[#9C9188] text-[13px] font-bold uppercase tracking-widest mb-2">Всего заказов</p>
@@ -188,7 +185,6 @@ export default function AnalyticsTab() {
      </div>
     </div>
 
-    {/* Card 4: SMS Balance */}
     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex items-center justify-between group">
      <div>
       <p className="text-[#9C9188] text-[13px] font-bold uppercase tracking-widest mb-2">Баланс AlfaSMS</p>
@@ -205,7 +201,6 @@ export default function AnalyticsTab() {
     </div>
    </div>
 
-   {/* Graph Component */}
    <div className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border border-gray-50">
     <div className="flex items-center justify-between mb-8">
      <h3 className="text-[20px] font-black text-[#6B5D54]">Динамика выручки (последние 7 дней)</h3>
@@ -228,7 +223,6 @@ export default function AnalyticsTab() {
     </div>
    </div>
 
-   {/* Order History Table */}
    <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-50">
     <div className="p-6 sm:p-8 border-b border-gray-50 flex items-center justify-between">
      <h3 className="text-[20px] font-black text-[#6B5D54]">История всех заказов</h3>
@@ -257,7 +251,7 @@ export default function AnalyticsTab() {
            #{o.id.toString().slice(-4)}
           </td>
           <td className="p-4 text-[#9C9188] text-[14px]">
-           {o.date}
+           {formatOrderDate(o.createdAt) || '—'}
           </td>
           <td className="p-4 hidden sm:table-cell">
            <div className="flex flex-col gap-1 max-w-[200px]">

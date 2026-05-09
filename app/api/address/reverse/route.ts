@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 const NOMINATIM_HEADERS = {
-  'User-Agent': 'smuslest-delivery-app/1.0 (support@smuslest.ru)',
+  'User-Agent': 'smislest-delivery-app/1.0 (support@smislest.ru)',
   'Accept-Language': 'ru',
 };
 

@@ -1,25 +1,36 @@
 "use client";
 
+import React, { useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useUIStore, useStoreData } from "@/store/hooks";
+import { useUIStore } from "@/store/hooks";
 
-// Dynamically import modals with No SSR to prevent hydration errors
-// and heavily reduce the initial server-rendered HTML payload.
 const LoginModal = dynamic(() => import("@/components/LoginModal"), { ssr: false });
 const AddressModal = dynamic(() => import("@/components/AddressModal"), { ssr: false });
 const CheckoutModal = dynamic(() => import("@/components/CheckoutModal"), { ssr: false });
 const ProductDetailsModal = dynamic(() => import("@/components/ProductDetailsModal"), { ssr: false });
 
 export default function GlobalModals() {
-  const uiStore = useUIStore();
-  
-  // We can conditionally mount them based on store state to save even more memory/DOM nodes
-  // But for now, they have their own inner AnimatePresence rendering logic.
-  // Rendering them here globally avoids duplication across pages.
-  const isAuthOpen = useStoreData(uiStore, (s) => s.getIsAuthModalOpen());
-  const isAddressOpen = useStoreData(uiStore, (s) => s.getIsAddressModalOpen());
-  const isCheckoutOpen = useStoreData(uiStore, (s) => s.getIsCheckoutOpen());
-  const isProductOpen = useStoreData(uiStore, (s) => s.getSelectedProduct() !== null);
+  const isAuthOpen = useUIStore((s) => s.isAuthModalOpen);
+  const isAddressOpen = useUIStore((s) => s.isAddressModalOpen);
+  const isCheckoutOpen = useUIStore((s) => s.isCheckoutOpen);
+  const isProductOpen = useUIStore((s) => s.selectedProduct !== null);
+
+  useEffect(() => {
+    const isAnyModalOpen = isAuthOpen || isAddressOpen || isCheckoutOpen || isProductOpen;
+    
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = "var(--removed-body-scroll-bar-size, 0px)";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    }
+    
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    };
+  }, [isAuthOpen, isAddressOpen, isCheckoutOpen, isProductOpen]);
 
   return (
     <>

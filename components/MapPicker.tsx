@@ -4,27 +4,25 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Search, MapPin, Loader2, X, Plus, Minus, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ─── Public API ──────────────────────────────────────────────────────────────
-
 export interface AddressDetails {
   full: string;
   road?: string;
   house?: string;
   city?: string;
   apartment?: string;
-  coords?: [number, number]; // [lat, lon]
+  coords?: [number, number];
 }
 
 interface MapPickerProps {
   initialAddress?: string;
-  city?: string; // e.g. 'Москва' | 'Санкт-Петербург' — passed to address search API
+  city?: string;
   onAddressSelect: (address: string) => void;
   onAddressDetailsSelect?: (details: AddressDetails) => void;
   onError?: (error: string | null) => void;
   className?: string;
   hideSearch?: boolean;
   showGeolocate?: boolean;
-  externalCoords?: [number, number] | null; // [lat, lon]
+  externalCoords?: [number, number] | null;
   interactive?: boolean;
 }
 
@@ -40,8 +38,6 @@ interface Suggestion {
     subtitle?: string;
   };
 }
-
-// ─── Minimal Leaflet typings (CDN, no npm install) ──────────────────────────
 
 interface LeafletMap {
   setView(center: [number, number], zoom?: number): void;
@@ -82,21 +78,15 @@ declare global {
   }
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
 const LEAFLET_CSS_ID = "leaflet-css";
 const LEAFLET_JS_ID = "leaflet-js";
 const LEAFLET_CSS_URL = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
 const LEAFLET_JS_URL = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
 
-// CartoDB Voyager — clean, modern look, no API key required
 const TILE_URL =
   "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
 
-
-const DEFAULT_CENTER: [number, number] = [55.7558, 37.6173]; // Москва
-
-// ─── Component ───────────────────────────────────────────────────────────────
+const DEFAULT_CENTER: [number, number] = [55.7558, 37.6173];
 
 export default function MapPicker({
   initialAddress,
@@ -125,10 +115,8 @@ export default function MapPicker({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cleanup debounce on unmount
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
-  // Stable callback refs so map handlers don't cause re-initialization
   const onAddressSelectRef = useRef(onAddressSelect);
   const onAddressDetailsSelectRef = useRef(onAddressDetailsSelect);
   useEffect(() => {
@@ -136,7 +124,6 @@ export default function MapPicker({
     onAddressDetailsSelectRef.current = onAddressDetailsSelect;
   }, [onAddressSelect, onAddressDetailsSelect]);
 
-  // Propagate error to parent
   useEffect(() => { onError?.(error); }, [error, onError]);
 
   const handleAddressSelect = useCallback((details: AddressDetails) => {
@@ -145,7 +132,6 @@ export default function MapPicker({
     onAddressDetailsSelectRef.current?.(details);
   }, []);
 
-  // Reverse geocode (lat, lon) → address text via our /api/address/reverse proxy
   const reverseGeocodeRef = useRef(async (coords: [number, number]) => {
     try {
       const [lat, lon] = coords;
@@ -166,16 +152,14 @@ export default function MapPicker({
     }
   });
 
-  // Move map to coords; optionally trigger reverse geocode
   const updateMapLocationRef = useRef((coords: [number, number], doReverse = true) => {
     if (!mapInstance.current) return;
     if (!doReverse) isProgrammatic.current = true;
-    mapInstance.current.setView(coords); // Leaflet uses [lat, lng] — matches our coords
+    mapInstance.current.setView(coords);
     if (doReverse) reverseGeocodeRef.current(coords);
     if (!doReverse) setTimeout(() => { isProgrammatic.current = false; }, 500);
   });
 
-  // Geocode an address string → move map
   const geocodeAddressRef = useRef(async (address: string) => {
     if (!address.trim()) return;
     try {
@@ -189,9 +173,7 @@ export default function MapPicker({
     }
   });
 
-  // ── Load Leaflet CSS + JS from CDN ──────────────────────────────────────────
   useEffect(() => {
-    // CSS (non-blocking)
     if (!document.getElementById(LEAFLET_CSS_ID)) {
       const link = document.createElement("link");
       link.id = LEAFLET_CSS_ID;
@@ -199,9 +181,12 @@ export default function MapPicker({
       link.href = LEAFLET_CSS_URL;
       document.head.appendChild(link);
     }
-    // JS
     if (document.getElementById(LEAFLET_JS_ID)) {
-      if (window.L) setIsLoaded(true);
+      if (window.L) {
+        setIsLoaded(true);
+      } else {
+        document.getElementById(LEAFLET_JS_ID)?.addEventListener('load', () => setIsLoaded(true));
+      }
       return;
     }
     const script = document.createElement("script");
@@ -213,7 +198,6 @@ export default function MapPicker({
     document.head.appendChild(script);
   }, []);
 
-  // ── Initialize map once Leaflet is ready ────────────────────────────────────
   useEffect(() => {
     if (!isLoaded || !mapRef.current || mapInstance.current || !window.L) return;
     const container = mapRef.current;
@@ -224,7 +208,7 @@ export default function MapPicker({
       const map = window.L.map(container, {
         center,
         zoom: 16,
-        zoomControl: false,        // custom controls below
+        zoomControl: false,
         dragging: interactive,
         scrollWheelZoom: interactive,
         doubleClickZoom: interactive,
@@ -250,12 +234,10 @@ export default function MapPicker({
 
       mapInstance.current = map;
 
-      // Allow DOM to settle before geocoding initial address
       if (initialAddress && !externalCoords) {
         setTimeout(() => geocodeAddressRef.current(initialAddress!), 200);
       }
 
-      // Fix layout in cases where container size wasn't known at init time
       setTimeout(() => map.invalidateSize(), 100);
     } catch (e) {
       console.error("[MapPicker] init error:", e);
@@ -268,11 +250,8 @@ export default function MapPicker({
         mapInstance.current = null;
       }
     };
-    // isLoaded is the only stable trigger; other deps are via refs
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]);
 
-  // ── Sync external coords ────────────────────────────────────────────────────
   useEffect(() => {
     if (!externalCoords || !mapInstance.current) return;
     if (
@@ -288,7 +267,6 @@ export default function MapPicker({
     }
   }, [externalCoords]);
 
-  // ── Zoom controls ───────────────────────────────────────────────────────────
   const handleZoomIn = () => {
     if (mapInstance.current) mapInstance.current.setZoom(mapInstance.current.getZoom() + 1);
   };
@@ -296,7 +274,6 @@ export default function MapPicker({
     if (mapInstance.current) mapInstance.current.setZoom(mapInstance.current.getZoom() - 1);
   };
 
-  // ── Address search / suggestions ────────────────────────────────────────────
   const fetchSuggestions = async (query: string) => {
     if (query.length < 2) { setSuggestions([]); return; }
     try {
@@ -315,7 +292,6 @@ export default function MapPicker({
     debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
   };
 
-  // ── Geolocation ─────────────────────────────────────────────────────────────
   const geolocate = useCallback(() => {
     if (!navigator.geolocation) { setError("Геолокация не поддерживается вашим браузером"); return; }
     setIsLocating(true);
@@ -333,12 +309,9 @@ export default function MapPicker({
     );
   }, []);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-
   return (
     <div className={cn("relative w-full h-full flex flex-col min-h-[400px]", className)}>
 
-      {/* ── Search Bar ── */}
       {!hideSearch && (
         <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-2">
           <div className="relative group">
@@ -383,7 +356,7 @@ export default function MapPicker({
               <div className="max-h-[320px] overflow-y-auto overflow-x-hidden custom-scrollbar">
                 {suggestions.map((s) => (
                   <button
-                    key={`${s.lat}-${s.lon}-${s.display_name}-${Math.random()}`}
+                    key={`${s.lat}-${s.lon}-${s.display_name}`}
                     onClick={() => {
                       handleAddressSelect({
                         full: s.display_name,
@@ -417,13 +390,10 @@ export default function MapPicker({
         </div>
       )}
 
-      {/* ── Map Container ── */}
       <div className="flex-1 w-full bg-[#f3f0ea] rounded-2xl overflow-hidden relative border border-gray-100 shadow-inner">
 
-        {/* Leaflet mounts here */}
         <div ref={mapRef} className="absolute inset-0 z-0" />
 
-        {/* Custom Zoom + Geolocate Controls */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[1000] flex flex-col items-center gap-3">
           {interactive && (
             <div className="flex flex-col items-center shadow-[0_4px_20px_rgba(0,0,0,0.12)] rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm border border-black/5">
@@ -458,7 +428,6 @@ export default function MapPicker({
           )}
         </div>
 
-        {/* Static center-pin overlay (no Leaflet marker needed) */}
         {interactive && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[500]">
             <div
@@ -479,7 +448,6 @@ export default function MapPicker({
           </div>
         )}
 
-        {/* Loading state */}
         {!isLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#f3f0ea] z-[1001]">
             <Loader2 className="w-8 h-8 text-[#CF8F73] animate-spin" />
@@ -488,7 +456,6 @@ export default function MapPicker({
         )}
       </div>
 
-      {/* Error toast */}
       {error && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium shadow-lg animate-in fade-in slide-in-from-bottom-2 whitespace-nowrap">
           {error}

@@ -4,6 +4,10 @@ import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
  const session = await auth();
  if (!session?.user || session.user.role !== 'ADMIN') {
@@ -19,7 +23,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
    return NextResponse.json({ error: 'Product not found' }, { status: 404 });
   }
 
-  // Delete image if it's in uploads directory
   if (product.image && product.image.startsWith('/uploads/')) {
    try {
     const imagePath = path.join(process.cwd(), 'public', product.image);
@@ -57,11 +60,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const file = formData.get('image') as File | null;
 
   if (file && file.size > 0 && typeof file !== 'string') {
+   if (!ALLOWED_MIME.includes(file.type)) {
+    return NextResponse.json({ error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' }, { status: 400 });
+   }
+   if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json({ error: 'File too large. Max 5MB allowed' }, { status: 400 });
+   }
+
    const bytes = await file.arrayBuffer();
    const buffer = Buffer.from(bytes);
 
    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-   const ext = path.extname(file.name) || '.png';
+   const rawExt = path.extname(file.name).toLowerCase();
+   const ext = ALLOWED_EXT.includes(rawExt) ? rawExt : '.bin';
    const filename = `${uniqueSuffix}${ext}`;
    const uploadDir = path.join(process.cwd(), 'public/uploads');
 
@@ -73,7 +84,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
    await fs.writeFile(path.join(uploadDir, filename), buffer);
 
-   // Delete old image
    if (existingProduct.image && existingProduct.image.startsWith('/uploads/')) {
     try {
      await fs.unlink(path.join(process.cwd(), 'public', existingProduct.image));
@@ -85,7 +95,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
    imagePath = `/uploads/${filename}`;
   }
 
-  const existingNutrition = existingProduct.nutrition ? JSON.parse(existingProduct.nutrition) : {};
+  let existingNutrition: Record<string, string> = {};
+  try {
+   existingNutrition = existingProduct.nutrition ? JSON.parse(existingProduct.nutrition) : {};
+  } catch {
+   existingNutrition = {};
+  }
   const kcal = formData.get('kcal') as string | null;
   const proteins = formData.get('proteins') as string | null;
   const fats = formData.get('fats') as string | null;
@@ -107,7 +122,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (oldPriceRaw) {
    newOldPrice = Number(oldPriceRaw);
   } else if (formData.has('oldPrice') && !oldPriceRaw) {
-   newOldPrice = null; // remove if explicitly cleared
+   newOldPrice = null;
   }
 
   const updatedProduct = await prisma.product.update({

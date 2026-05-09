@@ -1,5 +1,4 @@
-import NextAuth, { DefaultSession, DefaultUser } from "next-auth"
-import { JWT } from "next-auth/jwt"
+import { DefaultSession, DefaultUser } from "next-auth"
 
 declare module "next-auth" {
   interface Session {
@@ -9,10 +8,6 @@ declare module "next-auth" {
       twoFactorEnabled: boolean
       phone?: string
     } & DefaultSession["user"]
-    role?: string
-    twoFactorEnabled?: boolean
-    phone?: string
-    name?: string | null
   }
 
   interface User extends DefaultUser {

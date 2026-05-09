@@ -2,7 +2,9 @@
 import React from "react";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Send, Mail, Phone, Clock, MapPin } from "lucide-react";
+import { CONTACT } from "@/lib/constants/contact";
 
 const Footer: React.FC = () => {
  return (
@@ -11,11 +13,11 @@ const Footer: React.FC = () => {
     {/* ── Logo ── */}
     <div className="flex flex-col gap-4">
      <Link href="/" className="block w-fit select-none hover:opacity-80 transition-opacity">
-      <img
+      <Image
        src="/photo/logo.png"
-       alt="Logo"
-       width="160"
-       height="160"
+       alt={CONTACT.siteName}
+       width={160}
+       height={160}
        className="h-auto w-[140px] sm:w-[180px] brightness-0 invert opacity-90"
       />
      </Link>
@@ -25,11 +27,11 @@ const Footer: React.FC = () => {
     <div className="flex flex-col gap-6 pt-4">
      <div className="flex items-center gap-4">
       <Clock className="w-5 h-5 text-white/80" />
-      <span className="text-[16px] font-bold">10:00 - 19:00</span>
+      <span className="text-[16px] font-bold">{CONTACT.hours}</span>
      </div>
      <div className="flex items-start gap-4">
       <MapPin className="w-5 h-5 text-white/80 mt-1" />
-      <span className="text-[16px] font-bold leading-tight">Россия, г. Москва, ул. Ижорская 3</span>
+      <span className="text-[16px] font-bold leading-tight">{CONTACT.address.display}</span>
      </div>
      <div className="flex gap-4 mt-2">
       <Link href="#" className="hover:opacity-70 transition-opacity">
@@ -38,9 +40,6 @@ const Footer: React.FC = () => {
       <Link href="#" className="hover:opacity-70 transition-opacity">
        <Send className="w-5 h-5" />
       </Link>
-      <Link href="#" className="hover:opacity-70 transition-opacity">
-
-      </Link>
      </div>
     </div>
 
@@ -48,11 +47,15 @@ const Footer: React.FC = () => {
     <div className="flex flex-col gap-6 pt-4">
      <div className="flex items-center gap-4">
       <Mail className="w-5 h-5 text-white/80" />
-      <span className="text-[16px] font-bold">info@smislest.ru</span>
+      <a href={CONTACT.email.mailto} className="text-[16px] font-bold hover:opacity-80 transition-opacity">
+       {CONTACT.email.display}
+      </a>
      </div>
      <div className="flex items-center gap-4">
       <Phone className="w-5 h-5 text-white/80" />
-      <span className="text-[16px] font-bold">+7 (926) 210-45-65</span>
+      <a href={CONTACT.phone.tel} className="text-[16px] font-bold hover:opacity-80 transition-opacity">
+       {CONTACT.phone.display}
+      </a>
      </div>
     </div>
 

@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smusl-app
+    restart: always
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env
+    volumes:
+      - sqlite-data:/app/prisma
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+
+volumes:
+  sqlite-data:
+    name: smusl-sqlite-data

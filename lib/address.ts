@@ -34,8 +34,6 @@ export function extractFromQuery(query: string, houseNumFromApi: string = ''): O
     tempStr = tempStr.replace(flMatch[0], ' ');
   }
 
-  // 'к' and 'с' as abbreviations must be followed by '.' or a digit to prevent
-  // false positives like matching 'к' from 'комплекс' → 'омплекс'
   const corpMatch = tempStr.match(
     /(?:^|\s|,)(?:корпус|корп\.?|строение|стр\.?|к(?=[.\d])|с(?=[.\d]))\s*([a-zа-яё0-9]+)/
   );
@@ -80,8 +78,6 @@ export function parseAddress(fullAddress: string): AddressDetails {
       else if (p.startsWith('под.')) details.entrance = part.replace(/^под\.\s*/i, '').trim();
       else if (p.startsWith('эт.')) details.floor = part.replace(/^эт\.\s*/i, '').trim();
       else if (p.startsWith('кв.')) details.apartment = part.replace(/^кв\.\s*/i, '').trim();
-      // Handle cases without the prefix if it's just a number and looks like it could be one of these
-      // But for now, we rely on the specific prefixes we add in handleNextFromDelivery
     });
   }
 

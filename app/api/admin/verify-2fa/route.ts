@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
  try {
   const session = await auth();
-  if (!session || !session.user) {
+  if (!session || !session.user || session.user.role !== 'ADMIN') {
    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -28,7 +28,6 @@ export async function POST(req: Request) {
    return NextResponse.json({ error: "2FA not configured" }, { status: 400 });
   }
 
-  // Check rate limit lock
   if (user.twoFactorLockUntil && new Date(user.twoFactorLockUntil) > new Date()) {
     return NextResponse.json({ error: "Слишком много попыток. Подождите 15 минут." }, { status: 429 });
   }
@@ -54,7 +53,6 @@ export async function POST(req: Request) {
    return NextResponse.json({ error: "Неверный код" }, { status: 400 });
   }
 
-  // Reset rate limiting on success
   if (user.twoFactorAttempts > 0) {
     await prisma.user.update({
       where: { id: session.user.id },
@@ -64,12 +62,11 @@ export async function POST(req: Request) {
 
   const response = NextResponse.json({ success: true });
 
-  // Set cookie to confirm 2FA verification for this session
   response.cookies.set("admin_2fa_verified", "true", {
-   httpOnly: true, // Must be true — prevents JS access (XSS protection)
+   httpOnly: true,
    secure: process.env.NODE_ENV === "production",
    sameSite: "strict",
-   maxAge: 60 * 60 * 24, // 1 day
+   maxAge: 60 * 60 * 24,
    path: "/",
   });
 

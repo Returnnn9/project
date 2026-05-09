@@ -14,8 +14,13 @@ export const authConfig = {
     if (user.phone) token.phone = user.phone;
    }
    if (trigger === "update" && session) {
-    Object.assign(token, session);
-   }
+     const allowed = ["name", "email", "phone"] as const;
+     for (const key of allowed) {
+      if (key in session) {
+       (token as Record<string, unknown>)[key] = (session as Record<string, unknown>)[key];
+      }
+     }
+    }
    return token;
   },
   async session({ session, token }) {

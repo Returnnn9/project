@@ -75,21 +75,18 @@ model OtpCode {
 model Order {
   id        Int      @id @default(autoincrement())
   total     Float
-  date      String
   address   String
   status    String   @default("new")
   userName  String?
   userPhone String?
-  items     String   // SQLite uses String for JSON data
+  items     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-/// Хранит использованные TOTP-коды для защиты от replay-атак.
-/// Записи автоматически устаревают через 90 секунд (2 TOTP-окна).
 model TotpUsed {
   id        String   @id @default(cuid())
-  secret    String   // SHA-256 хэш секрета (не сам секрет)
+  secret    String
   code      String
   usedAt    DateTime @default(now())
 

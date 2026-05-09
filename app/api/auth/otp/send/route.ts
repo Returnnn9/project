@@ -19,12 +19,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Неверный формат номера' }, { status: 400 });
     }
 
-    // Admin shortcut — no OTP needed, password is verified in auth.ts
     if (ADMIN_PHONE && normalized === ADMIN_PHONE) {
       return NextResponse.json({ ok: true, admin: true });
     }
 
-    // DB-based cooldown (safe for serverless — no in-memory Map)
     const waitSeconds = await getOtpSendCooldown(normalized);
     if (waitSeconds > 0) {
       return NextResponse.json(
@@ -35,12 +33,10 @@ export async function POST(req: Request) {
 
     const code = await createOtp(normalized);
 
-    // Static test numbers bypass
     if (normalized === '71111111111' || normalized === '70000000000') {
       return NextResponse.json({ ok: true, dev: true });
     }
 
-    // Bypass AlfaSMS for test numbers in development only
     if (process.env.NODE_ENV !== 'production' && normalized.endsWith('0000')) {
       console.log(`[OTP] Bypass SMS for test number ${normalized}. Code: ${code}`);
       return NextResponse.json({ ok: true, dev: true });

@@ -1,11 +1,22 @@
-/**
- * SMS.ru sending utility.
- * API docs: https://sms.ru/
- */
 
 import { normalizePhone } from './phone';
 
 const SMSRU_API_KEY = process.env.SMSRU_API_KEY || '';
+
+interface SmsPhoneInfo {
+ status: string;
+ status_code?: number;
+ status_text?: string;
+ sms_id?: string | number;
+}
+
+interface SmsResponse {
+ status: string;
+ status_code?: number;
+ status_text?: string;
+ balance?: number;
+ sms?: Record<string, SmsPhoneInfo>;
+}
 
 interface SmsSendResult {
  success: boolean;
@@ -43,19 +54,10 @@ export async function sendSms(phone: string, text: string): Promise<SmsSendResul
    signal: AbortSignal.timeout(15000),
   });
 
-  const textRes = await res.text();
-  let json: Record<string, unknown> = {};
+  const json = await res.json() as SmsResponse;
 
-  try {
-   json = JSON.parse(textRes);
-  } catch {
-   console.error('[SMSRU] ❌ Failed to parse JSON response:', textRes);
-   return { success: false, errorText: 'Invalid JSON response from SMS.ru' };
-  }
-
-  // Response structure check based on SMS.ru documentation
   if (json.status === 'OK') {
-   const smsInfo = (json as any).sms?.[normalizedPhone];
+   const smsInfo = json.sms?.[normalizedPhone];
    
    if (smsInfo && smsInfo.status === 'OK') {
     const smsId = smsInfo.sms_id;
@@ -68,8 +70,8 @@ export async function sendSms(phone: string, text: string): Promise<SmsSendResul
     return { success: false, errorCode: String(errCode), errorText: String(textError) };
    }
   } else {
-   const errCode = (json as any).status_code;
-   const textError = (json as any).status_text || 'Unknown API error';
+   const errCode = json.status_code;
+   const textError = json.status_text || 'Unknown API error';
    console.error(`[SMSRU] ❌ API Error ${errCode}: ${textError}`);
    return { success: false, errorCode: String(errCode), errorText: String(textError) };
   }
@@ -93,19 +95,12 @@ export async function getSmsBalance(): Promise<{ success: boolean; balance?: num
 
  try {
   const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-  const textRes = await res.text();
-  let json: Record<string, unknown> = {};
-
-  try {
-   json = JSON.parse(textRes);
-  } catch {
-   return { success: false, errorText: 'Invalid JSON response' };
-  }
+  const json = await res.json() as SmsResponse;
 
   if (json.status === 'OK') {
-   return { success: true, balance: Number((json as any).balance) };
+   return { success: true, balance: Number(json.balance) };
   } else {
-   return { success: false, errorText: (json as any).status_text || 'Could not fetch balance' };
+   return { success: false, errorText: json.status_text || 'Could not fetch balance' };
   }
  } catch (err) {
   console.error('[SMSRU] ❌ Balance fetch failed:', err);
@@ -113,9 +108,6 @@ export async function getSmsBalance(): Promise<{ success: boolean; balance?: num
  }
 }
 
-/**
- * Build the order confirmation SMS text.
- */
 export function buildOrderSms(opts: {
  orderId: number;
  userName: string;

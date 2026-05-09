@@ -27,30 +27,39 @@ const greatVibes = Great_Vibes({
 });
 
 export const metadata: Metadata = {
- metadataBase: new URL("https://smuslest.ru"),
- title: {
-  template: "%s | СМЫСЛ ЕСТЬ",
-  default: "СМЫСЛ ЕСТЬ - Доставка еды",
- },
- description: "Закажите вкусную еду с быстрой доставкой в сервисе СМЫСЛ ЕСТЬ. Огромный выбор блюд, свежие ингредиенты и превосходный сервис.",
- keywords: ["доставка еды", "заказ еды", "смысл есть", "десерты", "выпечка", "еда на дом", "быстрая доставка"],
- authors: [{ name: "СМЫСЛ ЕСТЬ Team" }],
- manifest: "/manifest.json",
- openGraph: {
-  title: "СМЫСЛ ЕСТЬ - Доставка еды",
-  description: "Закажите вкусную еду с быстрой доставкой в сервисе СМЫСЛ ЕСТЬ. Огромный выбор блюд и превосходный сервис.",
-  url: "https://smuslest.ru",
-  siteName: "СМЫСЛ ЕСТЬ",
-  images: [
-   {
-    url: "/photo/logo.png",
-    width: 800,
-    height: 600,
-   },
-  ],
-  locale: "ru_RU",
-  type: "website",
- },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://smislest.ru"),
+  title: {
+    template: "%s | СМЫСЛ ЕСТЬ",
+    default: "СМЫСЛ ЕСТЬ — Доставка настоящих десертов и выпечки",
+  },
+  description: "Почувствуйте истинный вкус в каждом кусочке. Авторские десерты, свежая выпечка и хлеб с быстрой доставкой от сервиса СМЫСЛ ЕСТЬ. Натуральные ингредиенты и премиальный сервис.",
+  keywords: ["доставка еды", "авторские десерты", "смысл есть", "выпечка москва", "купить торт", "свежий хлеб", "премиальная доставка"],
+  authors: [{ name: "Smusl Team" }],
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-512x512.png",
+    apple: "/icons/icon-512x512.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "СМЫСЛ ЕСТЬ — Искусство вкуса в доставке",
+    description: "Авторская выпечка и десерты, которые меняют представление о доставке. Почувствуйте разницу вместе с СМЫСЛ ЕСТЬ.",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://smislest.ru",
+    siteName: "СМЫСЛ ЕСТЬ",
+    images: [
+      {
+        url: "/photo/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "СМЫСЛ ЕСТЬ — Логотип",
+      },
+    ],
+    locale: "ru_RU",
+    type: "website",
+  },
 };
 
 import { Viewport } from 'next';

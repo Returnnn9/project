@@ -5,16 +5,16 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { categories } from '@/data/products';
-import { useProductStore, useStoreData } from '@/store/hooks';
+import { useProductStore } from '@/store/hooks';
 
 const LandingProducts = () => {
  const [activeTab, setActiveTab] = useState('desserts');
- const productStore = useProductStore();
- const products = useStoreData(productStore, s => s.getProducts()) || [];
+ const products = useProductStore((state) => state.products) || [];
+ const fetchProducts = useProductStore((state) => state.fetchProducts);
 
  useEffect(() => {
   if (products.length === 0) {
-   productStore.fetchProducts();
+   fetchProducts();
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
  }, []);
@@ -82,17 +82,16 @@ const LandingProducts = () => {
          transition={{ duration: 0.8, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
          className={`group cursor-pointer ${product.gridArea}`}
         >
-         <div className={`relative rounded-[24px] overflow-hidden bg-white shadow-sm group-hover:shadow-2xl transition-all duration-700 ease-[0.16,1,0.3,1] aspect-square w-full ring-1 ring-[#4A403A]/5`}>
+         <div className={`relative rounded-[24px] overflow-hidden bg-white shadow-sm ring-1 ring-[#4A403A]/5 aspect-square w-full`}>
           <Image
            src={product.image || ''}
            alt={product.name}
            fill
            priority={idx < 4}
            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-           className="object-cover group-hover:scale-[1.1] transition-transform duration-1000"
+           className="object-cover"
           />
-          {/* Subtle overlay on hover */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
+          {/* Overlay removed — no hover effects for perf */}
          </div>
          <motion.div
           initial={{ opacity: 0 }}

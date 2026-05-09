@@ -16,10 +16,8 @@ const getPrisma = (): PrismaClient => {
  return globalForPrisma.prisma;
 };
 
-// Proxy export to ensure Prisma is only initialized on first access
 export const prisma = new Proxy({} as PrismaClient, {
  get: (target, prop) => {
-  // Return early for special properties or handle potential infinite recursion
   if (prop === '$$typeof' || prop === 'constructor') return Reflect.get(target, prop);
   return Reflect.get(getPrisma(), prop as string | symbol);
  }

@@ -146,9 +146,7 @@ export async function GET(req: NextRequest) {
 
  const config = CITY_CONFIG[city] ?? CITY_CONFIG['Москва'];
  const reqOrigin =
-  req.headers.get('origin') ||
-  req.headers.get('referer') ||
-  'http://localhost:3000';
+  req.nextUrl.origin;
 
  const fetchHeaders = {
   Referer: reqOrigin,

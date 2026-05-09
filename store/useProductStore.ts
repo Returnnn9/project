@@ -23,8 +23,8 @@ export const useProductStore = create<ProductState>((set) => ({
    if (!res.ok) throw new Error('Network response was not ok')
    const data: Product[] = await res.json()
    set({ products: data, isLoading: false })
-  } catch (err: any) {
-   set({ error: err.message, isLoading: false })
+  } catch (err) {
+   set({ error: err instanceof Error ? err.message : 'Unknown error', isLoading: false })
   }
  },
 
@@ -37,7 +37,7 @@ export const useProductStore = create<ProductState>((set) => ({
    if (!res.ok) throw new Error('Failed to add product')
    const newProduct: Product = await res.json()
    set((state) => ({ products: [...state.products, newProduct] }))
-  } catch (err: any) {
+  } catch (err) {
    throw err;
   }
  },
@@ -53,7 +53,7 @@ export const useProductStore = create<ProductState>((set) => ({
    set((state) => ({
     products: state.products.map(p => p.id === id ? updatedProduct : p)
    }))
-  } catch (err: any) {
+  } catch (err) {
    throw err;
   }
  },
@@ -67,7 +67,7 @@ export const useProductStore = create<ProductState>((set) => ({
    set((state) => ({
     products: state.products.filter(p => p.id !== id)
    }))
-  } catch (err: any) {
+  } catch (err) {
    throw err;
   }
  }

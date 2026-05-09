@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { OSMSuggestion, CityKey } from '../lib/types/address';
 
-const DEBOUNCE_MS = 300; // ms to wait before firing request
+const DEBOUNCE_MS = 300;
 const MIN_QUERY_LEN = 2;
 
 export function useAddressSearch(selectedCity: CityKey) {
@@ -14,7 +14,6 @@ export function useAddressSearch(selectedCity: CityKey) {
   const skipNextFetch = useRef<boolean>(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Cancel pending request on unmount
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const fetchSuggestions = useCallback(async (query: string) => {
@@ -23,7 +22,6 @@ export function useAddressSearch(selectedCity: CityKey) {
       return;
     }
 
-    // Abort previous in-flight request
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
@@ -37,7 +35,6 @@ export function useAddressSearch(selectedCity: CityKey) {
       if (!res.ok) throw new Error('search failed');
       const raw = await res.json();
 
-      // Normalise & deduplicate on client side too
       const seen = new Set<string>();
       const unique: OSMSuggestion[] = [];
 
@@ -53,7 +50,7 @@ export function useAddressSearch(selectedCity: CityKey) {
 
       setSuggestions(unique.slice(0, 8));
     } catch (err: unknown) {
-      if ((err as { name?: string })?.name !== 'AbortError') {
+      if (err instanceof Error && err.name !== 'AbortError') {
         console.error('[useAddressSearch] error:', err);
         setSuggestions([]);
       }
@@ -62,11 +59,6 @@ export function useAddressSearch(selectedCity: CityKey) {
     }
   }, [selectedCity]);
 
-  /**
-   * Debounced trigger — call this from onChange handlers.
-   * Automatically skips the next fetch if skipNextFetch.current is true
-   * (used when selecting a suggestion so the selected value doesn't re-trigger search).
-   */
   const debouncedSearch = useCallback((query: string) => {
     if (skipNextFetch.current) {
       skipNextFetch.current = false;

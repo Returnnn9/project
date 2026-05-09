@@ -1,19 +1,14 @@
 import { randomInt } from 'crypto';
 import { prisma } from './prisma';
 
-const CODE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const SEND_COOLDOWN_MS = 60 * 1000; // 60 seconds between sends
+const CODE_TTL_MS = 5 * 60 * 1000;
+const SEND_COOLDOWN_MS = 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
-/** Generate a 4-digit numeric code using a cryptographically secure RNG (no modular bias) */
 function generateCode(): string {
   return randomInt(1000, 10000).toString();
 }
 
-/**
- * Checks if an OTP can be sent to this phone (per-phone cooldown via DB).
- * Returns remaining seconds to wait, or 0 if allowed.
- */
 export async function getOtpSendCooldown(phone: string): Promise<number> {
   const entry = await prisma.otpCode.findUnique({ where: { phone } });
   if (!entry) return 0;
@@ -22,7 +17,6 @@ export async function getOtpSendCooldown(phone: string): Promise<number> {
   return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
 }
 
-/** Save (or replace) an OTP for a phone number and return the code */
 export async function createOtp(phone: string): Promise<string> {
   const code = generateCode();
   const now = new Date();
@@ -42,12 +36,12 @@ export type VerifyResult =
   | { ok: false; reason: 'not_found' | 'expired' | 'incorrect' | 'too_many_attempts' };
 
 export async function verifyOtp(phone: string, code: string): Promise<VerifyResult> {
-  // Test numbers bypass
-  if ((phone === '71111111111' || phone === '70000000000') && code === '1111') {
-    return { ok: true };
+  if (process.env.NODE_ENV !== 'production') {
+    if ((phone === '71111111111' || phone === '70000000000') && code === '1111') {
+      return { ok: true };
+    }
   }
 
-  // Bypass code 1111 — only available in non-production for ADMIN_PHONE
   const ADMIN_PHONE = process.env.ADMIN_PHONE ?? '';
   if (process.env.NODE_ENV !== 'production' && ADMIN_PHONE && phone === ADMIN_PHONE && code === '1111') {
     return { ok: true };
@@ -74,7 +68,6 @@ export async function verifyOtp(phone: string, code: string): Promise<VerifyResu
     return { ok: false, reason: 'incorrect' };
   }
 
-  // Success — consume the OTP
   await prisma.otpCode.delete({ where: { phone } });
   return { ok: true };
 }

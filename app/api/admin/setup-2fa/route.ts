@@ -22,10 +22,9 @@ export async function GET() {
 
   const qrCodeUrl = await QRCode.toDataURL(otpauth);
 
-  // Temporarily save secret to user in DB but don't enable yet
   await prisma.user.update({
    where: { id: session.user.id },
-   data: { twoFactorSecret: secret }
+   data: { twoFactorSecret: secret, twoFactorEnabled: false }
   });
 
   return NextResponse.json({ qrCodeUrl, secret });
@@ -37,7 +36,7 @@ export async function GET() {
 export async function POST(req: Request) {
  try {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || session.user.role !== "ADMIN") {
    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -57,7 +56,6 @@ export async function POST(req: Request) {
    return NextResponse.json({ error: "Неверный код подтверждения" }, { status: 400 });
   }
 
-  // Enable 2FA permanently
   await prisma.user.update({
    where: { id: session.user.id },
    data: { twoFactorEnabled: true }

@@ -1,35 +1,50 @@
+"use client";
+
 import React, { useState, useEffect, useCallback, useRef } from "react"
-import { useUIStore, useCartStore, useUserStore, useStoreData, useRootStore } from "@/store/hooks"
-import { X, ChevronRight, ChevronDown, Truck, MapPin, ArrowLeft, User, Phone, CheckCircle2, XCircle, Loader2, Edit3, CreditCard, Navigation } from "lucide-react"
+import { useUIStore, useCartStore, useUserStore } from "@/store/hooks"
+import { X, ChevronDown, ArrowLeft, Loader2, Edit3, Navigation } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
 import MapPicker from "./MapPicker"
 import { cn } from "@/lib/utils"
 import { useAddressSearch } from "@/hooks/useAddressSearch"
 import { PickupPoint, CityKey } from "@/lib/types/address"
-import { PICKUP_POINTS, CITY_COORDS } from "@/lib/constants/delivery"
+import { PICKUP_POINTS, CITY_COORDS, CITIES } from "@/lib/constants/delivery"
 import DeliveryTypeSelector from "./DeliveryTypeSelector"
 import { parseAddress, formatAddress, extractFromQuery } from "@/lib/address"
-import { normalizePhone } from "@/lib/phone"
 import { containerVariants, itemVariants, stepVariants } from "@/lib/motion-variants"
+import CheckoutStep1Contact from "./checkout/CheckoutStep1Contact"
+import CheckoutStep5Payment from "./checkout/CheckoutStep5Payment"
+import CheckoutStep6Success from "./checkout/CheckoutStep6Success"
 
 type DeliveryType = "delivery" | "pickup" | null
 
 export default function CheckoutModal() {
- const uiStore = useUIStore()
- const userStore = useUserStore()
- const rootStore = useRootStore()
+  const isCheckoutOpen = useUIStore(s => s.isCheckoutOpen)
+  const setCheckoutOpen = useUIStore(s => s.setCheckoutOpen)
+  const setAuthModalOpen = useUIStore(s => s.setAuthModalOpen)
 
- const isCheckoutOpen = useStoreData(uiStore, s => s.getIsCheckoutOpen())
- const address = useStoreData(userStore, s => s.getAddress())
- const userName = useStoreData(userStore, s => s.getUserName())
- const userPhone = useStoreData(userStore, s => s.getUserPhone())
+  const address = useUserStore(s => s.address)
+  const userName = useUserStore(s => s.userName)
+  const userPhone = useUserStore(s => s.userPhone)
+  const savedAddresses = useUserStore(s => s.savedAddresses)
 
- const setCheckoutOpen = (o: boolean) => uiStore.setCheckoutOpen(o)
- const setUserName = (n: string) => userStore.setUserName(n)
- const setUserPhone = (p: string) => userStore.setUserPhone(p)
- const updateAddress = (a: string, t: "delivery" | "pickup") => userStore.updateAddress(a, t)
- const checkout = () => rootStore.checkout()
+  const setUserName = useUserStore(s => s.setUserName)
+  const setUserPhone = useUserStore(s => s.setUserPhone)
+  const updateAddress = useUserStore(s => s.updateAddress)
+  const checkoutFn = useUserStore(s => s.checkout)
+  
+  const cartItems = useCartStore(s => s.cart)
+  const cartTotal = useCartStore(s => s.getCartTotal())
+  const clearCart = useCartStore(s => s.clearCart)
+
+  const checkout = async () => {
+    const success = await checkoutFn(cartItems, cartTotal);
+    if (success) {
+      clearCart();
+    }
+    return success;
+  }
  const { status } = useSession()
 
  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1)
@@ -40,13 +55,12 @@ export default function CheckoutModal() {
  const [cardCVC, setCardCVC] = useState('')
  const [tempAddress, setTempAddress] = useState(address)
  const [selectedPickup, setSelectedPickup] = useState<PickupPoint | null>(null)
- const [mapError, setMapError] = useState<string | null>(null)
+ 
  const [selectedCity, setSelectedCity] = useState<CityKey>('Москва')
  const [showCityDropdown, setShowCityDropdown] = useState(false)
  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(null)
  const [acceptNews, setAcceptNews] = useState(true)
 
- // Mobile WOW adaptive states
  const [isEditingAddress, setIsEditingAddress] = useState(false)
  const [isMobile, setIsMobile] = useState(false)
 
@@ -57,7 +71,6 @@ export default function CheckoutModal() {
   return () => window.removeEventListener('resize', check)
  }, [])
 
- // Expanded address fields
  const [house, setHouse] = useState('')
  const [corpus, setCorpus] = useState('')
  const [entrance, setEntrance] = useState('')
@@ -66,36 +79,29 @@ export default function CheckoutModal() {
 
  const phoneInputRef = useRef<HTMLInputElement>(null)
 
- // Auto-focus phone number in Step 1
  useEffect(() => {
-  if (isCheckoutOpen && step === 1 && phoneInputRef.current) {
+  if (isCheckoutOpen && step === 1) {
    setTimeout(() => {
     phoneInputRef.current?.focus()
-   }, 400) // Delay to wait for modal transition
+   }, 400)
   }
  }, [isCheckoutOpen, step])
 
- // Address search hook
- const {
-  suggestions,
-  setSuggestions,
-  clearSuggestions,
-  isLoading: isLoadingSuggestions,
-  isLocating,
-  skipNextFetch,
-  debouncedSearch,
-  geolocate,
- } = useAddressSearch(selectedCity);
-
-
+  const {
+   suggestions,
+   setSuggestions,
+   isLoading: isLoadingSuggestions,
+   skipNextFetch,
+   debouncedSearch,
+  } = useAddressSearch(selectedCity);
 
  const reset = useCallback(() => {
-  setStep(1)
-  setDeliveryType(null)
-  setPaymentMethod(null)
-  setCardNumber('')
-  setCardExpiry('')
-  setCardCVC('')
+   setStep(1)
+   setDeliveryType(null)
+   setPaymentMethod(null)
+   setCardNumber('')
+   setCardExpiry('')
+   setCardCVC('')
   if (address) {
    const d = parseAddress(address)
    setTempAddress(d.street || address)
@@ -113,22 +119,14 @@ export default function CheckoutModal() {
    setApartment('')
   }
   setSelectedPickup(null)
-  setMapError(null)
+  
   setSelectedCity('Москва')
   setShowCityDropdown(false)
   setSelectedCoords(null)
   setIsEditingAddress(false)
  }, [address])
 
- const handleGeolocate = () => {
-  geolocate((addr, coords, matchedCity) => {
-   if (matchedCity) setSelectedCity(matchedCity);
-   setTempAddress(addr);
-   setSelectedCoords(coords);
-  });
- }
-
- const handleClose = () => {
+  const handleClose = () => {
   setCheckoutOpen(false)
   setTimeout(reset, 400)
  }
@@ -156,23 +154,11 @@ export default function CheckoutModal() {
   }
  }
 
- const formatCardNumber = (val: string) => {
-  const digits = val.replace(/\D/g, '').substring(0, 16)
-  const groups = digits.match(/.{1,4}/g) || []
-  return groups.join(' ')
- }
+  const isCardValid = cardNumber.replace(/\D/g, '').length === 16 &&
+   cardExpiry.length === 5 &&
+   cardCVC.length === 3
 
- const formatExpiry = (val: string) => {
-  const digits = val.replace(/\D/g, '').substring(0, 4)
-  if (digits.length <= 2) return digits
-  return `${digits.substring(0, 2)}/${digits.substring(2, 4)}`
- }
-
- const isCardValid = cardNumber.replace(/\D/g, '').length === 16 &&
-  cardExpiry.length === 5 &&
-  cardCVC.length === 3
-
- const handleFinalCheckout = async () => {
+  const handleFinalCheckout = async () => {
   const success = await checkout()
   if (success) {
    setStep(6)
@@ -182,16 +168,14 @@ export default function CheckoutModal() {
   }
  }
 
- // Stabilized callbacks for MapPicker
  const onAddressSelect = useCallback((val: string) => {
   skipNextFetch.current = true;
   setTempAddress(val);
  }, [skipNextFetch]);
 
- const onAddressDetailsSelect = useCallback((details: import('./MapPicker').AddressDetails) => {
+  const onAddressDetailsSelect = useCallback((details: import('./MapPicker').AddressDetails) => {
   skipNextFetch.current = true;
 
-  // Handle potential city match from geocoding
   if (details.city) {
    const matchedCity = details.city.includes('Санкт-Петербург') ? 'Санкт-Петербург' :
     details.city.includes('Москва') ? 'Москва' : null;
@@ -200,8 +184,6 @@ export default function CheckoutModal() {
 
   let road = details.road || details.full.split(',')[0];
   const houseFromApi = details.house || '';
-
-  // If road is just the city name, get a more specific part
   if (road === selectedCity || road === 'Москва' || road === 'Санкт-Петербург') {
    const parts = details.full.split(',').map((p: string) => p.trim());
    const streetPart = parts.find((p: string) => p !== selectedCity && p !== 'Москва' && p !== 'Санкт-Петербург');
@@ -209,7 +191,6 @@ export default function CheckoutModal() {
   }
 
   const displayAddr = houseFromApi ? `${road}, ${houseFromApi}` : road;
-  // Strip city name from the start (fixed regex: single backslash)
   const cleanAddr = displayAddr
    .replace(new RegExp(`^${selectedCity},?\\s*`, 'i'), '')
    .replace(/^Москва,?\s*/i, '')
@@ -226,39 +207,11 @@ export default function CheckoutModal() {
   if (extracted.apartment) setApartment(extracted.apartment);
 
   if (details.coords) {
-   setSelectedCoords(details.coords);
-  }
- }, [selectedCity, skipNextFetch]);
+    setSelectedCoords(details.coords);
+   }
+  }, [selectedCity, skipNextFetch, tempAddress]);
 
  if (!isCheckoutOpen) return null
-
- const LeftPanel = ({ icon, text }: { icon: React.ReactNode, text: React.ReactNode }) => (
-  <div className="hidden sm:flex flex-shrink-0 bg-[#F8F8F8] border-r border-gray-100 flex-col items-center justify-center gap-6
-					w-[200px] md:w-[280px]
-					py-10 px-6">
-   <div className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100">
-    {mapError && step === 2 ? (
-     <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-      <XCircle className="w-9 h-9 text-red-400" />
-     </div>
-    ) : icon}
-   </div>
-   <p className={cn(
-    "text-center text-[14px] sm:text-[15px] font-[800] leading-relaxed px-2",
-    mapError && step === 2 ? "text-red-500/80" : "text-[#3A332E]"
-   )}>
-    {mapError && step === 2 ? mapError : text}
-   </p>
-   {step > 1 && step < 6 && (
-    <button
-     onClick={() => setStep((step - 1) as 1 | 2 | 3 | 4 | 5 | 6)}
-     className="flex items-center gap-2 text-[12px] font-bold text-[#3A332E]/40 hover:text-[#3A332E] transition-colors mt-2"
-    >
-     <ArrowLeft className="w-3.5 h-3.5" /> Назад
-    </button>
-   )}
-  </div>
- )
 
  return (
   <AnimatePresence>
@@ -302,90 +255,19 @@ export default function CheckoutModal() {
      <AnimatePresence mode="wait">
 
       {step === 1 && (
-       <motion.div
-        key="step1-guest"
-        variants={stepVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="flex h-full w-full"
-       >
-        <div className="flex-1 p-6 sm:p-12 flex flex-col justify-center max-w-xl mx-auto">
-         <h2 className="text-[24px] sm:text-[28px] font-extrabold text-[#3A332E] mb-8 tracking-tight">
-          Как к вам обращаться?
-         </h2>
-         <div className="space-y-4">
-          <div className="bg-[#F8F8F8] rounded-[1.2rem] px-6 py-4 border border-transparent focus-within:border-gray-300 transition-colors">
-           <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Телефон</span>
-           <input
-            ref={phoneInputRef}
-            type="tel"
-            value={userPhone}
-            onChange={(e) => setUserPhone(e.target.value)}
-            placeholder="+7 (999) 000-00-00"
-            className="bg-transparent border-none outline-none text-[16px] font-bold text-[#3A332E] placeholder:text-gray-300 w-full"
-           />
-          </div>
-          <div className="bg-[#F8F8F8] rounded-[1.2rem] px-6 py-4 border border-transparent focus-within:border-gray-300 transition-colors">
-           <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Имя</span>
-           <input
-            type="text"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            placeholder="Иван"
-            className="bg-transparent border-none outline-none text-[16px] font-bold text-[#3A332E] placeholder:text-gray-300 w-full"
-           />
-          </div>
-         </div>
-         <div className="flex items-start gap-3 mt-4">
-          <button
-           type="button"
-           onClick={() => setAcceptNews(!acceptNews)}
-           className={`w-5 h-5 rounded-md border flex-shrink-0 flex items-center justify-center transition-all ${acceptNews ? "bg-[#CF8F73] border-[#CF8F73] shadow-sm shadow-[#CF8F73]/20" : "bg-white border-gray-200"
-            }`}
-          >
-           {acceptNews && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-          </button>
-          <p className="text-[13px] font-medium text-[#3A332E]/60 leading-snug">
-           Соглашаюсь получать новости и специальные предложения
-          </p>
-
-          {status !== 'authenticated' && (
-           <div className="mt-5 pt-5 border-t border-gray-100 text-center">
-            <p className="text-[12px] font-medium text-[#3A332E]/40 mb-3">
-             Уже есть аккаунт?
-            </p>
-            <button
-             onClick={() => { handleClose(); uiStore.setAuthModalOpen(true); }}
-             className="inline-flex items-center gap-2 px-6 py-3 rounded-[1rem] bg-[#3A332E] text-white text-[14px] font-[800] hover:bg-[#2A2420] active:scale-95 transition-all shadow-md"
-            >
-             Войти / Зарегистрироваться
-            </button>
-           </div>
-          )}
-         </div>
-
-         <button
-          onClick={() => setStep(2)}
-          disabled={!userName || !normalizePhone(userPhone)}
-          className="mt-8 w-full h-[64px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20"
-         >
-          Далее
-         </button>
-
-         <p className="mt-6 text-[12px] font-medium text-[#3A332E]/30 leading-relaxed text-center px-4">
-          Нажимая «Далее», принимаю{" "}
-          <a href="/offer" className="text-[#CF8F73] underline underline-offset-2 hover:text-[#b87a60] transition-colors">оферту</a>
-          {" "}и{" "}
-          <a href="/terms" className="text-[#CF8F73] underline underline-offset-2 hover:text-[#b87a60] transition-colors">пользовательское соглашение</a>
-          , соглашаюсь на обработку персональных данных на условиях{" "}
-          <a href="/privacy" className="text-[#CF8F73] underline underline-offset-2 hover:text-[#b87a60] transition-colors">политики конфиденциальности</a>
-         </p>
-        </div>
-       </motion.div>
+       <CheckoutStep1Contact
+        userName={userName}
+        userPhone={userPhone}
+        acceptNews={acceptNews}
+        status={status}
+        setUserName={setUserName}
+        setUserPhone={setUserPhone}
+        setAcceptNews={setAcceptNews}
+        onNext={() => setStep(2)}
+        onLoginClick={() => { handleClose(); setAuthModalOpen(true); }}
+       />
       )}
 
-      {/* ───── STEP 2: Способ получения ───── */}
       {step === 2 && (
        <motion.div
         key="step2-method"
@@ -413,7 +295,7 @@ export default function CheckoutModal() {
            selectedType={deliveryType}
            onSelect={(type) => {
             setDeliveryType(type);
-            if (type === "delivery" && userStore.getSavedAddresses().length > 0) {
+            if (type === "delivery" && savedAddresses.length > 0) {
              setStep(3);
             } else {
              setStep(4);
@@ -424,7 +306,6 @@ export default function CheckoutModal() {
        </motion.div>
       )}
 
-      {/* ───── STEP 3: Saved Addresses (Delivery) ───── */}
       {step === 3 && deliveryType === "delivery" && (
        <motion.div
         key="step3-saved"
@@ -453,7 +334,7 @@ export default function CheckoutModal() {
          className="flex-1 overflow-y-auto px-1 no-scrollbar space-y-3"
         >
          <AnimatePresence mode="popLayout">
-          {userStore.getSavedAddresses().map((addr, idx) => (
+          {savedAddresses.map((addr) => (
            <motion.button
             key={addr}
             variants={itemVariants}
@@ -512,7 +393,6 @@ export default function CheckoutModal() {
        </motion.div>
       )}
 
-      {/* ───── STEP 4: Delivery ───── */}
       {step === 4 && deliveryType === "delivery" && (
        <motion.div
         key="step4-delivery"
@@ -530,7 +410,7 @@ export default function CheckoutModal() {
            initialAddress={tempAddress}
            onAddressSelect={onAddressSelect}
            onAddressDetailsSelect={onAddressDetailsSelect}
-           onError={setMapError}
+           
            externalCoords={selectedCoords}
           />
          </div>
@@ -558,10 +438,13 @@ export default function CheckoutModal() {
          )}
          transition={{ type: "spring" as const, damping: 28, stiffness: 220 }}
         >
-         {/* Drag Handle for Mobile */}
-         <div className="w-12 h-1.5 bg-gray-200/50 rounded-full mx-auto mb-4 sm:hidden shrink-0 cursor-grab active:cursor-grabbing" />
+         <div className="w-full flex items-center justify-center shrink-0 mb-4 sm:hidden group relative z-10 cursor-grab active:cursor-grabbing">
+          <div className="absolute top-1/2 -translate-y-1/2 w-20 h-6 bg-[#CF8F73]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="w-14 h-[5px] rounded-full bg-[#4A403A]/15 border border-[#4A403A]/5 shadow-[0_1px_2px_rgba(255,255,255,0.8)_inset,0_1px_3px_rgba(0,0,0,0.05)] relative overflow-hidden transition-all duration-300 group-active:scale-95 group-active:bg-[#4A403A]/25">
+           <motion.div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full" animate={{ translateX: ["-100%", "200%"] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 0.5 }} />
+          </div>
+         </div>
 
-         {/* Mobile Compact View */}
          <div className={cn("sm:hidden flex flex-col gap-4", isEditingAddress ? "hidden" : "flex")}>
           <motion.div
            whileHover={{ scale: 1.01 }}
@@ -593,14 +476,13 @@ export default function CheckoutModal() {
           </button>
          </div>
 
-         {/* Expanded / Desktop View */}
          <div className={cn("flex-col h-full", isEditingAddress ? "flex" : "hidden sm:flex")}>
           <div className="flex items-center gap-4 mb-6 sm:mb-8 shrink-0">
            <button
             onClick={() => {
              if (window.innerWidth < 640 && isEditingAddress) {
               setIsEditingAddress(false);
-             } else if (userStore.getSavedAddresses().length > 0) {
+             } else if (savedAddresses.length > 0) {
               setStep(3);
              } else {
               setStep(2);
@@ -629,7 +511,7 @@ export default function CheckoutModal() {
             </div>
             {showCityDropdown && (
              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-[1.2rem] shadow-[0_16px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden z-50">
-              {(['Москва', 'Санкт-Петербург'] as const).map(c => (
+              {CITIES.map(c => (
                <button
                 key={c}
                 onClick={() => { setSelectedCity(c); setTempAddress(''); setSuggestions([]); setSelectedCoords(null); setShowCityDropdown(false) }}
@@ -765,7 +647,6 @@ export default function CheckoutModal() {
        </motion.div>
       )}
 
-      {/* ───── STEP 4: Pickup ───── */}
       {step === 4 && deliveryType === "pickup" && (
        <motion.div
         key="step4-pickup"
@@ -783,7 +664,7 @@ export default function CheckoutModal() {
            interactive={true}
            initialAddress={selectedPickup ? `${selectedPickup.city}, ${selectedPickup.address}` : ""}
            onAddressSelect={() => { }}
-           onError={setMapError}
+           
            externalCoords={selectedPickup ? (selectedPickup.coords as [number, number]) : CITY_COORDS[selectedCity]}
           />
          </div>
@@ -811,10 +692,13 @@ export default function CheckoutModal() {
          )}
          transition={{ type: "spring" as const, damping: 28, stiffness: 220 }}
         >
-         {/* Drag Handle for Mobile */}
-         <div className="w-12 h-1.5 bg-gray-200/50 rounded-full mx-auto mb-4 sm:hidden shrink-0 cursor-grab active:cursor-grabbing" />
+         <div className="w-full flex items-center justify-center shrink-0 mb-4 sm:hidden group relative z-10 cursor-grab active:cursor-grabbing">
+          <div className="absolute top-1/2 -translate-y-1/2 w-20 h-6 bg-[#CF8F73]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="w-14 h-[5px] rounded-full bg-[#4A403A]/15 border border-[#4A403A]/5 shadow-[0_1px_2px_rgba(255,255,255,0.8)_inset,0_1px_3px_rgba(0,0,0,0.05)] relative overflow-hidden transition-all duration-300 group-active:scale-95 group-active:bg-[#4A403A]/25">
+           <motion.div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full" animate={{ translateX: ["-100%", "200%"] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 0.5 }} />
+          </div>
+         </div>
 
-         {/* Mobile Compact View */}
          <div className={cn("sm:hidden flex flex-col gap-4", isEditingAddress ? "hidden" : "flex")}>
           <motion.div
            whileHover={{ scale: 1.01 }}
@@ -846,7 +730,6 @@ export default function CheckoutModal() {
           </button>
          </div>
 
-         {/* Expanded / Desktop View */}
          <div className={cn("flex-col h-full", isEditingAddress ? "flex" : "hidden sm:flex")}>
           <div className="flex items-center justify-between mb-5 sm:mb-8 shrink-0">
            <div className="flex items-center gap-4">
@@ -969,183 +852,24 @@ export default function CheckoutModal() {
        </motion.div>
       )}
 
-      {/* ───── STEP 5: Payment ───── */}
       {step === 5 && (
-       <motion.div
-        key="step5-pay"
-        variants={stepVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="flex h-full w-full"
-       >
-        <div className="flex-1 p-6 sm:p-12 flex flex-col justify-center max-w-xl mx-auto">
-         <h2 className="text-[24px] sm:text-[28px] font-extrabold text-[#3A332E] mb-8 tracking-tight">
-          Оплата заказа
-         </h2>
-
-         <div className="space-y-4">
-          <motion.button
-           whileHover={{ scale: 1.01 }}
-           whileTap={{ scale: 0.98 }}
-           onClick={() => setPaymentMethod('sbp')}
-           className={cn(
-            "w-full p-6 rounded-[1.8rem] border-2 transition-all flex items-center justify-between group",
-            paymentMethod === 'sbp' ? "border-[#CF8F73] bg-[#CF8F73]/5" : "border-gray-100 hover:border-gray-200"
-           )}
-          >
-           <div className="flex items-center gap-4">
-            <div className="w-12 h-8 rounded-md bg-gradient-to-br from-blue-600 via-purple-600 to-orange-500 flex items-center justify-center shadow-sm">
-             <span className="text-white font-extrabold text-[12px] tracking-wider">СБП</span>
-            </div>
-            <span className="font-extrabold text-[#3A332E] text-[17px]">Оплата через СБП</span>
-           </div>
-           <div className={cn(
-            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors px-0.5",
-            paymentMethod === 'sbp' ? "border-[#CF8F73]" : "border-gray-200"
-           )}>
-            <div className={cn(
-             "w-2.5 h-2.5 rounded-full bg-[#CF8F73] transition-all",
-             paymentMethod === 'sbp' ? "scale-100 opacity-100" : "scale-0 opacity-0"
-            )} />
-           </div>
-          </motion.button>
-
-          <motion.button
-           whileHover={{ scale: 1.01 }}
-           whileTap={{ scale: 0.98 }}
-           onClick={() => setPaymentMethod('card')}
-           className={cn(
-            "w-full p-6 rounded-[1.8rem] border-2 transition-all flex items-center justify-between group",
-            paymentMethod === 'card' ? "border-[#CF8F73] bg-[#CF8F73]/5" : "border-gray-100 hover:border-gray-200"
-           )}
-          >
-           <div className="flex items-center gap-4">
-            <div className="w-12 h-8 rounded-md bg-gradient-to-br from-gray-800 to-gray-600 flex items-center justify-center shadow-sm">
-             <CreditCard className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-extrabold text-[#3A332E] text-[17px]">Банковской картой</span>
-           </div>
-           <div className={cn(
-            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors px-0.5",
-            paymentMethod === 'card' ? "border-[#CF8F73]" : "border-gray-200"
-           )}>
-            <div className={cn(
-             "w-2.5 h-2.5 rounded-full bg-[#CF8F73] transition-all",
-             paymentMethod === 'card' ? "scale-100 opacity-100" : "scale-0 opacity-0"
-            )} />
-           </div>
-          </motion.button>
-         </div>
-
-         {paymentMethod === 'card' && (
-          <motion.div
-           initial={{ opacity: 0, y: 15 }}
-           animate={{ opacity: 1, y: 0 }}
-           className="mt-6 space-y-3"
-          >
-           <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5 border border-transparent focus-within:border-gray-300 transition-colors">
-            <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Номер карты</span>
-            <input
-             type="text"
-             value={cardNumber}
-             onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-             placeholder="0000 0000 0000 0000"
-             className="bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] w-full"
-            />
-           </div>
-           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5 border border-transparent focus-within:border-gray-300 transition-colors">
-             <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Срок</span>
-             <input
-              type="text"
-              value={cardExpiry}
-              onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
-              placeholder="ММ/ГГ"
-              className="bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] w-full"
-             />
-            </div>
-            <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3.5 border border-transparent focus-within:border-gray-300 transition-colors">
-             <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">CVC</span>
-             <input
-              type="password"
-              value={cardCVC}
-              onChange={(e) => setCardCVC(e.target.value.substring(0, 3))}
-              placeholder="•••"
-              className="bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] w-full"
-             />
-            </div>
-           </div>
-          </motion.div>
-         )}
-
-         <button
-          onClick={handleFinalCheckout}
-          disabled={!paymentMethod || (paymentMethod === 'card' && !isCardValid)}
-          className="mt-8 w-full h-[68px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20"
-         >
-          Оплатить
-         </button>
-        </div>
-       </motion.div>
+       <CheckoutStep5Payment
+        paymentMethod={paymentMethod}
+        cardNumber={cardNumber}
+        cardExpiry={cardExpiry}
+        cardCVC={cardCVC}
+        isCardValid={isCardValid}
+        setPaymentMethod={setPaymentMethod}
+        setCardNumber={setCardNumber}
+        setCardExpiry={setCardExpiry}
+        setCardCVC={setCardCVC}
+        onCheckout={handleFinalCheckout}
+        onClose={handleClose}
+       />
       )}
 
-      {/* ───── STEP 6: Success ───── */}
       {step === 6 && (
-       <motion.div
-        key="step6-success"
-        variants={stepVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="flex flex-col items-center justify-center h-full w-full p-12 text-center"
-       >
-        <div className="relative w-32 h-32 mb-8 flex items-center justify-center">
-         <motion.div
-          initial={{ scale: 0, rotate: -45 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.2 }}
-          className="w-24 h-24 rounded-full bg-[#CF8F73] flex items-center justify-center shadow-lg shadow-[#CF8F73]/20"
-         >
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-           <motion.path
-            d="M20 6L9 17L4 12"
-            stroke="white"
-            strokeWidth="3.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.5, ease: "easeInOut" }}
-           />
-          </svg>
-         </motion.div>
-
-         {/* Decorative particles */}
-         {[...Array(6)].map((_, i) => (
-          <motion.div
-           key={i}
-           className="absolute w-2 h-2 rounded-full bg-[#CF8F73]/40"
-           initial={{ scale: 0, x: 0, y: 0 }}
-           animate={{ scale: [0, 1, 0], x: (i % 2 === 0 ? 1 : -1) * (40 + i * 10), y: (i < 3 ? 1 : -1) * (40 + i * 5) }}
-           transition={{ duration: 1, delay: 0.8 + i * 0.1 }}
-          />
-         ))}
-        </div>
-
-        <h2 className="text-[28px] sm:text-[32px] font-extrabold text-[#3A332E] mb-4 tracking-tight" style={{ fontFeatureSettings: "'pnum' on, 'lnum' on" }}>
-         Заказ принят!
-        </h2>
-        <p className="text-[#3A332E]/60 text-[16px] max-w-[320px] leading-relaxed mb-10">
-         Спасибо за покупку. Мы уже начали готовить ваш заказ и скоро свяжемся с вами.
-        </p>
-        <button
-         onClick={handleClose}
-         className="w-full max-w-[280px] h-[64px] bg-[#CF8F73] text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20"
-        >
-         Отлично
-        </button>
-       </motion.div>
+       <CheckoutStep6Success total={cartTotal} onClose={handleClose} />
       )}
 
      </AnimatePresence>

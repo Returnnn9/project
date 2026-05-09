@@ -1,4 +1,4 @@
-import { Product } from "@/store/AppContext";
+import { Product } from "@/store/types";
 
 const commonProductData = {
  name: "Пирожное фисташка-малина",

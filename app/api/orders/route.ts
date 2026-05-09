@@ -7,8 +7,7 @@ import { prisma } from '@/lib/prisma';
 
 export const runtime = "nodejs";
 
-export async function GET(_req: NextRequest) {
-  // Only admins can list all orders
+export async function GET() {
   const session = await auth();
   
   if (!session?.user || session.user.role !== 'ADMIN') {
@@ -20,15 +19,13 @@ export async function GET(_req: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Map Prisma models to the expected frontend Order type.
-    // items is native Json — no JSON.parse needed.
     const orders: Order[] = dbOrders.map(dbOrder => ({
       ...dbOrder,
       userName: dbOrder.userName ?? undefined,
       userPhone: dbOrder.userPhone ?? undefined,
-      // items stored as JSON string — parse safely
-      items: (() => { try { return JSON.parse(String(dbOrder.items)) as CartItem[]; } catch { return []; } })(),
+      items: dbOrder.items as unknown as CartItem[],
       status: dbOrder.status as Order['status'],
+      createdAt: dbOrder.createdAt.toISOString(),
     }));
 
     return NextResponse.json(orders);
@@ -38,8 +35,6 @@ export async function GET(_req: NextRequest) {
   }
 }
 
-// Simple in-memory rate limit for order creation: max 5 orders / minute per IP.
-// Note: resets on serverless cold-start — a Redis-based solution is recommended for production.
 const orderRateLimit = new Map<string, { count: number; firstAt: number }>();
 const ORDER_RATE_WINDOW_MS = 60_000;
 const ORDER_RATE_MAX = 5;
@@ -49,25 +44,24 @@ function checkOrderRateLimit(ip: string): boolean {
   const entry = orderRateLimit.get(ip);
   if (!entry || now - entry.firstAt > ORDER_RATE_WINDOW_MS) {
     orderRateLimit.set(ip, { count: 1, firstAt: now });
-    return true; // allowed
+    return true;
   }
   entry.count += 1;
   return entry.count <= ORDER_RATE_MAX;
 }
 
 export async function POST(req: NextRequest) {
-  // ── Basic origin/CSRF check ───────────────────────────────────────────────
   const origin = req.headers.get('origin') || req.headers.get('referer') || '';
   const allowedOrigins = [
-    process.env.NEXTAUTH_URL || '',
-    process.env.AUTH_URL || '',
-  ].filter(Boolean);
+    process.env.NEXTAUTH_URL,
+    process.env.AUTH_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+  ].filter(Boolean) as string[];
   const isTrustedOrigin = allowedOrigins.some(o => origin.startsWith(o));
   if (!isTrustedOrigin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // ── IP rate limit ─────────────────────────────────────────────────────────
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
   if (!checkOrderRateLimit(ip)) {
     return NextResponse.json({ error: 'Слишком много запросов. Подождите минуту.' }, { status: 429 });
@@ -76,28 +70,25 @@ export async function POST(req: NextRequest) {
   try {
     const newOrder: Order = await req.json();
 
-    // Basic validation
     if (!newOrder.items || !Array.isArray(newOrder.items) || newOrder.items.length === 0) {
       return NextResponse.json({ error: 'Missing required field: items' }, { status: 400 });
     }
     if (!newOrder.total || typeof newOrder.total !== 'number' || newOrder.total <= 0) {
       return NextResponse.json({ error: 'Missing required field: total' }, { status: 400 });
     }
+    const MAX_ORDER_TOTAL = 50_000;
+    if (newOrder.total > MAX_ORDER_TOTAL) {
+      return NextResponse.json({ error: 'Order total exceeds allowed limit' }, { status: 400 });
+    }
 
-    // Determine current date string if missing
-    const dateStr = newOrder.date || new Date().toISOString();
-
-    // Save order in database.
-    // items is stored as native PostgreSQL JSON — no JSON.stringify needed.
     const savedOrder = await prisma.order.create({
       data: {
         total: newOrder.total,
-        date: dateStr,
         address: newOrder.address || '',
         status: newOrder.status || 'new',
         userName: newOrder.userName,
         userPhone: newOrder.userPhone,
-        items: JSON.stringify(newOrder.items),
+        items: JSON.parse(JSON.stringify(newOrder.items)),
       }
     });
 
@@ -105,12 +96,11 @@ export async function POST(req: NextRequest) {
       ...savedOrder,
       userName: savedOrder.userName ?? undefined,
       userPhone: savedOrder.userPhone ?? undefined,
-      // items is stored as a JSON string in the DB (String field, not Json)
-      items: (() => { try { return JSON.parse(String(savedOrder.items)) as CartItem[]; } catch { return []; } })(),
+      items: savedOrder.items as unknown as CartItem[],
       status: savedOrder.status as Order['status'],
+      createdAt: savedOrder.createdAt.toISOString(),
     };
 
-    // Send SMS confirmation to customer (non-blocking)
     if (parsedOrder.userPhone) {
       const smsText = buildOrderSms({
         orderId: parsedOrder.id,
@@ -121,7 +111,7 @@ export async function POST(req: NextRequest) {
       });
 
       sendSms(parsedOrder.userPhone, smsText).catch(err => {
-        console.error('[ALFASMS] Unhandled SMS error:', err);
+        console.error('[SMSRU] Unhandled SMS error:', err);
       });
     }
 
@@ -131,3 +121,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  const session = await auth();
+
+  if (!session?.user || session.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { id, status } = await req.json() as { id: number; status: Order['status'] };
+
+    const validStatuses: Order['status'][] = ['new', 'processing', 'shipped', 'delivered', 'cancelled'];
+    if (!id || !status || !validStatuses.includes(status)) {
+      return NextResponse.json({ error: 'Invalid id or status' }, { status: 400 });
+    }
+
+    const updated = await prisma.order.update({
+      where: { id },
+      data: { status },
+    });
+
+    return NextResponse.json({
+      ...updated,
+      userName: updated.userName ?? undefined,
+      userPhone: updated.userPhone ?? undefined,
+      items: updated.items as unknown as CartItem[],
+      status: updated.status as Order['status'],
+      createdAt: updated.createdAt.toISOString(),
+    });
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
+  }
+}
+

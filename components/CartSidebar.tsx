@@ -4,7 +4,7 @@ import React from "react"
 
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
-import { useUIStore, useCartStore, useUserStore, useStoreData } from "@/store/hooks"
+import { useUIStore, useCartStore, useUserStore } from "@/store/hooks"
 import { cn } from "@/lib/utils"
 
 interface CartSidebarProps {
@@ -13,15 +13,11 @@ interface CartSidebarProps {
 }
 
 const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) => {
- const uiStore = useUIStore()
- const cartStore = useCartStore()
- const userStore = useUserStore()
+ const cart = useCartStore(s => s.cart)
+ const updateQuantity = useCartStore(s => s.updateQuantity)
+ const address = useUserStore(s => s.address)
+ const setCheckoutOpen = useUIStore(s => s.setCheckoutOpen)
 
- const cart = useStoreData(cartStore, s => s.getCart())
- const address = useStoreData(userStore, s => s.getAddress())
-
- const updateQuantity = (id: number, d: number) => cartStore.updateQuantity(id, d)
- const setCheckoutOpen = (o: boolean) => uiStore.setCheckoutOpen(o)
  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
  return (
@@ -159,57 +155,51 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
     )}
    </div>
 
-    {cart.length > 0 && (
-     <div className="mt-6 space-y-5 shrink-0">
-      <div className="flex items-end justify-between px-2">
-       <span className="text-[14px] font-[900] text-[#8D8681] uppercase tracking-[0.2em] pb-1">итого</span>
-       <motion.span
-        key={total}
-        initial={{ y: 10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="text-[28px] font-black text-[#4A423D] tracking-tight leading-none"
-       >
-        {total.toLocaleString("ru-RU")} ₽
-       </motion.span>
-      </div>
+   {cart.length > 0 && (
+    <div className="mt-6 space-y-5 shrink-0">
+     <div className="flex items-end justify-between px-2">
+      <span className="text-[14px] font-[900] text-[#8D8681] uppercase tracking-[0.2em] pb-1">итого</span>
+      <motion.span
+       key={total}
+       initial={{ y: 10, opacity: 0 }}
+       animate={{ y: 0, opacity: 1 }}
+       className="text-[22px] font-black text-[#4A423D] tracking-tight leading-none"
+      >
+       {total.toLocaleString("ru-RU")} ₽
+      </motion.span>
+     </div>
 
-       <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => {
-         setCheckoutOpen(true)
-         if (onClose) onClose()
-        }}
-        className="w-full bg-[#CF8F73] rounded-[2rem] px-8 h-[74px] flex items-center justify-between text-white shadow-[0_12px_40px_rgba(207,143,115,0.3)] group relative overflow-hidden"
+     <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => {
+       setCheckoutOpen(true)
+       if (onClose) onClose()
+      }}
+      className="w-full bg-[#CF8F73] rounded-[1.4rem] px-6 h-[54px] sm:h-[60px] flex items-center justify-between text-white shadow-[0_8px_30px_rgba(207,143,115,0.25)] group relative overflow-hidden"
+     >
+
+      <span className="text-[17px] font-[900] relative z-10 drop-shadow-sm">Оформить</span>
+      <div className="flex items-center gap-2 relative z-10">
+       <div className="w-[1px] h-6 bg-[#FDF8ED]/30 mx-2" />
+       <motion.svg
+        width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+        animate={{ x: [0, 5, 0] }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
        >
-        {/* Button shimmer effect */}
-        <motion.div
-         className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
-         animate={{ translateX: ["-100%", "200%"] }}
-         transition={{ repeat: Infinity, duration: 2.5, ease: "linear", repeatDelay: 1 }}
-        />
-        <span className="text-[21px] font-[900] relative z-10 drop-shadow-sm">Оформить</span>
-        <div className="flex items-center gap-2 relative z-10">
-         <div className="w-[1px] h-8 bg-[#FDF8ED]/30 mx-2" />
-         <motion.svg
-          width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-          animate={{ x: [0, 5, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-         >
-          <path d="M5 12h14m-7-7 7 7-7 7" />
-         </motion.svg>
-        </div>
-       </motion.button>
-       <p className="mt-4 text-[11px] font-medium text-[#4A423D]/40 leading-relaxed text-center px-4">
-        Нажимая «Оформить», вы принимаете условия{" "}
-        <a href="/offer" className="text-[#CF8F73] underline underline-offset-2 hover:text-[#b87a60] transition-colors">оферты</a>
-        {" "}и{" "}
-        <a href="/privacy" className="text-[#CF8F73] underline underline-offset-2 hover:text-[#b87a60] transition-colors">политики конфиденциальности</a>
-       </p>
+        <path d="M5 12h14m-7-7 7 7-7 7" />
+       </motion.svg>
       </div>
-    )
-   }
-  </div >
+     </motion.button>
+     <p className="mt-4 text-[11px] font-medium text-[#4A423D]/40 leading-relaxed text-center px-4 pb-4 sm:pb-0">
+      Нажимая «Оформить», вы принимаете условия{" "}
+      <a href="/offer" className="text-[#CF8F73] underline underline-offset-2 hover:text-[#b87a60] transition-colors">оферты</a>
+      {" "}и{" "}
+      <a href="/privacy" className="text-[#CF8F73] underline underline-offset-2 hover:text-[#b87a60] transition-colors">политики конфиденциальности</a>
+     </p>
+    </div>
+   )}
+  </div>
  )
 }
 

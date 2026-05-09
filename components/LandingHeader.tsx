@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 
 import { Menu, X } from "lucide-react"
 import { motion, AnimatePresence, Variants, useScroll, useMotionValueEvent } from "framer-motion"
-
-// ─── Constants ───────────────────────────────────────────────────────────────
+import { CONTACT } from "@/lib/constants/contact"
 
 const NAV_LINKS = [
  { label: "меню", href: "/#menu" },
@@ -17,8 +17,6 @@ const NAV_LINKS = [
 ] as const
 
 const SCROLL_THRESHOLD = 20
-
-// ─── Animation Variants ──────────────────────────────────────────────────────
 
 const menuVariants: Variants = {
  hidden: { opacity: 0 },
@@ -37,8 +35,6 @@ const itemVariants: Variants = {
  },
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
-
 const LandingHeader: React.FC = () => {
  const [isScrolled, setIsScrolled] = useState(false)
  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -48,7 +44,6 @@ const LandingHeader: React.FC = () => {
   setIsScrolled(latest > SCROLL_THRESHOLD)
  })
 
- // Lock body scroll when mobile menu is open
  useEffect(() => {
   document.body.style.overflow = isMobileMenuOpen ? "hidden" : ""
   return () => { document.body.style.overflow = "" }
@@ -59,7 +54,6 @@ const LandingHeader: React.FC = () => {
 
  return (
   <>
-   {/* ── Premium Scroll Header ── */}
    <motion.header
     initial="top"
     animate={isScrolled ? "scrolled" : "top"}
@@ -82,7 +76,6 @@ const LandingHeader: React.FC = () => {
     transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     className="fixed top-0 left-0 w-full z-[100] px-4 md:px-8 xl:px-12 flex items-center justify-between"
    >
-    {/* Mobile: hamburger */}
     <div className="lg:hidden flex-1 flex items-center justify-start">
      <button
       onClick={openMenu}
@@ -93,7 +86,6 @@ const LandingHeader: React.FC = () => {
      </button>
     </div>
 
-    {/* Desktop: left nav */}
     <nav className="hidden lg:flex flex-1 items-center justify-start gap-4 xl:gap-14 text-[15px] font-[800] tracking-wide text-[#936746]">
      {NAV_LINKS.map((link) => (
       <Link
@@ -107,7 +99,6 @@ const LandingHeader: React.FC = () => {
      ))}
     </nav>
 
-    {/* Center: logo */}
     <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
      <Link href="/" className="flex items-center group">
       <motion.div
@@ -118,34 +109,31 @@ const LandingHeader: React.FC = () => {
        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
        className="relative origin-center hover:scale-105 transition-transform duration-500 ease-out py-1"
       >
-       <img
+       <Image
         src="/images/Logoo.png"
-        alt="СМЫСЛ ЕСТЬ"
-        width="90"
-        height="90"
+        alt={CONTACT.siteName}
+        width={90}
+        height={90}
         className="w-[60px] md:w-[75px] lg:w-[90px] h-auto object-contain drop-shadow-sm group-hover:drop-shadow-md"
        />
       </motion.div>
      </Link>
     </div>
 
-    {/* Desktop: right contacts */}
     <div className="hidden lg:flex flex-1 items-center justify-end gap-6 xl:gap-12 text-[16px] font-[800] text-[#936746]">
-     <a href="tel:+79262104565" className="relative group transition-colors hover:text-[#B54442] whitespace-nowrap py-2">
-      +7 926 210-45-65
+     <a href={CONTACT.phone.tel} className="relative group transition-colors hover:text-[#B54442] whitespace-nowrap py-2">
+      {CONTACT.phone.display}
       <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-[#B54442] group-hover:w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
      </a>
-     <a href="mailto:info@smislest.ru" className="relative group transition-colors hover:text-[#B54442] py-2">
-      info@smislest.ru
+     <a href={CONTACT.email.mailto} className="relative group transition-colors hover:text-[#B54442] py-2">
+      {CONTACT.email.display}
       <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-[#B54442] group-hover:w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
      </a>
     </div>
 
-    {/* Mobile: right spacer */}
     <div className="lg:hidden flex-1" />
    </motion.header>
 
-   {/* ── Mobile Fullscreen Menu ── */}
    <AnimatePresence>
     {isMobileMenuOpen && (
      <motion.div
@@ -155,7 +143,6 @@ const LandingHeader: React.FC = () => {
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-0 z-[200] bg-[#FAF8F5]/98 flex flex-col font-manrope overflow-hidden"
      >
-      {/* Background blobs */}
       <motion.div
        initial={{ scale: 0.8, opacity: 0 }}
        animate={{ scale: 1, opacity: 1 }}
@@ -169,7 +156,6 @@ const LandingHeader: React.FC = () => {
        className="absolute bottom-[-10%] left-[-10%] w-[60vh] h-[60vh] bg-[#B54442]/10 rounded-full blur-[100px] pointer-events-none"
       />
 
-      {/* Menu header */}
       <div className="flex items-center justify-between px-6 py-6 w-full relative z-10">
        <div className="flex-1 flex items-center justify-start">
         <button
@@ -181,18 +167,17 @@ const LandingHeader: React.FC = () => {
         </button>
        </div>
        <div className="absolute left-1/2 -translate-x-1/2 top-4 flex items-center justify-center">
-        <img
-         src="/photo/logo.png"
-         alt="СМЫСЛ ЕСТЬ"
-         width="50"
-         height="50"
+        <Image
+         src="/images/Logoo.png"
+         alt={CONTACT.siteName}
+         width={50}
+         height={50}
          className="w-[45px] h-auto object-contain drop-shadow-sm opacity-80"
         />
        </div>
        <div className="flex-1" />
       </div>
 
-      {/* Links */}
       <div className="flex flex-col items-center justify-center flex-1 w-full px-6 relative z-10 mt-[-40px]">
        <motion.div
         variants={menuVariants}
@@ -228,11 +213,11 @@ const LandingHeader: React.FC = () => {
         transition={{ delay: 0.7, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="flex flex-col items-center gap-3 text-center"
        >
-        <a href="tel:+79262104565" className="text-[18px] font-[700] tracking-wide text-[#936746] hover:text-[#B54442] transition-colors">
-         +7 (926) 210-45-65
+        <a href={CONTACT.phone.tel} className="text-[18px] font-[700] tracking-wide text-[#936746] hover:text-[#B54442] transition-colors">
+         {CONTACT.phone.display}
         </a>
-        <a href="mailto:info@smislest.ru" className="text-[16px] font-[600] text-[#936746]/60 hover:text-[#B54442] transition-colors">
-         info@smislest.ru
+        <a href={CONTACT.email.mailto} className="text-[16px] font-[600] text-[#936746]/60 hover:text-[#B54442] transition-colors">
+         {CONTACT.email.display}
         </a>
        </motion.div>
       </div>

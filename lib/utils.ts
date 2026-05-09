@@ -1,6 +1,4 @@
-"use client";
-
-export function cn(...inputs: (string | boolean | undefined | null | { [key: string]: unknown })[]) {
+export function cn(...inputs: (string | string[] | boolean | undefined | null | { [key: string]: unknown })[]) {
  const classes: string[] = [];
 
  for (const input of inputs) {
@@ -9,7 +7,9 @@ export function cn(...inputs: (string | boolean | undefined | null | { [key: str
   if (typeof input === 'string') {
    classes.push(input);
   } else if (Array.isArray(input)) {
-   // Basic flat array support if ever needed
+   for (const item of input) {
+    if (item) classes.push(item);
+   }
   } else if (typeof input === 'object') {
    for (const [key, value] of Object.entries(input)) {
     if (value) {

@@ -1,5 +1,8 @@
 import { PickupPoint, CityKey } from "../types/address";
 
+/** Список городов доставки — единый источник. Используется в AddressModal и CheckoutModal. */
+export const CITIES = ["Москва", "Санкт-Петербург"] as const;
+
 export const PICKUP_POINTS: PickupPoint[] = [
  { city: "Москва", address: "Ижорская 3", coords: [55.882, 37.514] },
  { city: "Москва", address: "Арбат 5", coords: [55.752, 37.598] },
