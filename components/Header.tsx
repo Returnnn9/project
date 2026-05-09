@@ -87,23 +87,21 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
 
      <div className="flex items-center gap-2 sm:gap-4 lg:gap-8 shrink-0 min-w-0">
 
-      {/* Address Button */}
+      {/* Address Text Button */}
       <motion.button
-       whileHover={{ scale: 1.02 }}
+       whileHover={{ opacity: 0.8 }}
        whileTap={{ scale: 0.98 }}
        onClick={() => setAddressModalOpen(true)}
-       className="flex items-center h-[44px] sm:h-[50px] px-4 sm:px-5 bg-white rounded-full shadow-premium hover:shadow-[0_8px_30px_rgba(207,143,115,0.15)] transition-all shrink-0 min-w-0 group"
+       className="flex flex-col items-start min-w-0 text-left justify-center shrink-0 group transition-all"
       >
-       <div className="flex flex-col items-start min-w-0 text-left justify-center pt-0.5">
-        <span className="text-[8px] sm:text-[9px] font-black text-smusl-terracotta/80 leading-none uppercase tracking-[0.15em] mb-1">
-         {deliveryType === "pickup" ? "Самовывоз" : (deliveryType === "delivery" ? "Доставка" : "Получение")}
+       <span className="text-[9px] sm:text-[10px] font-black text-smusl-terracotta/80 leading-none uppercase tracking-[0.2em] mb-1">
+        {deliveryType === "pickup" ? "Самовывоз" : (deliveryType === "delivery" ? "Доставка" : "Получение")}
+       </span>
+       <div className="flex items-center gap-1.5 w-full">
+        <span className="text-[13px] sm:text-[15px] font-bold text-smusl-brown max-w-[120px] sm:max-w-[180px] lg:max-w-[220px] truncate tracking-tight leading-none group-hover:text-smusl-terracotta transition-colors">
+         {address || "Выбрать адрес"}
         </span>
-        <div className="flex items-center gap-1.5 w-full">
-         <span className="text-[12px] sm:text-[14px] font-bold text-smusl-brown max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] truncate tracking-tight leading-none group-hover:text-smusl-terracotta transition-colors">
-          {address || "Выбрать адрес"}
-         </span>
-         <ChevronDown className="w-3 h-3 shrink-0 text-smusl-brown/40 group-hover:text-smusl-terracotta transition-colors" />
-        </div>
+        <ChevronDown className="w-3.5 h-3.5 shrink-0 text-smusl-brown/40 group-hover:text-smusl-terracotta transition-colors" />
        </div>
       </motion.button>
 
