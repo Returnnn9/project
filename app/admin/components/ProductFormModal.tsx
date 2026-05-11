@@ -137,21 +137,22 @@ export default function ProductFormModal({ isOpen, onClose, product }: ProductFo
  return (
   <AnimatePresence>
    {isOpen && (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden py-6 px-4">
      <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      className="absolute inset-0 bg-[#2A1F1A]/60 backdrop-blur-sm"
+      className="fixed inset-0 bg-[#2A1F1A]/60 backdrop-blur-sm"
      />
 
-     <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: 20 }}
-      className="relative w-full max-w-[800px] bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
-     >
+     <div className="flex min-h-full items-center justify-center">
+      <motion.div
+       initial={{ opacity: 0, scale: 0.95, y: 20 }}
+       animate={{ opacity: 1, scale: 1, y: 0 }}
+       exit={{ opacity: 0, scale: 0.95, y: 20 }}
+       className="relative w-full max-w-[800px] bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
+      >
       {/* Header */}
       <div className="flex items-center justify-between p-6 sm:p-8 border-b border-gray-100 shrink-0">
        <h2 className="text-[24px] sm:text-[28px] font-black text-[#6B5D54]">
@@ -354,7 +355,8 @@ export default function ProductFormModal({ isOpen, onClose, product }: ProductFo
       </form>
      </motion.div>
     </div>
-   )}
-  </AnimatePresence>
- );
+   </div>
+  )}
+ </AnimatePresence>
+);
 }

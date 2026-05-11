@@ -26,11 +26,19 @@ export default function MarketPage() {
   const isLoading = useProductStore(s => s.isLoading)
   const fetchProducts = useProductStore(s => s.fetchProducts)
 
+  const [hasFetched, setHasFetched] = React.useState(false)
+  const isInitialMount = React.useRef(true)
+
   useEffect(() => {
-    if (products.length === 0) {
-      fetchProducts()
+    const init = async () => {
+      if (products.length === 0) {
+        await fetchProducts()
+      }
+      setHasFetched(true)
+      isInitialMount.current = false
     }
-  }, [])
+    init()
+  }, [fetchProducts, products.length])
 
   const filteredProducts = products.filter((p: Product) => {
     const tokens = searchQuery.toLowerCase().split(' ').filter(Boolean)
@@ -67,7 +75,7 @@ export default function MarketPage() {
                 transition={{ duration: 0.4 }}
                 className="grid grid-cols-2 gap-1.5 sm:gap-3"
               >
-                {isLoading
+                {(isLoading || (!hasFetched && products.length === 0))
                   ? Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)
                   : filteredProducts.length > 0 ? (
                   filteredProducts.map((p: Product, i: number) => (

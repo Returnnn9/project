@@ -42,15 +42,17 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-RUN chown -R nextjs:nodejs ./prisma
+# Create mandatory directories and set permissions
+RUN mkdir -p .next data public/uploads && \
+    chown -R nextjs:nodejs .next data public ./prisma
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Install prisma CLI for running migrations in production
+RUN npm install prisma@^6.19.3
 
 USER nextjs
 
@@ -60,6 +62,5 @@ ENV PORT=3000
 # set hostname to all interfaces
 ENV HOSTNAME="0.0.0.0"
 
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD ["node", "server.js"]
+# Run migrations and then start the server
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]

@@ -91,9 +91,9 @@ export default function SecurityTab() {
       </p>
      </div>
 
-     <div className="flex items-center justify-between p-6 bg-white border border-gray-100 rounded-3xl">
+     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-white border border-gray-100 rounded-3xl">
       <div className="flex items-center gap-4">
-       <Smartphone className="w-10 h-10 text-[#6B5D54]/20" />
+       <Smartphone className="w-10 h-10 text-[#6B5D54]/20 shrink-0" />
        <div>
         <p className="font-bold text-[#6B5D54]">Приложение Authenticator</p>
         <p className="text-[13px] text-[#9C9188]">Используйте для генерации кодов</p>

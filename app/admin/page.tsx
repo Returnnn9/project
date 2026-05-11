@@ -51,8 +51,7 @@ export default function AdminPage() {
   return categories.find(c => c.id === catId)?.label || catId;
  };
 
- const handleQuantityChange = async (product: Product, delta: number) => {
-  const newQuantity = Math.max(0, (product.quantity || 0) + delta);
+ const handleUpdateQuantity = async (product: Product, newQuantity: number) => {
   if (newQuantity === product.quantity) return;
 
   try {
@@ -68,6 +67,72 @@ export default function AdminPage() {
    console.error("Failed to update quantity", error);
   }
  };
+
+function QuantityStepper({ product, size = 'md' }: { product: Product, size?: 'sm' | 'md' }) {
+ const [val, setVal] = useState<string>(product.quantity?.toString() || "0");
+
+ useEffect(() => {
+  setVal(product.quantity?.toString() || "0");
+ }, [product.quantity]);
+
+ const handleCommit = (input: string) => {
+  const parsed = parseInt(input.replace(/[^\d-]/g, ''), 10);
+  const final = isNaN(parsed) ? 0 : Math.max(0, parsed);
+  handleUpdateQuantity(product, final);
+ };
+
+ const handleDelta = (d: number) => {
+  const current = product.quantity || 0;
+  handleUpdateQuantity(product, Math.max(0, current + d));
+ };
+
+ const inputClass = cn(
+  "bg-transparent text-center font-extrabold outline-none transition-colors w-9 focus:w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+  size === 'sm' ? "text-[13px]" : "text-[14px]",
+  (product.quantity || 0) > 10 ? "text-green-600 focus:text-green-700" :
+   (product.quantity || 0) > 0 ? "text-orange-600 focus:text-orange-700" :
+    "text-red-500 focus:text-red-600"
+ );
+
+ return (
+  <div className={cn(
+   "inline-flex items-center bg-gray-50 rounded-full p-1 border border-gray-100/50 transition-all focus-within:bg-white focus-within:shadow-md focus-within:border-[#CD8B70]/30",
+   size === 'sm' ? "gap-1.5" : "gap-3"
+  )}>
+   <button
+    type="button"
+    onClick={() => handleDelta(-1)}
+    className={cn(
+     "flex items-center justify-center bg-white rounded-full text-[#6B5D54] shadow-sm hover:bg-gray-100 transition-colors active:scale-95",
+     size === 'sm' ? "w-7 h-7" : "w-8 h-8"
+    )}
+   >
+    <Minus className={size === 'sm' ? "w-3 h-3" : "w-4 h-4"} />
+   </button>
+   
+   <input 
+    type="text"
+    inputMode="numeric"
+    value={val}
+    onChange={(e) => setVal(e.target.value)}
+    onBlur={() => handleCommit(val)}
+    onKeyDown={(e) => e.key === 'Enter' && handleCommit(val)}
+    className={inputClass}
+   />
+
+   <button
+    type="button"
+    onClick={() => handleDelta(1)}
+    className={cn(
+     "flex items-center justify-center bg-white rounded-full text-[#6B5D54] shadow-sm hover:bg-gray-100 transition-colors active:scale-95",
+     size === 'sm' ? "w-7 h-7" : "w-8 h-8"
+    )}
+   >
+    <Plus className={size === 'sm' ? "w-3 h-3" : "w-4 h-4"} />
+   </button>
+  </div>
+ );
+}
 
  if (status === 'loading') return null;
  if (!session?.user || session.user.role !== 'ADMIN') return null;
@@ -124,11 +189,11 @@ export default function AdminPage() {
      <AnalyticsTab />
     ) : activeTab === 'products' ? (
      <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden">
-      <div className="p-8 flex justify-between items-center border-b border-gray-50">
+      <div className="p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-50 gap-4">
        <h2 className="text-[20px] font-black text-[#6B5D54]">Список товаров</h2>
        <button
         onClick={handleAddNew}
-        className="flex items-center gap-2 px-6 py-3 bg-[#CD8B70] text-white rounded-full font-bold hover:bg-[#C27E63] transition-colors shadow-sm active:scale-95"
+        className="flex items-center justify-center gap-2 px-6 py-3 bg-[#CD8B70] text-white rounded-full font-bold hover:bg-[#C27E63] transition-colors shadow-sm active:scale-95 w-full sm:w-auto"
        >
         <Plus className="w-5 h-5" />
         Добавить товар
@@ -158,28 +223,7 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-           <div className="flex items-center gap-3 bg-gray-50 rounded-full p-1 border border-gray-100">
-            <button
-             onClick={() => handleQuantityChange(product, -1)}
-             className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-[#6B5D54] shadow-sm hover:bg-gray-100 transition-colors active:scale-95"
-            >
-             <Minus className="w-4 h-4" />
-            </button>
-            <span className={cn(
-             "text-[14px] font-bold w-6 text-center",
-             (product.quantity || 0) > 10 ? "text-green-600" :
-              (product.quantity || 0) > 0 ? "text-orange-600" :
-               "text-red-500"
-            )}>
-             {product.quantity || 0}
-            </span>
-            <button
-             onClick={() => handleQuantityChange(product, 1)}
-             className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-[#6B5D54] shadow-sm hover:bg-gray-100 transition-colors active:scale-95"
-            >
-             <Plus className="w-4 h-4" />
-            </button>
-           </div>
+           <QuantityStepper product={product} />
 
            <div className="flex items-center gap-2">
             <button
@@ -246,28 +290,7 @@ export default function AdminPage() {
              <div className="text-[14px] text-[#9C9188]">{product.weight}</div>
             </td>
             <td className="p-4 text-center">
-             <div className="inline-flex items-center gap-2 bg-gray-50 rounded-full p-1 border border-gray-100/50 group-hover:bg-white group-hover:shadow-sm transition-all">
-              <button
-               onClick={() => handleQuantityChange(product, -1)}
-               className="w-7 h-7 flex items-center justify-center bg-white rounded-full text-[#6B5D54] hover:bg-gray-100 transition-colors active:scale-95 shadow-sm"
-              >
-               <Minus className="w-3 h-3" />
-              </button>
-              <span className={cn(
-               "text-[13px] font-bold w-6 text-center",
-               (product.quantity || 0) > 10 ? "text-green-600" :
-                (product.quantity || 0) > 0 ? "text-orange-600" :
-                 "text-red-500"
-              )}>
-               {product.quantity || 0}
-              </span>
-              <button
-               onClick={() => handleQuantityChange(product, 1)}
-               className="w-7 h-7 flex items-center justify-center bg-white rounded-full text-[#6B5D54] hover:bg-gray-100 transition-colors active:scale-95 shadow-sm"
-              >
-               <Plus className="w-3 h-3" />
-              </button>
-             </div>
+              <QuantityStepper product={product} size="sm" />
             </td>
             <td className="p-4 pr-6 text-right">
              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

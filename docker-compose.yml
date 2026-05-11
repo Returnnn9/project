@@ -10,10 +10,13 @@ services:
     env_file:
       - .env
     volumes:
-      - sqlite-data:/app/prisma
+      - app-data:/app/data
+      - public-uploads:/app/public/uploads
     environment:
-      - DATABASE_URL=file:/app/prisma/dev.db
+      - DATABASE_URL=file:/app/data/prod.db
 
 volumes:
-  sqlite-data:
-    name: smusl-sqlite-data
+  app-data:
+    name: smusl-app-data
+  public-uploads:
+    name: smusl-public-uploads

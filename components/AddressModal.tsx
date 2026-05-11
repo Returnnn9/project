@@ -324,7 +324,7 @@ export default function AddressModal() {
        >
         <div className="flex-1 p-5 sm:p-10 flex flex-col justify-center overflow-y-auto w-full">
          <div className="flex items-center justify-between mb-8">
-          <h2 className="text-[22px] sm:text-[26px] font-extrabold text-[#3A332E] tracking-tight">
+          <h2 className="text-[26px] sm:text-[32px] font-black text-[#3A332E] tracking-tight">
            Способ получения
           </h2>
           <button

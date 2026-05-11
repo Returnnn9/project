@@ -37,7 +37,7 @@ export default function ProductDetailsModal() {
 
   return (
    <>
-    <div className="w-full bg-white sm:bg-[#EBE7E2] overflow-hidden aspect-[4/3] sm:aspect-[16/9] relative shrink-0 flex items-center justify-center group sm:rounded-t-none transform-gpu">
+    <div className="w-full bg-white sm:bg-[#EBE7E2] overflow-hidden aspect-[4/3] sm:aspect-[16/9] relative shrink-0 flex items-center justify-center group sm:rounded-t-none">
 
 
      {isMobile && (
@@ -80,7 +80,7 @@ export default function ProductDetailsModal() {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9, rotate: -15 }}
       onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedProduct.id); }}
-      className={`absolute top-4 right-4 sm:top-5 sm:right-5 h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-[#4A403A]/10 shadow-md flex items-center justify-center transition-all z-20 ${isFavorite
+      className={`absolute top-4 right-4 sm:top-5 sm:right-5 h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-[#4A403A]/10 shadow-md hidden sm:flex items-center justify-center transition-all z-20 ${isFavorite
         ? "bg-[#e94e4e] text-white"
         : (isMobile ? "bg-white/40 backdrop-blur-md text-[#4A403A]/40" : "bg-[#EBE7E2]/50 text-[#4A403A]/40 hover:text-[#CF8F73] hover:bg-white")
        }`}
@@ -89,7 +89,7 @@ export default function ProductDetailsModal() {
      </motion.button>
     </div>
 
-    <div className="flex flex-col p-6 sm:p-10 gap-6 sm:gap-8 flex-1 pb-10 sm:pb-12 bg-white transform-gpu">
+    <div className="flex flex-col p-6 sm:p-10 gap-6 sm:gap-8 flex-1 pb-10 sm:pb-12 bg-white">
      <div className="space-y-1">
       <h1 className="text-[28px] sm:text-[42px] font-black text-[#4A403A] leading-[1.1] tracking-tighter">
        {selectedProduct.name}
@@ -107,11 +107,11 @@ export default function ProductDetailsModal() {
 
      <div className="flex flex-col gap-3 sm:gap-4">
       <div className="flex items-center gap-3 sm:gap-5">
-       <span className="shrink-0 px-5 sm:px-6 py-3 bg-[#CF8F73] text-white text-[20px] sm:text-[26px] font-black rounded-[1.2rem] shadow-lg shadow-[#CF8F73]/20 whitespace-nowrap">
+       <span className="shrink-0 h-[56px] sm:h-[72px] px-5 sm:px-7 flex items-center justify-center bg-[#CF8F73] text-white text-[20px] sm:text-[26px] font-black rounded-[1.2rem] shadow-lg shadow-[#CF8F73]/20 whitespace-nowrap">
         {selectedProduct.price} ₽
        </span>
 
-       <div className="flex items-center gap-4 sm:gap-6 bg-[#FDF4EE] rounded-[1.2rem] px-5 sm:px-7 py-3 border border-[#CF8F73]/5">
+       <div className="flex-1 sm:flex-none flex items-center justify-between sm:justify-center h-[56px] sm:h-[72px] sm:gap-6 bg-[#FDF4EE] rounded-[1.2rem] px-5 sm:px-8 border border-[#CF8F73]/5">
         <button
          onClick={decrement}
          className="text-[22px] sm:text-[28px] font-light text-[#CF8F73] leading-none hover:opacity-100 opacity-60 transition-opacity w-6 flex items-center justify-center"
@@ -200,7 +200,7 @@ export default function ProductDetailsModal() {
     <>
      <motion.div
       key="overlay"
-      className="fixed inset-0 z-[200] bg-[#3A332E]/60 backdrop-blur-md"
+      className="fixed inset-0 z-[200] bg-[#3A332E]/80"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -214,7 +214,7 @@ export default function ProductDetailsModal() {
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      transition={{ type: "spring", damping: 30, stiffness: 300, mass: 0.8 }}
+      transition={{ type: "spring", damping: 26, stiffness: 260, mass: 0.8 }}
       drag="y"
       dragConstraints={{ top: 0 }}
       dragElastic={0.08}
@@ -224,7 +224,7 @@ export default function ProductDetailsModal() {
        }
       }}
      >
-      <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl w-full max-h-[96dvh] overflow-y-auto flex flex-col font-manrope pb-10 transform-gpu will-change-transform">
+      <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl w-full max-h-[96dvh] overflow-y-auto flex flex-col font-manrope pb-10">
        {renderContent(true)}
       </div>
      </motion.div>
@@ -235,9 +235,9 @@ export default function ProductDetailsModal() {
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
-      transition={{ type: "spring", damping: 35, stiffness: 300, mass: 1 }}
+      transition={{ type: "spring", damping: 30, stiffness: 280, mass: 1 }}
      >
-      <div className="relative bg-white shadow-2xl w-[min(680px,100vw)] h-full overflow-y-auto flex flex-col font-manrope transform-gpu will-change-transform">
+      <div className="relative bg-white shadow-2xl w-[min(680px,100vw)] h-full overflow-y-auto flex flex-col font-manrope">
        {renderContent(false)}
       </div>
      </motion.div>

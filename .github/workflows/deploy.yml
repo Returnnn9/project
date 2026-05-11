@@ -1,0 +1,32 @@
+name: Production CD
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Production VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PORT || 22 }}
+          script: |
+            # Navigate to project dir
+            cd ${{ secrets.TARGET_DIR || '~/smusl' }}
+            
+            # Pull latest code
+            git pull origin $(git rev-parse --abbrev-ref HEAD)
+            
+            # Rebuild and restart containers
+            docker-compose up --build -d
+            
+            # Clean up unused images to save space
+            docker image prune -f

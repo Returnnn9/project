@@ -4,7 +4,6 @@ out
 build
 .git
 .git.zip
-.env
 .env.local
 .env.development.local
 .env.test.local
