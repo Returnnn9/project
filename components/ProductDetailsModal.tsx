@@ -210,9 +210,10 @@ export default function ProductDetailsModal() {
       }}
       style={{ maxHeight: '96dvh' }}
      >
+
+      <div className="absolute top-[95%] left-0 right-0 h-[100vh] bg-white z-[-1] pointer-events-none sm:hidden" />
       <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl w-full flex flex-col overflow-hidden font-manrope">
 
-       {/* ── Drag handle — the ONLY draggable zone ── */}
        <div
         className="w-full pt-4 pb-3 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing select-none"
         style={{ touchAction: 'none' }}

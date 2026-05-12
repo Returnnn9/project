@@ -15,14 +15,14 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
-  const address = useUserStore(s => s.address)
-  const deliveryType = useUserStore(s => s.deliveryType)
-  const activeCategory = useUIStore(s => s.activeCategory)
-  const searchQuery = useUIStore(s => s.searchQuery)
+ const address = useUserStore(s => s.address)
+ const deliveryType = useUserStore(s => s.deliveryType)
+ const activeCategory = useUIStore(s => s.activeCategory)
+ const searchQuery = useUIStore(s => s.searchQuery)
 
-  const setAddressModalOpen = useUIStore(s => s.setAddressModalOpen)
-  const setActiveCategory = useUIStore(s => s.setActiveCategory)
-  const setSearchQuery = useUIStore(s => s.setSearchQuery)
+ const setAddressModalOpen = useUIStore(s => s.setAddressModalOpen)
+ const setActiveCategory = useUIStore(s => s.setActiveCategory)
+ const setSearchQuery = useUIStore(s => s.setSearchQuery)
 
  const { status } = useSession()
  const [mounted, setMounted] = React.useState(false)
@@ -31,6 +31,7 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
 
  return (
   <header className="sticky top-0 w-full z-[100] font-manrope bg-[#FDF8ED] border-b border-[#4A403A]/5 transition-all duration-300">
+   <div className="absolute bottom-full left-0 w-full h-[100vh] bg-[#FDF8ED] pointer-events-none" />
    <div className="w-full px-4 sm:px-8 lg:px-12">
 
     <div className="flex items-center justify-between py-3 sm:py-5 gap-4 lg:gap-8">
