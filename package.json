@@ -18,7 +18,7 @@
   "framer-motion": "^12.5.0",
   "jose": "^5.10.0",
   "lucide-react": "^0.487.0",
-  "next": "^15.2.4",
+  "next": "^16.2.6",
   "next-auth": "^5.0.0-beta.30",
   "otplib": "^12.0.1",
   "qrcode": "^1.5.4",
@@ -37,9 +37,12 @@
   "@types/react-dom": "^19.1.0",
   "dotenv": "^16.4.7",
   "eslint": "^9.24.0",
-  "eslint-config-next": "^15.2.4",
+  "eslint-config-next": "^16.2.6",
   "prisma": "^6.19.3",
   "tailwindcss": "^4.1.0",
   "typescript": "5.8.2"
+ },
+ "overrides": {
+  "postcss": "^8.5.10"
  }
 }

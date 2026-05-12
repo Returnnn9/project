@@ -192,15 +192,9 @@ export default function AddressModal() {
      animate={{ opacity: 1, y: 0 }}
      exit={{ opacity: 0, y: "100%" }}
      transition={{ type: "spring" as const, damping: 32, stiffness: 280 }}
-     className="relative z-10 bg-white sm:bg-white/95 sm:backdrop-blur-[20px] rounded-t-[2.5rem] sm:rounded-[3rem] shadow-[0_-8px_40px_rgba(0,0,0,0.12)] sm:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] flex flex-col w-full max-w-[1240px] h-auto max-h-[96dvh] sm:h-full font-manrope sm:border-l sm:border-white/20 mt-auto sm:mt-0 overflow-hidden"
+     className="relative z-10 bg-white sm:bg-white/95 sm:backdrop-blur-[20px] rounded-t-[2.5rem] sm:rounded-[3rem] shadow-[0_-8px_40px_rgba(0,0,0,0.12)] sm:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] flex flex-col w-full max-w-[1240px] h-[95dvh] sm:h-full font-manrope sm:border-l sm:border-white/20 mt-auto sm:mt-0 overflow-hidden"
     >
-     {/* Mobile Swipe Handle */}
-     <div className="w-full flex items-center justify-center shrink-0 pt-4 pb-2 sm:hidden group relative z-10 cursor-grab active:cursor-grabbing" onClick={handleClose}>
-      <div className="absolute top-1/2 -translate-y-1/2 w-20 h-6 bg-[#CF8F73]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="w-14 h-[5px] rounded-full bg-[#4A403A]/15 border border-[#4A403A]/5 shadow-[0_1px_2px_rgba(255,255,255,0.8)_inset,0_1px_3px_rgba(0,0,0,0.05)] relative overflow-hidden transition-all duration-300 group-active:scale-95 group-active:bg-[#4A403A]/25">
-       <motion.div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full" animate={{ translateX: ["-100%", "200%"] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 0.5 }} />
-      </div>
-     </div>
+
      <button onClick={handleClose} className="absolute top-6 right-6 z-50 p-2.5 bg-gray-50/80 backdrop-blur-md rounded-full text-[#3A332E] hover:bg-gray-100 transition-all sm:hidden shadow-sm">
       <X className="w-5 h-5" />
      </button>

@@ -73,7 +73,7 @@ export default function MarketPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.4 }}
-                className="grid grid-cols-2 gap-1.5 sm:gap-3"
+                className="grid grid-cols-2 gap-2.5 sm:gap-3"
               >
                 {(isLoading || (!hasFetched && products.length === 0))
                   ? Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)

@@ -30,12 +30,12 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
  const isAuthenticated = mounted && status === "authenticated"
 
  return (
-  <header className="sticky top-0 w-full z-[100] font-manrope bg-[#FDF8ED]/70 backdrop-blur-xl border-b border-[#4A403A]/5 transition-all duration-300">
+  <header className="sticky top-0 w-full z-[100] font-manrope bg-[#FDF8ED] border-b border-[#4A403A]/5 transition-all duration-300">
    <div className="w-full px-4 sm:px-8 lg:px-12">
 
     <div className="flex items-center justify-between py-3 sm:py-5 gap-4 lg:gap-8">
 
-     <div className="flex items-center gap-6 lg:gap-10 shrink-0 min-w-0">
+     <div className="flex items-center gap-4 lg:gap-10 min-w-0 flex-1 sm:flex-none">
       <Link href="/" className="flex items-center cursor-pointer shrink-0 select-none group">
        <motion.img
         whileHover={{ scale: 1.02 }}
@@ -85,14 +85,14 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
       )}
      </div>
 
-     <div className="flex items-center gap-2 sm:gap-4 lg:gap-8 shrink-0 min-w-0">
+     <div className="flex items-center gap-2 sm:gap-4 lg:gap-8 min-w-0">
 
       {/* Address Text Button */}
       <motion.button
        whileHover={{ opacity: 0.8 }}
        whileTap={{ scale: 0.98 }}
        onClick={() => setAddressModalOpen(true)}
-       className="flex flex-col items-start min-w-0 text-left justify-center shrink-0 group transition-all"
+       className="flex flex-col items-start text-left justify-center shrink group transition-all min-w-0"
       >
        <span className="text-[9px] sm:text-[10px] font-black text-smusl-terracotta/80 leading-none uppercase tracking-[0.2em] mb-1">
         {deliveryType === "pickup" ? "Самовывоз" : (deliveryType === "delivery" ? "Доставка" : "Получение")}

@@ -64,11 +64,10 @@ export const metadata: Metadata = {
 
 import { Viewport } from 'next';
 export const viewport: Viewport = {
- themeColor: "#FDF8ED",
  width: "device-width",
  initialScale: 1,
- maximumScale: 1,
  viewportFit: "cover",
+ themeColor: "#FDF8ED",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

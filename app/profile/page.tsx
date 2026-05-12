@@ -52,10 +52,10 @@ function CartItemRow({ item, index, isLast, onDecrement, onIncrement, onRemove }
    animate={{ opacity: 1, y: 0, scale: 1 }}
    exit={{ opacity: 0, x: -40, scale: 0.95 }}
    transition={{ delay: index * 0.06, type: "spring", damping: 22, stiffness: 260 }}
-   className={`group relative flex items-center gap-4 sm:gap-6 px-5 py-4 sm:px-8 sm:py-6 bg-white hover:bg-[#FDFAF8] transition-all duration-300 ${!isLast ? "border-b border-[#F3EDE8]" : ""}`}
+   className={`group relative flex items-start sm:items-center gap-4 px-4 py-5 sm:px-8 sm:py-6 bg-white hover:bg-[#FDFAF8] transition-all duration-300 ${!isLast ? "border-b border-[#F3EDE8]" : ""}`}
   >
    {/* Image */}
-   <div className="relative w-[76px] h-[76px] sm:w-[96px] sm:h-[96px] rounded-[1.6rem] overflow-hidden bg-[#FAF5F0] shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.06)] border border-[#EEE8E2]">
+   <div className="relative w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-[1.5rem] overflow-hidden bg-[#FAF5F0] shrink-0 shadow-sm border border-[#EEE8E2]">
     <Image
      src={item.image}
      fill
@@ -65,113 +65,122 @@ function CartItemRow({ item, index, isLast, onDecrement, onIncrement, onRemove }
     />
    </div>
 
-   {/* Name + price */}
-   <div className="min-w-0 flex-1">
-    <h3 className="text-[15px] sm:text-[18px] font-[800] text-[#3A332E] leading-snug line-clamp-2 mb-1">{item.name}</h3>
-    <motion.p
-     key={item.quantity}
-     initial={{ scale: 0.92, opacity: 0.7 }}
-     animate={{ scale: 1, opacity: 1 }}
-     className="text-[13px] sm:text-[15px] font-[900] text-[#CF8F73] tabular-nums"
-    >
-     {item.price} ₽ за шт.
-    </motion.p>
-   </div>
-
-   {/* Controls + total */}
-   <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-    {/* Total on desktop */}
-    <motion.span
-     key={item.quantity}
-     initial={{ y: -6, opacity: 0 }}
-     animate={{ y: 0, opacity: 1 }}
-     className="hidden sm:block text-[18px] font-[900] text-[#3A332E] tabular-nums min-w-[70px] text-right"
-    >
-     {(item.price * item.quantity).toLocaleString("ru-RU")} ₽
-    </motion.span>
-
-    {/* Quantity pill */}
-    <div className="flex items-center gap-1 bg-[#F5F0EC] rounded-full p-1 shadow-inner border border-[#EAE4DE]">
-     <motion.button
-      onClick={onDecrement}
-      whileTap={{ scale: 0.82 }}
-      className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-[#3A332E] hover:bg-[#CF8F73] hover:text-white shadow-sm transition-all duration-200"
-     >
-      <Minus className="w-3.5 h-3.5" strokeWidth={2.5} />
-     </motion.button>
-     <motion.span
-      key={item.quantity}
-      initial={{ scale: 0.7, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      className="w-7 text-center text-[15px] font-[900] text-[#3A332E] tabular-nums"
-     >
-      {item.quantity}
-     </motion.span>
-     <motion.button
-      onClick={onIncrement}
-      whileTap={{ scale: 0.82 }}
-      className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-[#3A332E] hover:bg-[#CF8F73] hover:text-white shadow-sm transition-all duration-200"
-     >
-      <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
-     </motion.button>
+   {/* Content Wrapper */}
+   <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6">
+    
+    {/* Name and Mobile Price */}
+    <div className="min-w-0 flex-1">
+     <h3 className="text-[15px] sm:text-[18px] font-[800] text-[#3A332E] leading-snug line-clamp-2">{item.name}</h3>
+     
+     {/* Mobile Sub-line (Price) */}
+     <div className="mt-1 sm:mt-1.5">
+       <motion.p
+        key={item.quantity}
+        initial={{ scale: 0.92, opacity: 0.7 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="text-[13px] sm:text-[15px] font-[900] text-[#CF8F73] tabular-nums"
+       >
+        {item.price} ₽ за шт.
+       </motion.p>
+     </div>
     </div>
 
-    {/* Delete */}
-    <motion.button
-     onClick={onRemove}
-     whileTap={{ scale: 0.82 }}
-     className="w-9 h-9 flex items-center justify-center rounded-full bg-[#F5F0EC] text-[#CF8F73]/70 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 border border-[#EAE4DE]"
-    >
-     <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
-    </motion.button>
+    {/* Controls Area */}
+    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 mt-1 sm:mt-0">
+     
+     {/* Price per Item x Quantity Calculation for Desktop only */}
+     <motion.span
+      key={item.quantity}
+      initial={{ y: -6, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="hidden sm:block text-[18px] font-[900] text-[#3A332E] tabular-nums min-w-[80px] text-right order-2 sm:order-none ml-auto"
+     >
+      {(item.price * item.quantity).toLocaleString("ru-RU")} ₽
+     </motion.span>
+
+     {/* Quantity Pill Wrapper */}
+     <div className="flex items-center gap-1 bg-[#F5F0EC] rounded-full p-1 shadow-inner border border-[#EAE4DE] shrink-0">
+      <motion.button
+       onClick={onDecrement}
+       whileTap={{ scale: 0.82 }}
+       className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white text-[#3A332E] hover:bg-[#CF8F73] hover:text-white shadow-sm transition-all duration-200"
+      >
+       <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" strokeWidth={2.5} />
+      </motion.button>
+      <motion.span
+       key={item.quantity}
+       initial={{ scale: 0.7, opacity: 0 }}
+       animate={{ scale: 1, opacity: 1 }}
+       className="w-6 sm:w-7 text-center text-[14px] sm:text-[15px] font-[900] text-[#3A332E] tabular-nums"
+      >
+       {item.quantity}
+      </motion.span>
+      <motion.button
+       onClick={onIncrement}
+       whileTap={{ scale: 0.82 }}
+       className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white text-[#3A332E] hover:bg-[#CF8F73] hover:text-white shadow-sm transition-all duration-200"
+      >
+       <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" strokeWidth={2.5} />
+      </motion.button>
+     </div>
+
+     {/* Trash Action Button */}
+     <motion.button
+      onClick={onRemove}
+      whileTap={{ scale: 0.82 }}
+      className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-[#F5F0EC] text-[#CF8F73]/70 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200 border border-[#EAE4DE] shrink-0"
+     >
+      <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
+     </motion.button>
+    </div>
    </div>
   </motion.div>
  )
 }
 
 export default function ProfilePage() {
-  const setAuthModalOpen = useUIStore(s => s.setAuthModalOpen)
-  const setCheckoutOpen = useUIStore(s => s.setCheckoutOpen)
+ const setAuthModalOpen = useUIStore(s => s.setAuthModalOpen)
+ const setCheckoutOpen = useUIStore(s => s.setCheckoutOpen)
 
-  const cart = useCartStore(s => s.cart)
-  const addToCart = useCartStore(s => s.addToCart)
-  const addMultipleToCart = useCartStore(s => s.addMultipleToCart)
-  const updateQuantity = useCartStore(s => s.updateQuantity)
+ const cart = useCartStore(s => s.cart)
+ const addToCart = useCartStore(s => s.addToCart)
+ const addMultipleToCart = useCartStore(s => s.addMultipleToCart)
+ const updateQuantity = useCartStore(s => s.updateQuantity)
 
-  const favorites = useUserStore(s => s.favorites) || []
-  const orderHistory = useUserStore(s => s.orderHistory) || []
-  const userName = useUserStore(s => s.userName)
+ const favorites = useUserStore(s => s.favorites) || []
+ const orderHistory = useUserStore(s => s.orderHistory) || []
+ const userName = useUserStore(s => s.userName)
 
-  const products = useProductStore(s => s.products) || []
-  const fetchProducts = useProductStore(s => s.fetchProducts)
+ const products = useProductStore(s => s.products) || []
+ const fetchProducts = useProductStore(s => s.fetchProducts)
 
-  const { data: session, status: authStatus } = useSession()
-  const isAuthenticated = authStatus === "authenticated"
-  const isLoadingSession = authStatus === "loading"
-  const [activeTab, setActiveTab] = useState<TabLabel>("История заказов")
-  const [mounted, setMounted] = useState(false)
+ const { data: session, status: authStatus } = useSession()
+ const isAuthenticated = authStatus === "authenticated"
+ const isLoadingSession = authStatus === "loading"
+ const [activeTab, setActiveTab] = useState<TabLabel>("История заказов")
+ const [mounted, setMounted] = useState(false)
 
 
  useEffect(() => {
   setMounted(true)
  }, [])
 
-  useEffect(() => {
-    if (products.length === 0) {
-      fetchProducts()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  let displayName = isAuthenticated ? (session?.user?.name || "Пользователь") : "Гость";
-  const localName = userName;
-  if (isAuthenticated && displayName && /^[\d\s\-\+\(\)]+$/.test(displayName)) {
-    displayName = localName || "Пользователь";
-  } else if (isAuthenticated && localName && localName !== displayName && !/^[\d\s\-\+\(\)]+$/.test(localName)) {
-    displayName = localName;
+ useEffect(() => {
+  if (products.length === 0) {
+   fetchProducts()
   }
-  const isLoading = isLoadingSession || !mounted
-  const favoriteProducts = products.filter((p: Product) => Array.isArray(favorites) && favorites.includes(p.id))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [])
+
+ let displayName = isAuthenticated ? (session?.user?.name || "Пользователь") : "Гость";
+ const localName = userName;
+ if (isAuthenticated && displayName && /^[\d\s\-\+\(\)]+$/.test(displayName)) {
+  displayName = localName || "Пользователь";
+ } else if (isAuthenticated && localName && localName !== displayName && !/^[\d\s\-\+\(\)]+$/.test(localName)) {
+  displayName = localName;
+ }
+ const isLoading = isLoadingSession || !mounted
+ const favoriteProducts = products.filter((p: Product) => Array.isArray(favorites) && favorites.includes(p.id))
  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
  const handleLogout = async () => {
@@ -244,7 +253,7 @@ export default function ProfilePage() {
 
     {/* Tabs */}
     <div className="mt-12 sm:mt-16 mb-8 sm:mb-12 -mx-4 sm:mx-0">
-     <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-4 px-4 sm:px-1 after:content-[''] after:w-1 after:shrink-0 sm:after:hidden">
+     <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-4 px-4 sm:px-1">
       {TABS.map(({ label, icon: Icon }) => (
        <button
         key={label}
@@ -257,6 +266,7 @@ export default function ProfilePage() {
         {label}
        </button>
       ))}
+      <div className="w-2 shrink-0 sm:hidden" />
      </div>
     </div>
 
@@ -295,11 +305,11 @@ export default function ProfilePage() {
              </div>
              <div className="space-y-3 pt-4 border-t border-smusl-brown/[0.05]">
               <p className="text-[13px] text-smusl-gray/60 font-medium leading-relaxed">{order.address}</p>
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleRepeatOrder(order)} 
-                className="w-full flex items-center justify-center gap-3 py-5 bg-gradient-to-r from-[#D99A82] to-[#CF8F73] text-white rounded-[1.6rem] text-[16px] font-black uppercase tracking-widest shadow-[0_12px_32px_rgba(207,143,115,0.3)] active:scale-95 transition-all"
+              <motion.button
+               whileHover={{ scale: 1.02 }}
+               whileTap={{ scale: 0.98 }}
+               onClick={() => handleRepeatOrder(order)}
+               className="w-full flex items-center justify-center gap-3 py-5 bg-gradient-to-r from-[#D99A82] to-[#CF8F73] text-white rounded-[1.6rem] text-[16px] font-black uppercase tracking-widest shadow-[0_12px_32px_rgba(207,143,115,0.3)] active:scale-95 transition-all"
               >
                <RotateCcw className="w-5 h-5" />
                Повторить заказ
@@ -319,7 +329,7 @@ export default function ProfilePage() {
              </div>
              <div className="text-center px-1 sm:px-2">
               <p className="text-[10px] text-smusl-gray/30 font-black uppercase tracking-[0.2em] mb-1.5">Дата</p>
-               <p className="text-[14px] lg:text-[15px] text-[#5B5047] font-bold whitespace-nowrap">{order.createdAt ? new Date(order.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) : '—'}</p>
+              <p className="text-[14px] lg:text-[15px] text-[#5B5047] font-bold whitespace-nowrap">{order.createdAt ? new Date(order.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) : '—'}</p>
              </div>
              <div className="px-1 sm:px-2 min-w-0">
               <p className="text-[10px] text-smusl-gray/30 font-black uppercase tracking-[0.2em] mb-1.5">Адрес</p>
@@ -329,15 +339,15 @@ export default function ProfilePage() {
               <p className="text-[10px] text-smusl-gray/30 font-black uppercase tracking-[0.2em] mb-1.5">Сумма</p>
               <p className="text-[20px] lg:text-[28px] font-black text-[#5B5047] whitespace-nowrap">{order.total} ₽</p>
              </div>
-              <motion.button 
-                 whileHover={{ y: -3, scale: 1.02 }}
-                 whileTap={{ scale: 0.98 }}
-                 onClick={() => handleRepeatOrder(order)} 
-                 className="flex items-center gap-3 px-10 py-[18px] bg-gradient-to-r from-[#D99A82] to-[#B87A60] text-white rounded-[1.6rem] text-[15px] lg:text-[16px] font-black uppercase tracking-widest hover:brightness-105 transition-all active:scale-95 shadow-[0_15px_40px_rgba(207,143,115,0.25)] hover:shadow-[0_25px_50px_-12px_rgba(207,143,115,0.3)] shrink-0"
-               >
-                <RotateCcw className="w-[18px] h-[18px] lg:w-5 lg:h-5" />
-                <span className="whitespace-nowrap">Повторить заказ</span>
-               </motion.button>
+             <motion.button
+              whileHover={{ y: -3, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleRepeatOrder(order)}
+              className="flex items-center gap-3 px-10 py-[18px] bg-gradient-to-r from-[#D99A82] to-[#B87A60] text-white rounded-[1.6rem] text-[15px] lg:text-[16px] font-black uppercase tracking-widest hover:brightness-105 transition-all active:scale-95 shadow-[0_15px_40px_rgba(207,143,115,0.25)] hover:shadow-[0_25px_50px_-12px_rgba(207,143,115,0.3)] shrink-0"
+             >
+              <RotateCcw className="w-[18px] h-[18px] lg:w-5 lg:h-5" />
+              <span className="whitespace-nowrap">Повторить заказ</span>
+             </motion.button>
             </div>
            </motion.div>
           )
@@ -403,22 +413,22 @@ export default function ProfilePage() {
             <span className="text-[32px] sm:text-[44px] font-[900] text-[#CF8F73] leading-none">₽</span>
            </div>
            <p className="text-[13px] font-[700] text-[#3A332E]/40 mt-3 flex items-center gap-2">
-             <span className="w-1.5 h-1.5 rounded-full bg-[#CF8F73]" />
-             {cart.reduce((s, i) => s + i.quantity, 0)} позиций в корзине
+            <span className="w-1.5 h-1.5 rounded-full bg-[#CF8F73]" />
+            {cart.reduce((s, i) => s + i.quantity, 0)} позиций в корзине
            </p>
           </div>
 
-          <motion.div 
-           whileHover={{ scale: 1.03, y: -2 }} 
-           whileTap={{ scale: 0.97 }} 
+          <motion.div
+           whileHover={{ scale: 1.03, y: -2 }}
+           whileTap={{ scale: 0.97 }}
            className="relative z-10 w-full sm:w-auto"
           >
-             <button
-               onClick={() => setCheckoutOpen(true)}
-               className="relative overflow-hidden w-full sm:w-auto flex items-center justify-center gap-5 px-12 sm:px-20 py-6 sm:py-8 bg-gradient-to-br from-[#E2A68E] via-[#CF8F73] to-[#B87A60] text-white rounded-[2.5rem] text-[18px] sm:text-[22px] font-black uppercase tracking-[0.2em] shadow-[0_25px_60px_rgba(207,143,115,0.45)] hover:shadow-[0_35px_80px_rgba(207,143,115,0.55)] active:scale-95 transition-all duration-500"
-             >
+           <button
+            onClick={() => setCheckoutOpen(true)}
+            className="relative overflow-hidden w-full sm:w-auto h-[58px] sm:h-auto flex items-center justify-center gap-3 sm:gap-5 px-6 sm:px-20 py-0 sm:py-8 bg-gradient-to-br from-[#E2A68E] via-[#CF8F73] to-[#B87A60] text-white rounded-[1.5rem] sm:rounded-[2.5rem] text-[15px] sm:text-[22px] font-black uppercase tracking-wider sm:tracking-[0.2em] shadow-[0_15px_35px_rgba(207,143,115,0.35)] hover:shadow-[0_35px_80px_rgba(207,143,115,0.55)] active:scale-95 transition-all duration-500"
+           >
 
-            <span className="relative z-10">Оформить заказ</span>
+            <span className="relative z-5 whitespace-nowrap">Оформить заказ</span>
             <motion.svg
              className="relative z-10 w-6 h-6"
              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"

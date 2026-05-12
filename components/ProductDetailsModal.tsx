@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useDragControls } from "framer-motion"
 import { X, ShoppingBag, Heart } from "lucide-react"
 import Image from "next/image"
 import { useUIStore, useCartStore, useUserStore } from "@/store/hooks"
@@ -16,6 +16,9 @@ export default function ProductDetailsModal() {
  const addToCart = useCartStore(s => s.addToCart)
 
  const [quantity, setQuantity] = useState(1)
+
+ // Only allow drag from the handle bar — prevents scroll conflicts
+ const dragControls = useDragControls()
 
  const handleClose = () => {
   setSelectedProduct(null)
@@ -39,13 +42,6 @@ export default function ProductDetailsModal() {
    <>
     <div className="w-full bg-white sm:bg-[#EBE7E2] overflow-hidden aspect-[4/3] sm:aspect-[16/9] relative shrink-0 flex items-center justify-center group sm:rounded-t-none">
 
-
-     {isMobile && (
-      <div className="absolute top-0 inset-x-0 z-20 flex justify-center pt-4 pb-2">
-       <div className="w-12 h-1.5 rounded-full bg-[#4A403A]/15 shadow-sm" />
-      </div>
-     )}
-
      {selectedProduct.image ? (
       <motion.div
        className="relative w-full h-full"
@@ -61,6 +57,8 @@ export default function ProductDetailsModal() {
         className="object-cover"
         priority
        />
+       {/* Soft gradient fade into white content below */}
+       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white via-white/60 to-transparent pointer-events-none" />
       </motion.div>
      ) : (
       <div className="w-full h-full bg-[#EBE7E2]" />
@@ -70,8 +68,7 @@ export default function ProductDetailsModal() {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={handleClose}
-      className={`absolute top-4 left-4 sm:top-5 sm:left-5 h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-[#4A403A]/10 shadow-md flex items-center justify-center transition-all z-20 ${isMobile ? "bg-white/40 backdrop-blur-md text-[#4A403A]" : "bg-[#EBE7E2]/50 text-[#4A403A] hover:bg-white"
-       }`}
+      className={`absolute top-4 left-4 sm:top-5 sm:left-5 h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-[#4A403A]/10 shadow-md flex items-center justify-center transition-all z-20 ${isMobile ? "bg-white/40 backdrop-blur-md text-[#4A403A]" : "bg-[#EBE7E2]/50 text-[#4A403A] hover:bg-white"}`}
      >
       <X className="w-5 h-5 sm:w-6 sm:h-6" />
      </motion.button>
@@ -80,16 +77,13 @@ export default function ProductDetailsModal() {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9, rotate: -15 }}
       onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedProduct.id); }}
-      className={`absolute top-4 right-4 sm:top-5 sm:right-5 h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-[#4A403A]/10 shadow-md hidden sm:flex items-center justify-center transition-all z-20 ${isFavorite
-        ? "bg-[#e94e4e] text-white"
-        : (isMobile ? "bg-white/40 backdrop-blur-md text-[#4A403A]/40" : "bg-[#EBE7E2]/50 text-[#4A403A]/40 hover:text-[#CF8F73] hover:bg-white")
-       }`}
+      className={`absolute top-4 right-4 sm:top-5 sm:right-5 h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-[#4A403A]/10 shadow-md hidden sm:flex items-center justify-center transition-all z-20 ${isFavorite ? "bg-[#e94e4e] text-white" : (isMobile ? "bg-white/40 backdrop-blur-md text-[#4A403A]/40" : "bg-[#EBE7E2]/50 text-[#4A403A]/40 hover:text-[#CF8F73] hover:bg-white")}`}
      >
       <Heart className="w-5 h-5 sm:w-6 sm:h-6" fill={isFavorite ? "currentColor" : "none"} />
      </motion.button>
     </div>
 
-    <div className="flex flex-col p-6 sm:p-10 gap-6 sm:gap-8 flex-1 pb-10 sm:pb-12 bg-white">
+    <div className="flex flex-col p-6 sm:p-10 gap-6 sm:gap-8 flex-1 pb-10 sm:pb-12 bg-white select-none">
      <div className="space-y-1">
       <h1 className="text-[28px] sm:text-[42px] font-black text-[#4A403A] leading-[1.1] tracking-tighter">
        {selectedProduct.name}
@@ -112,21 +106,9 @@ export default function ProductDetailsModal() {
        </span>
 
        <div className="flex-1 sm:flex-none flex items-center justify-between sm:justify-center h-[56px] sm:h-[72px] sm:gap-6 bg-[#FDF4EE] rounded-[1.2rem] px-5 sm:px-8 border border-[#CF8F73]/5">
-        <button
-         onClick={decrement}
-         className="text-[22px] sm:text-[28px] font-light text-[#CF8F73] leading-none hover:opacity-100 opacity-60 transition-opacity w-6 flex items-center justify-center"
-        >
-         −
-        </button>
-        <span className="text-[17px] sm:text-[22px] font-black text-[#4A403A] min-w-[20px] text-center tabular-nums">
-         {quantity}
-        </span>
-        <button
-         onClick={increment}
-         className="text-[22px] sm:text-[28px] font-light text-[#CF8F73] leading-none hover:opacity-100 opacity-60 transition-opacity w-6 flex items-center justify-center"
-        >
-         +
-        </button>
+        <button onClick={decrement} className="text-[22px] sm:text-[28px] font-light text-[#CF8F73] leading-none hover:opacity-100 opacity-60 transition-opacity w-6 flex items-center justify-center">−</button>
+        <span className="text-[17px] sm:text-[22px] font-black text-[#4A403A] min-w-[20px] text-center tabular-nums">{quantity}</span>
+        <button onClick={increment} className="text-[22px] sm:text-[28px] font-light text-[#CF8F73] leading-none hover:opacity-100 opacity-60 transition-opacity w-6 flex items-center justify-center">+</button>
        </div>
 
        <motion.button
@@ -208,27 +190,55 @@ export default function ProductDetailsModal() {
       onClick={handleClose}
      />
 
+     {/* Mobile bottom sheet — drag ONLY from handle to avoid scroll conflicts */}
      <motion.div
       key="modal-mobile"
-      className="fixed inset-x-0 bottom-0 z-[210] sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-[210] sm:hidden flex flex-col"
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
       transition={{ type: "spring", damping: 26, stiffness: 260, mass: 0.8 }}
       drag="y"
+      dragControls={dragControls}
+      dragListener={false}
       dragConstraints={{ top: 0 }}
-      dragElastic={0.08}
+      dragElastic={0.1}
       onDragEnd={(_, info) => {
-       if (info.offset.y > 100 || info.velocity.y > 500) {
+       if (info.offset.y > 80 || info.velocity.y > 400) {
         handleClose()
        }
       }}
+      style={{ maxHeight: '96dvh' }}
      >
-      <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl w-full max-h-[96dvh] overflow-y-auto flex flex-col font-manrope pb-10">
-       {renderContent(true)}
+      <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl w-full flex flex-col overflow-hidden font-manrope">
+
+       {/* ── Drag handle — the ONLY draggable zone ── */}
+       <div
+        className="w-full pt-4 pb-3 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing select-none"
+        style={{ touchAction: 'none' }}
+        onPointerDown={(e) => {
+         e.preventDefault()
+         dragControls.start(e)
+        }}
+       >
+        <div className="w-10 h-[5px] rounded-full bg-[#4A403A]/15" />
+       </div>
+
+       {/* ── Scrollable content — free from drag interference ── */}
+       <div
+        className="flex-1 overflow-y-auto no-scrollbar"
+        style={{
+         touchAction: 'pan-y',
+         WebkitOverflowScrolling: 'touch',
+         paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
+        }}
+       >
+        {renderContent(true)}
+       </div>
       </div>
      </motion.div>
 
+     {/* Desktop side panel */}
      <motion.div
       key="modal-desktop"
       className="fixed inset-y-0 right-0 z-[210] hidden sm:flex items-stretch"
