@@ -10,11 +10,11 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://images.unsplash.com https://img.freepik.com https://*.tile.openstreetmap.org",
-      "connect-src 'self' https://nominatim.openstreetmap.org https://restcountries.eu",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://mapgl.2gis.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://mapgl.2gis.com",
+      "font-src 'self' https://fonts.gstatic.com https://mapgl.2gis.com",
+      "img-src 'self' data: blob: https://images.unsplash.com https://img.freepik.com https://*.tile.openstreetmap.org https://*.2gis.com",
+      "connect-src 'self' https://nominatim.openstreetmap.org https://restcountries.eu https://*.2gis.com wss://*.2gis.com",
       "frame-src 'none'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -24,6 +24,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     qualities: [75, 90],
     remotePatterns: [
