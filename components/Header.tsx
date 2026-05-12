@@ -23,6 +23,11 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
  const setAddressModalOpen = useUIStore(s => s.setAddressModalOpen)
  const setActiveCategory = useUIStore(s => s.setActiveCategory)
  const setSearchQuery = useUIStore(s => s.setSearchQuery)
+ const isAuthOpen = useUIStore(s => s.isAuthModalOpen)
+ const isAddressOpen = useUIStore(s => s.isAddressModalOpen)
+ const isCheckoutOpen = useUIStore(s => s.isCheckoutOpen)
+ const isProductOpen = useUIStore(s => s.selectedProduct !== null)
+ const isAnyModalOpen = isAuthOpen || isAddressOpen || isCheckoutOpen || isProductOpen
 
  const { status } = useSession()
  const [mounted, setMounted] = React.useState(false)
@@ -30,7 +35,10 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
  const isAuthenticated = mounted && status === "authenticated"
 
  return (
-  <header className="sticky top-0 w-full z-[999] font-manrope bg-[#FDF8ED] border-b border-[#4A403A]/5 transition-all duration-300 pt-[env(safe-area-inset-top)]">
+  <header className={cn(
+   "sticky top-0 w-full font-manrope bg-[#FDF8ED] border-b border-[#4A403A]/5 transition-all duration-300 pt-[env(safe-area-inset-top)] transform-gpu isolate",
+   isAnyModalOpen ? "invisible opacity-0 pointer-events-none" : "z-[999]"
+  )}>
    {/* Safari top bounce overflow cap */}
    <div className="absolute bottom-full left-0 w-full h-[100vh] bg-[#FDF8ED] pointer-events-none z-[-1]" />
    <div className="w-full px-4 sm:px-8 lg:px-12">

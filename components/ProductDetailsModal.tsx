@@ -182,7 +182,7 @@ export default function ProductDetailsModal() {
     <>
      <motion.div
       key="overlay"
-      className="fixed inset-0 z-[200] bg-[#3A332E]/80"
+      className="fixed inset-0 z-[9998] bg-[#3A332E]/80 transform-gpu isolate"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -190,14 +190,14 @@ export default function ProductDetailsModal() {
       onClick={handleClose}
      />
 
-     {/* Mobile bottom sheet — drag ONLY from handle to avoid scroll conflicts */}
+     {/* Mobile bottom sheet — robust, unbreakable container spanning below screen */}
      <motion.div
       key="modal-mobile"
-      className="fixed inset-x-0 bottom-0 z-[210] sm:hidden flex flex-col"
+      className="fixed inset-x-0 bottom-[-100px] z-[9999] sm:hidden flex flex-col bg-white rounded-t-[2.5rem] shadow-2xl font-manrope pb-[100px] overflow-hidden transform-gpu isolate"
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      transition={{ type: "spring", damping: 26, stiffness: 260, mass: 0.8 }}
+      transition={{ type: "spring", damping: 28, stiffness: 300, mass: 0.9 }}
       drag="y"
       dragControls={dragControls}
       dragListener={false}
@@ -208,12 +208,8 @@ export default function ProductDetailsModal() {
         handleClose()
        }
       }}
-      style={{ maxHeight: '96dvh' }}
+      style={{ maxHeight: 'calc(96dvh + 100px)' }}
      >
-
-      {/* Bottom extension for Safari safety, blocks anything from bleeding through under modal */}
-      <div className="absolute top-[95%] left-0 right-0 h-[100vh] bg-white pointer-events-none sm:hidden" />
-      <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl w-full flex flex-col overflow-hidden font-manrope">
 
        <div
         className="w-full pt-4 pb-3 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing select-none"
@@ -237,13 +233,12 @@ export default function ProductDetailsModal() {
        >
         {renderContent(true)}
        </div>
-      </div>
      </motion.div>
 
      {/* Desktop side panel */}
      <motion.div
       key="modal-desktop"
-      className="fixed inset-y-0 right-0 z-[210] hidden sm:flex items-stretch"
+      className="fixed inset-y-0 right-0 z-[9999] hidden sm:flex items-stretch transform-gpu isolate"
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
