@@ -30,8 +30,9 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
  const isAuthenticated = mounted && status === "authenticated"
 
  return (
-  <header className="sticky top-0 w-full z-[100] font-manrope bg-[#FDF8ED] border-b border-[#4A403A]/5 transition-all duration-300">
-   <div className="absolute bottom-full left-0 w-full h-[100vh] bg-[#FDF8ED] pointer-events-none" />
+  <header className="sticky top-0 w-full z-[999] font-manrope bg-[#FDF8ED] border-b border-[#4A403A]/5 transition-all duration-300 pt-[env(safe-area-inset-top)]">
+   {/* Safari top bounce overflow cap */}
+   <div className="absolute bottom-full left-0 w-full h-[100vh] bg-[#FDF8ED] pointer-events-none z-[-1]" />
    <div className="w-full px-4 sm:px-8 lg:px-12">
 
     <div className="flex items-center justify-between py-3 sm:py-5 gap-4 lg:gap-8">

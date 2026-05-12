@@ -211,7 +211,8 @@ export default function ProductDetailsModal() {
       style={{ maxHeight: '96dvh' }}
      >
 
-      <div className="absolute top-[95%] left-0 right-0 h-[100vh] bg-white z-[-1] pointer-events-none sm:hidden" />
+      {/* Bottom extension for Safari safety, blocks anything from bleeding through under modal */}
+      <div className="absolute top-[95%] left-0 right-0 h-[100vh] bg-white pointer-events-none sm:hidden" />
       <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl w-full flex flex-col overflow-hidden font-manrope">
 
        <div
@@ -227,7 +228,7 @@ export default function ProductDetailsModal() {
 
        {/* ── Scrollable content — free from drag interference ── */}
        <div
-        className="flex-1 overflow-y-auto no-scrollbar"
+        className="flex-1 overflow-y-auto no-scrollbar bg-white"
         style={{
          touchAction: 'pan-y',
          WebkitOverflowScrolling: 'touch',
