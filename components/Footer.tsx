@@ -72,6 +72,8 @@ const Footer: React.FC = () => {
      </Link>
     </nav>
    </div>
+
+
   </footer>
  );
 };

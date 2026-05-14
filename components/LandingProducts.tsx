@@ -16,7 +16,7 @@ const LandingProducts = () => {
   if (products.length === 0) {
    fetchProducts();
   }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
  }, []);
 
  const filteredProducts = products.filter(p => p.category === activeTab);
@@ -25,9 +25,9 @@ const LandingProducts = () => {
   <section id="menu" className="pt-32 pb-24 bg-[#FAF8F5]">
    <div className="w-full max-w-[1700px] mx-auto px-4 md:px-8 lg:px-12">
 
-    {/* Section Header */}
+
     <div className="flex flex-col xl:flex-row items-center justify-between mb-24 lg:mb-32 gap-12 relative w-full">
-     {/* Title with decorative elements */}
+
      <div className="flex items-center gap-4 md:gap-8 mx-auto xl:mx-0 xl:absolute xl:left-1/2 xl:-translate-x-1/2 group">
       <motion.span
        animate={{ x: [-5, 0, -5] }}
@@ -48,7 +48,7 @@ const LandingProducts = () => {
       </motion.span>
      </div>
 
-     {/* Filters - Glassmorphism Style */}
+
      <div className="flex gap-4 md:gap-6 xl:ml-auto z-10 w-full xl:w-auto justify-center xl:justify-end flex-wrap pt-8 xl:pt-0">
       {categories.map((cat) => (
        <button
@@ -65,7 +65,7 @@ const LandingProducts = () => {
      </div>
     </div>
 
-    {/* Products Grid - Exact Match Array Mapping */}
+
     <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8 lg:gap-12 xl:gap-14 mb-32 items-start max-w-[1600px] mx-auto`}>
      <AnimatePresence mode="popLayout">
       {filteredProducts.map((product, idx) => {
@@ -91,7 +91,7 @@ const LandingProducts = () => {
            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
            className="object-cover"
           />
-          {/* Overlay removed — no hover effects for perf */}
+
          </div>
          <motion.div
           initial={{ opacity: 0 }}

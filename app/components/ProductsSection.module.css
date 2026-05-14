@@ -1,0 +1,73 @@
+/* Стили только для секции продуктов */
+.section {
+  width: 100%;
+  padding: clamp(2.5rem, 6vw, 4rem) 0 clamp(2rem, 5vw, 3.5rem) 0;
+  background-color: transparent;
+  position: relative;
+  overflow: visible;
+}
+
+.container {
+  max-width: 80rem; /* max-w-7xl */
+  margin: 0 auto;
+  padding: 0 1.5rem; /* px-6 */
+  position: relative;
+  z-index: 10;
+  overflow: visible;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 2rem; /* sm:px-8 */
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 2.5rem; /* md:px-10 */
+  }
+}
+
+.titleContainer {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .titleContainer {
+    margin-bottom: 1.25rem;
+  }
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 3.5rem;
+    margin-top: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 4rem;
+  }
+}
+
+.carouselWrapper {
+  position: relative;
+  overflow: visible;
+  margin-top: -1rem;
+}

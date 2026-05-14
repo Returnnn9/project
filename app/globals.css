@@ -1,20 +1,51 @@
 @import "tailwindcss";
 
 /* ══════════════════════════════════════════════════
-   СМЫСЛ ЕСТЬ — REBIRTH 2026
-   Warm, Organic, Elegant Aesthetic
-   Design System & Tailwind Config
+   СМЫСЛ ЕСТЬ — палитра брендбука (pallete_min.pdf)
+   #f0e4d8 #bcd0cf #736357 #cbc0b2 #66633a #af9864 #716356
    ══════════════════════════════════════════════════ */
 
+:root {
+ --smusl-cream: #f5e9d3;
+ --smusl-page: #f9f5f0;
+ --smusl-card-teal: #d1e8e9;
+ --smusl-header-bar: #4a2c2a;
+ --smusl-heading: #4a2c2a;
+ --smusl-ticker-gold: #b5a67d;
+ --smusl-sage: #bcd0cf;
+ --smusl-sage-deep: #a3b8b5;
+ --smusl-taupe: #736357;
+ --smusl-stone: #cbc0b2;
+ --smusl-olive: #66633a;
+ --smusl-gold: #b5a67d;
+ --smusl-espresso: #716356;
+ --smusl-card: #f5f0e8;
+ --smusl-ink: #2f241e;
+ --smusl-light-gray: #e8dfd5;
+ --header-height-mobile: 80px;
+ --header-height-desktop: 160px;
+}
+
 @theme {
- --color-smusl-beige: #FDF8ED;
- --color-smusl-clay: #F3EFE4;
- --color-smusl-terracotta: #CF8D72;
- --color-smusl-red: #B54442;
- --color-smusl-accent-red: #9A2D2B;
- --color-smusl-brown: #4A423D;
- --color-smusl-gray: #8D8681;
- --color-smusl-light-gray: #EAE5D8;
+ --color-smusl-beige: #f9f5f0;
+ --color-smusl-page: #f9f5f0;
+ --color-smusl-card-teal: #d1e8e9;
+ --color-smusl-header-bar: #4a2c2a;
+ --color-smusl-heading: #4a2c2a;
+ --color-smusl-clay: #cbc0b2;
+ --color-smusl-terracotta: #af9864;
+ --color-smusl-red: #8b4a45;
+ --color-smusl-accent-red: #6d3a36;
+ --color-smusl-brown: #716356;
+ --color-smusl-gray: #736357;
+ --color-smusl-light-gray: #e8dfd5;
+ --color-smusl-sage: #bcd0cf;
+ --color-smusl-sage-deep: #a3b8b5;
+ --color-smusl-olive: #66633a;
+ --color-smusl-gold: #b5a67d;
+ --color-smusl-espresso: #716356;
+ --color-smusl-taupe: #736357;
+ --color-smusl-stone: #cbc0b2;
 
  --font-manrope: var(--font-manrope, 'Manrope', system-ui, sans-serif);
  --font-script: var(--font-great-vibes, 'Great Vibes', cursive);
@@ -51,7 +82,7 @@
  }
 
  body {
-  @apply font-manrope text-base font-medium antialiased text-[#4A423D] bg-[#FDF8ED];
+  @apply font-manrope text-base font-medium antialiased text-smusl-heading bg-smusl-page;
   letter-spacing: -0.01em;
   line-height: 1.5;
   position: relative;
@@ -88,7 +119,7 @@
  h2,
  h3,
  h4 {
-  @apply font-bold tracking-tight text-smusl-brown;
+  @apply font-bold tracking-tight text-smusl-heading;
  }
 }
 
@@ -204,8 +235,8 @@
 
 /* Custom Selection Color */
 ::selection {
- background: #CF8D72;
- color: white;
+ background: var(--smusl-gold);
+ color: var(--smusl-espresso);
 }
 
 /* Cross-browser Prefix Fixes for Safari/Legacy Webkit support */
@@ -222,4 +253,4 @@
 .glass-card, .glass-panel {
  -webkit-backdrop-filter: blur(24px);
  backdrop-filter: blur(24px);
-}
+}

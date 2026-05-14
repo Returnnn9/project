@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { motion, AnimatePresence, useDragControls } from "framer-motion"
+import { motion, AnimatePresence, useDragControls, useReducedMotion } from "framer-motion"
 import { X, ShoppingBag, Heart } from "lucide-react"
 import Image from "next/image"
 import { useUIStore, useCartStore, useUserStore } from "@/store/hooks"
@@ -18,6 +18,7 @@ export default function ProductDetailsModal() {
  const [quantity, setQuantity] = useState(1)
 
  // Only allow drag from the handle bar — prevents scroll conflicts
+ const prefersReducedMotion = useReducedMotion()
  const dragControls = useDragControls()
 
  const handleClose = () => {
@@ -197,7 +198,7 @@ export default function ProductDetailsModal() {
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      transition={{ type: "spring", damping: 28, stiffness: 300, mass: 0.9 }}
+      transition={prefersReducedMotion ? { duration: 0.15 } : { type: "spring", damping: 28, stiffness: 300, mass: 0.9 }}
       drag="y"
       dragControls={dragControls}
       dragListener={false}
@@ -242,7 +243,7 @@ export default function ProductDetailsModal() {
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
-      transition={{ type: "spring", damping: 30, stiffness: 280, mass: 1 }}
+      transition={prefersReducedMotion ? { duration: 0.15 } : { type: "spring", damping: 30, stiffness: 280, mass: 1 }}
      >
       <div className="relative bg-white shadow-2xl w-[min(680px,100vw)] h-full overflow-y-auto flex flex-col font-manrope">
        {renderContent(false)}

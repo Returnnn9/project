@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useUIStore, useUserStore } from "@/store/hooks"
 import { X, ChevronDown, ArrowLeft, Loader2, Edit3, Navigation, Phone, User as UserIcon } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import MapPicker from "./MapPicker"
 import { cn } from "@/lib/utils"
 import { useAddressSearch } from "@/hooks/useAddressSearch"
@@ -18,6 +18,7 @@ import { useSession } from "next-auth/react"
 export default function AddressModal() {
  const { status: authStatus } = useSession()
 
+ const prefersReducedMotion = useReducedMotion()
  const isAddressModalOpen = useUIStore(s => s.isAddressModalOpen)
  const setAddressModalOpen = useUIStore(s => s.setAddressModalOpen)
  const setAuthModalOpen = useUIStore(s => s.setAuthModalOpen)
@@ -191,7 +192,7 @@ export default function AddressModal() {
      initial={{ opacity: 0, y: "100%" }}
      animate={{ opacity: 1, y: 0 }}
      exit={{ opacity: 0, y: "100%" }}
-     transition={{ type: "spring" as const, damping: 32, stiffness: 280 }}
+     transition={prefersReducedMotion ? { duration: 0.15 } : { type: "spring" as const, damping: 32, stiffness: 280 }}
      className="relative z-10 bg-white sm:bg-white/95 sm:backdrop-blur-[20px] rounded-t-[2.5rem] sm:rounded-[3rem] shadow-[0_-8px_40px_rgba(0,0,0,0.12)] sm:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] flex flex-col w-full max-w-[1240px] h-[95dvh] sm:h-full font-manrope sm:border-l sm:border-white/20 mt-auto sm:mt-0 overflow-hidden"
     >
 

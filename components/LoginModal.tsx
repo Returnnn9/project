@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X, Phone, ArrowRight, Loader2, ChevronLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import { useUIStore, useUserStore } from "@/store/hooks";
 
@@ -98,6 +98,7 @@ type Step = "phone" | "code" | "done";
 
 const LoginModal: React.FC = () => {
  const router = useRouter();
+ const prefersReducedMotion = useReducedMotion();
  const isAuthModalOpen = useUIStore((s) => s.isAuthModalOpen);
  const setAuthModalOpen = useUIStore((s) => s.setAuthModalOpen);
  const setUserPhone = useUserStore((s) => s.setUserPhone);
@@ -200,26 +201,27 @@ const LoginModal: React.FC = () => {
   }
  }, [isOtpComplete, step, handleVerify]);
 
- if (!isAuthModalOpen) return null;
+  return (
+   <AnimatePresence mode="wait">
+    {isAuthModalOpen && (
+     <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto transform-gpu isolate pointer-events-none">
+      <motion.div
+       key="overlay"
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       exit={{ opacity: 0 }}
+       onClick={handleClose}
+       className="fixed inset-0 bg-[#3A332E]/40 backdrop-blur-md pointer-events-auto"
+      />
 
- return (
-  <AnimatePresence>
-   <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-    <motion.div
-     initial={{ opacity: 0 }}
-     animate={{ opacity: 1 }}
-     exit={{ opacity: 0 }}
-     onClick={handleClose}
-     className="fixed inset-0 bg-[#3A332E]/40 backdrop-blur-md"
-    />
-
-    <motion.div
-     initial={{ opacity: 0, y: "100%" }}
-     animate={{ opacity: 1, y: 0 }}
-     exit={{ opacity: 0, y: "100%" }}
-     transition={{ type: "spring", damping: 30, stiffness: 280 }}
-     className="relative w-full sm:max-w-[420px] bg-white/95 backdrop-blur-2xl rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] sm:shadow-2xl sm:border border-white/40 mt-auto sm:my-auto pb-6 sm:pb-0 overflow-hidden"
-    >
+      <motion.div
+       key="modal-auth"
+       initial={{ opacity: 0, y: "100%" }}
+       animate={{ opacity: 1, y: 0 }}
+       exit={{ opacity: 0, y: "100%" }}
+       transition={prefersReducedMotion ? { duration: 0.15 } : { type: "spring", damping: 30, stiffness: 280, mass: 0.8 }}
+       className="relative w-full sm:max-w-[420px] bg-white/95 backdrop-blur-2xl rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] sm:shadow-2xl sm:border border-white/40 mt-auto sm:my-auto pb-6 sm:pb-0 overflow-hidden pointer-events-auto"
+      >
      <div className="absolute top-0 right-0 w-64 h-64 bg-[#CF8F73]/15 rounded-full blur-[60px] -mr-20 -mt-20 pointer-events-none" />
      <button
       onClick={handleClose}
@@ -495,6 +497,7 @@ const LoginModal: React.FC = () => {
      </AnimatePresence>
     </motion.div>
    </div>
+   )}
   </AnimatePresence>
  );
 };

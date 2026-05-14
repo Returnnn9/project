@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useUIStore, useCartStore, useUserStore } from "@/store/hooks"
 import { X, ChevronDown, ArrowLeft, Loader2, Edit3, Navigation } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import MapPicker from "./MapPicker"
 import { cn } from "@/lib/utils"
@@ -20,6 +20,7 @@ import CheckoutStep6Success from "./checkout/CheckoutStep6Success"
 type DeliveryType = "delivery" | "pickup" | null
 
 export default function CheckoutModal() {
+  const prefersReducedMotion = useReducedMotion()
   const isCheckoutOpen = useUIStore(s => s.isCheckoutOpen)
   const setCheckoutOpen = useUIStore(s => s.setCheckoutOpen)
   const setAuthModalOpen = useUIStore(s => s.setAuthModalOpen)
@@ -230,7 +231,7 @@ export default function CheckoutModal() {
      initial={{ opacity: 0, y: "100%" }}
      animate={{ opacity: 1, y: 0 }}
      exit={{ opacity: 0, y: "100%" }}
-     transition={{ type: "spring" as const, damping: 32, stiffness: 280 }}
+     transition={prefersReducedMotion ? { duration: 0.15 } : { type: "spring" as const, damping: 32, stiffness: 280 }}
      className="relative z-10 bg-white sm:bg-white/95 sm:backdrop-blur-[20px] rounded-t-[2rem] sm:rounded-[3rem] shadow-[0_-8px_40px_rgba(0,0,0,0.12)] sm:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden flex w-full max-w-[1280px] font-manrope sm:border-l sm:border-white/20 mt-auto sm:mt-0"
      style={{ height: '95dvh' } as React.CSSProperties}
     >
@@ -435,7 +436,7 @@ export default function CheckoutModal() {
          animate={{ y: 0 }}
          className={cn(
           "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto sm:w-[50%] bg-white sm:bg-transparent z-10 flex flex-col rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-y-auto sm:overflow-y-auto no-scrollbar touch-pan-y",
-          isEditingAddress ? "max-h-[85vh] sm:h-full px-4 pt-6 sm:p-10" : "px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-6 sm:h-full sm:p-10"
+          isEditingAddress ? "max-h-[85dvh] sm:h-full px-4 pt-6 sm:p-10" : "px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-6 sm:h-full sm:p-10"
          )}
          transition={{ type: "spring" as const, damping: 28, stiffness: 220 }}
         >
@@ -689,7 +690,7 @@ export default function CheckoutModal() {
          animate={{ y: 0 }}
          className={cn(
           "absolute bottom-0 left-0 right-0 sm:relative sm:bottom-auto bg-white sm:bg-transparent z-10 flex flex-col sm:flex-1 rounded-t-[2.5rem] sm:rounded-none shadow-[0_-12px_40px_rgba(0,0,0,0.12)] sm:shadow-none overflow-hidden sm:overflow-y-auto no-scrollbar touch-pan-y",
-          isEditingAddress ? "max-h-[85vh] sm:h-full px-4 pt-6 sm:px-10 sm:py-10" : "px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-6 sm:h-full sm:px-10 sm:py-10"
+          isEditingAddress ? "max-h-[85dvh] sm:h-full px-4 pt-6 sm:px-10 sm:py-10" : "px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-6 sm:h-full sm:px-10 sm:py-10"
          )}
          transition={{ type: "spring" as const, damping: 28, stiffness: 220 }}
         >

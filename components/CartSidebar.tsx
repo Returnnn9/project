@@ -21,7 +21,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
  return (
-  <div className={`flex flex-col ${isMobile ? "h-full" : "h-[calc(100vh-8rem)]"} ${!isMobile ? "bg-gradient-to-b from-[#FDF8ED] to-[#F5E6DA] rounded-[2.5rem] shadow-2xl border border-white/20 p-6" : ""} font-manrope overflow-hidden`}>
+  <div className={`flex flex-col ${isMobile ? "h-full" : "h-[calc(100dvh-8rem)]"} ${!isMobile ? "bg-gradient-to-b from-[#FDF8ED] to-[#F5E6DA] rounded-[2.5rem] shadow-2xl border border-white/20 p-6" : ""} font-manrope overflow-hidden`}>
 
    {/* Header Area */}
    <div className={`flex items-center justify-between shrink-0 ${isMobile ? "mb-4 pt-1" : "mb-6"}`}>
@@ -72,33 +72,10 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
          animate={{ opacity: 1, y: 0, scale: 1 }}
          exit={{ opacity: 0, x: -100, scale: 0.9, transition: { duration: 0.2 } }}
          whileTap={isMobile ? { scale: 0.98 } : {}}
-         transition={{ type: "spring", stiffness: 350, damping: 25, delay: index * 0.05 }}
+         transition={{ type: "spring", stiffness: 350, damping: 25, delay: Math.min(index, 4) * 0.05 }}
          className="relative group shrink-0"
         >
-         {isMobile && (
-          <div className="absolute top-[1px] bottom-[1px] left-[1px] right-[1px] bg-red-500 rounded-[2.5rem] flex items-center justify-end pr-8 shadow-inner z-0 overflow-hidden">
-           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            className="flex flex-col items-center gap-1"
-           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-             <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            <span className="text-[10px] font-black text-white uppercase tracking-widest">Удалить</span>
-           </motion.div>
-          </div>
-         )}
-
-          <motion.div
-           drag={isMobile ? "x" : false}
-           dragConstraints={{ left: -110, right: 0 }}
-           dragElastic={0.05}
-           onDragEnd={(e, { offset }) => {
-            if (offset.x < -70) {
-             updateQuantity(item.id, -item.quantity);
-            }
-           }}
+          <div
            className="bg-[#FCF5EF] border border-[#4A403A]/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-[2.5rem] p-3 flex gap-3 overflow-hidden relative z-10 w-full items-center active:bg-[#FDF8F4] transition-colors"
           >
            <div className="relative flex-shrink-0 w-[90px] h-[90px] rounded-[1.8rem] overflow-hidden bg-[#F5E6DA]/50 border border-[#4A403A]/5">
@@ -147,7 +124,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
              </div>
             </div>
            </div>
-         </motion.div>
+          </div>
         </motion.div>
        ))}
       </AnimatePresence>

@@ -27,9 +27,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ onAdd, index = 0, ...product 
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.5, delay: Math.min(index, 7) * 0.04, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => setSelectedProduct(product)}
-      className="relative flex flex-col bg-white border border-[#4A423D]/5 rounded-[2.5rem] p-3 sm:p-4 h-full cursor-pointer group font-manrope shadow-premium"
+      className="relative flex flex-col bg-white border border-[#4A423D]/5 rounded-[2.5rem] p-3 sm:p-4 h-full cursor-pointer group font-manrope shadow-premium transform-gpu"
     >
       <div className="absolute inset-0 rounded-[2.5rem] border border-white/40 pointer-events-none z-10" />
 

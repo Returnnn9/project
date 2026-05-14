@@ -13,9 +13,9 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://mapgl.2gis.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://mapgl.2gis.com",
       "font-src 'self' https://fonts.gstatic.com https://mapgl.2gis.com",
-      "img-src 'self' data: blob: https://images.unsplash.com https://img.freepik.com https://*.tile.openstreetmap.org https://*.2gis.com",
-      "connect-src 'self' https://nominatim.openstreetmap.org https://restcountries.eu https://*.2gis.com wss://*.2gis.com",
-      "frame-src 'none'",
+      "img-src 'self' data: blob: https://images.unsplash.com https://img.freepik.com https://*.tile.openstreetmap.org https://*.2gis.com https://*.smislest.ru https://smislest.ru",
+      "connect-src 'self' https://nominatim.openstreetmap.org https://restcountries.eu https://*.2gis.com wss://*.2gis.com https://admin.smislest.ru https://smislest.ru",
+      "frame-src 'none' https://yandex.ru",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -35,6 +35,18 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "img.freepik.com",
+      },
+      {
+        protocol: "https",
+        hostname: "smislest.ru",
+      },
+      {
+        protocol: "https",
+        hostname: "admin.smislest.ru",
+      },
+      {
+        protocol: "https",
+        hostname: "*.smislest.ru",
       },
     ],
   },

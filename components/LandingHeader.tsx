@@ -45,8 +45,22 @@ const LandingHeader: React.FC = () => {
  })
 
  useEffect(() => {
-  document.body.style.overflow = isMobileMenuOpen ? "hidden" : ""
-  return () => { document.body.style.overflow = "" }
+  if (isMobileMenuOpen) {
+   const scrollY = window.scrollY
+   document.body.style.position = "fixed"
+   document.body.style.top = `-${scrollY}px`
+   document.body.style.width = "100%"
+   document.body.style.overflow = "hidden"
+   document.body.dataset.menuScrollY = String(scrollY)
+  } else {
+   const savedY = parseInt(document.body.dataset.menuScrollY || "0", 10)
+   document.body.style.position = ""
+   document.body.style.top = ""
+   document.body.style.width = ""
+   document.body.style.overflow = ""
+   delete document.body.dataset.menuScrollY
+   window.scrollTo(0, savedY)
+  }
  }, [isMobileMenuOpen])
 
  const openMenu = () => setIsMobileMenuOpen(true)

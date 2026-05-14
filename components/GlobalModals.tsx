@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useUIStore } from "@/store/hooks";
 
@@ -14,30 +14,38 @@ export default function GlobalModals() {
   const isAddressOpen = useUIStore((s) => s.isAddressModalOpen);
   const isCheckoutOpen = useUIStore((s) => s.isCheckoutOpen);
   const isProductOpen = useUIStore((s) => s.selectedProduct !== null);
+  const isCartOpen = useUIStore((s) => s.isCartOpen);
+  const scrollYRef = useRef(0);
 
   useEffect(() => {
-    const isAnyModalOpen = isAuthOpen || isAddressOpen || isCheckoutOpen || isProductOpen;
-    
+    const isAnyModalOpen = isAuthOpen || isAddressOpen || isCheckoutOpen || isProductOpen || isCartOpen;
+
     if (isAnyModalOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.paddingRight = "var(--removed-body-scroll-bar-size, 0px)";
+      // Only lock if not already locked — avoids clobbering saved scroll position
+      if (document.body.style.position !== "fixed") {
+        scrollYRef.current = window.scrollY;
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${scrollYRef.current}px`;
+        document.body.style.width = "100%";
+        document.body.style.overflow = "hidden";
+      }
     } else {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
+      if (document.body.style.position === "fixed") {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollYRef.current);
+      }
     }
-    
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
-    };
-  }, [isAuthOpen, isAddressOpen, isCheckoutOpen, isProductOpen]);
+  }, [isAuthOpen, isAddressOpen, isCheckoutOpen, isProductOpen, isCartOpen]);
 
   return (
     <>
-      {isAuthOpen && <LoginModal />}
-      {isAddressOpen && <AddressModal />}
-      {isCheckoutOpen && <CheckoutModal />}
-      {isProductOpen && <ProductDetailsModal />}
+      <LoginModal />
+      <AddressModal />
+      <CheckoutModal />
+      <ProductDetailsModal />
     </>
   );
 }

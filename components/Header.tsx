@@ -27,7 +27,8 @@ const Header: React.FC<HeaderProps> = ({ showCategories = true }) => {
  const isAddressOpen = useUIStore(s => s.isAddressModalOpen)
  const isCheckoutOpen = useUIStore(s => s.isCheckoutOpen)
  const isProductOpen = useUIStore(s => s.selectedProduct !== null)
- const isAnyModalOpen = isAuthOpen || isAddressOpen || isCheckoutOpen || isProductOpen
+ const isCartOpen = useUIStore(s => s.isCartOpen)
+ const isAnyModalOpen = isAuthOpen || isAddressOpen || isCheckoutOpen || isProductOpen || isCartOpen
 
  const { status } = useSession()
  const [mounted, setMounted] = React.useState(false)
