@@ -48,10 +48,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ onAdd, index = 0, ...product 
           whileTap={{ scale: 0.9 }}
           onClick={(e) => { e.stopPropagation(); toggleFavorite(id) }}
           className={cn(
-            "absolute top-3 right-3 h-10 w-10 sm:h-12 sm:w-12 rounded-full hidden sm:flex items-center justify-center transition-all duration-500 backdrop-blur-xl border z-20",
+            "absolute top-3 right-3 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center transition-all duration-500 backdrop-blur-xl border z-20",
             isFavorite
               ? "bg-smusl-terracotta text-white border-smusl-terracotta/20 shadow-lg shadow-smusl-terracotta/30"
-              : "bg-white/40 text-smusl-brown/30 border-white/40 hover:bg-white/80 hover:text-smusl-terracotta translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
+              : "bg-white/60 text-smusl-brown/40 border-white/40 sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:hover:bg-white/80 sm:hover:text-smusl-terracotta"
           )}
         >
           <Heart className={cn("w-5 h-5 sm:w-6 sm:h-6", isFavorite && "fill-current")} />

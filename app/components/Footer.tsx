@@ -19,9 +19,9 @@ export default function Footer({ showMapOnMobile = false, seoData }: FooterProps
     social_instagram: 'https://instagram.com/smyslest',
     social_telegram: 'https://t.me/smyslest',
     social_vk: 'https://vk.com/smislest',
-    business_phone: '+7-999-123-45-67',
-    business_email: 'info@smysl-est.ru',
-    business_address: '111675, Россия, г. Москва, ул. Святоозерская, дом 8',
+    business_phone: '+7 926 210 45-65',
+    business_email: 'info@smislest.ru',
+    business_address: 'Россия, г. Москва, ул. Ижорская 3',
   } as SiteSettings;
   return (
     <footer id="contacts" className="w-full py-16" style={{ backgroundColor: "var(--smusl-espresso)" }}>

@@ -59,10 +59,9 @@
 }
 
 .menuIconBox {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(245, 233, 211, 0.18);
+  width: auto;
+  height: auto;
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,10 +69,18 @@
 }
 
 .menuGlyphImg {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   filter: brightness(0) invert(1);
+  transition: transform 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .menuGlyphImg {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .menuCloseGlyph {
@@ -83,7 +90,7 @@
 }
 
 .mobileMenuLabel {
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   font-family: var(--font-montserrat, "Montserrat", system-ui, sans-serif);
@@ -106,30 +113,36 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 1.05;
+  line-height: 0.85;
 }
 
 .textBrandCompact .textBrandMain {
-  font-size: clamp(1.15rem, 4vw, 1.45rem);
+  font-size: clamp(1.2rem, 4.5vw, 1.5rem);
+  letter-spacing: 0.2em;
+  margin-right: -0.2em;
 }
 
 .textBrandCompact .textBrandScript {
-  font-size: clamp(0.95rem, 3.5vw, 1.2rem);
+  font-size: clamp(1.5rem, 5vw, 1.9rem);
+  margin-top: -0.2rem;
 }
 
 .textBrandMain {
   font-family: var(--font-montserrat, "Montserrat", system-ui, sans-serif);
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.25em;
   color: #f5e0b5;
-  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  margin-right: -0.25em; /* Компенсация letter-spacing для точного центрирования */
 }
 
 .textBrandScript {
   font-family: var(--font-great-vibes, "Great Vibes", cursive);
   color: #f5e0b5;
-  font-size: clamp(1.1rem, 2vw, 1.45rem);
-  margin-top: 0.1rem;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  margin-top: -0.35rem;
+  font-weight: normal;
+  letter-spacing: 0.05em;
 }
 
 .desktopLogoLink {
@@ -143,27 +156,31 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   width: 100%;
-  max-width: min(1400px, 100%);
+  max-width: 100%; /* Разрешаем полную ширину, чтобы меню сместилось в край */
   margin: 0 auto;
-  min-height: clamp(110px, 10vw, 150px);
-  padding: 0.35rem clamp(1rem, 3vw, 2.5rem);
+  min-height: clamp(90px, 8vw, 120px);
+  padding: 0.25rem clamp(1rem, 2.5vw, 2rem); /* Уменьшенный боковой отступ для самого угла */
 }
 
-.desktopRibbonSlot {
-  justify-self: end;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding-top: 0.15rem;
+.desktopBarSpacer {
+  width: 1px;
+  height: 1px;
 }
 
-.open2026Ribbon {
-  width: min(200px, 22vw);
+.desktopRibbonFloating {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 110;
+  pointer-events: none;
+}
+
+.open2026RibbonFloatingImg {
+  width: min(190px, 22vw);
   height: auto;
-  max-height: 100px;
+  max-height: 220px;
   object-fit: contain;
   display: block;
-  pointer-events: none;
 }
 
 /* ДЕСКТОПНАЯ ВЕРСИЯ */
@@ -184,9 +201,9 @@
   justify-content: center;
   position: relative;
   width: 100%;
-  min-height: clamp(110px, 10vw, 150px);
-  height: clamp(120px, 12vw, 150px);
-  clip-path: ellipse(85% 100% at 50% 0%);
+  min-height: clamp(90px, 8vw, 120px);
+  height: clamp(90px, 8vw, 120px);
+  clip-path: ellipse(100% 100% at 50% 0%);
 }
 
 .desktopMenuButton {
@@ -194,23 +211,23 @@
   transform: none;
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   color: #f5e0b5;
   justify-self: start;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   border: none;
   background: none;
   padding: 0;
 }
 
 .desktopMenuButton:hover {
-  color: #9BC381;
-  opacity: 1;
+  opacity: 0.85;
+  transform: scale(1.02);
 }
 
 .desktopMenuText {
-  font-size: clamp(1.1rem, 1.2vw + 0.65rem, 1.55rem);
+  font-size: clamp(1.35rem, 1.5vw + 0.8rem, 1.9rem);
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1;
@@ -237,9 +254,9 @@
   position: fixed;
   inset: 0;
   top: 0;
-  z-index: 60;
+  z-index: 200; /* Перекрывает весь хедер и ленту абсолютно надежно */
   background-color: transparent;
-  width: 100vw;
+  width: 100%; /* Заменяем 100vw на 100% во избежание горизонтального переполнения */
   transition: opacity 0.5s ease-in-out;
   pointer-events: none;
   opacity: 0;
@@ -512,10 +529,11 @@
 /* ФИКСЫ ТОЛЬКО ДЛЯ ЭТОГО КОМПОНЕНТА */
 @media (max-width: 767px) {
   .mobileEllipse {
-    width: 100vw;
-    max-width: 100vw;
+    width: 100%;
+    max-width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
+    box-sizing: border-box;
   }
 
   .menuFooter {

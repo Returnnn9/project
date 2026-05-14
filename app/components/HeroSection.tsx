@@ -11,26 +11,11 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ initialData = null }: HeroSectionProps) {
- const [waveScrolled, setWaveScrolled] = useState(false);
- const [hero, setHero] = useState<HeroData | null>(initialData);
+  const [hero, setHero] = useState<HeroData | null>(initialData);
 
- useEffect(() => {
-  setHero(initialData);
- }, [initialData]);
-
- useEffect(() => {
-  let ticking = false;
-  const onScroll = () => {
-   if (ticking) return;
-   ticking = true;
-   requestAnimationFrame(() => {
-    setWaveScrolled(window.scrollY > 60);
-    ticking = false;
-   });
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  return () => window.removeEventListener("scroll", onScroll);
- }, []);
+  useEffect(() => {
+   setHero(initialData);
+  }, [initialData]);
 
  // Если данные не загрузились, рендерим пустую секцию
  const data = hero;
@@ -50,52 +35,8 @@ export default function HeroSection({ initialData = null }: HeroSectionProps) {
      : {}),
    }}
   >
-   {/* Фоновая волна - десктоп */}
-   <div className={styles.waveBg} aria-hidden="true">
-    <img
-     src="/svg/muka_wave.svg"
-     alt=""
-     className={`${styles.waveSvg} ${waveScrolled ? styles.waveScrolled : ''}`}
-    />
-   </div>
 
-   {/* Фоновая волна - мобильная */}
-   <div className={styles.waveBgMobile} aria-hidden="true">
-    <img
-     src="/svg/muka_mob.svg"
-     alt=""
-     className={styles.waveSvgMobile}
-     loading="lazy"
-    />
-   </div>
 
-   {/* Декоративные хлеба */}
-   <div className={styles.breadsBg} aria-hidden="true">
-    <picture>
-     <source srcSet="/lending/bread_.avif" type="image/avif" />
-     <img src="/lending/bread_.png" alt="" className={`${styles.bread} ${styles.breadMain}`} loading="lazy" width={520} height={480} />
-    </picture>
-    <picture>
-     <source srcSet="/lending/bread_1.avif" type="image/avif" />
-     <img src="/lending/bread_1.png" alt="" className={`${styles.bread} ${styles.bread1}`} loading="lazy" width={260} height={240} />
-    </picture>
-    <picture>
-     <source srcSet="/lending/bread_min.avif" type="image/avif" />
-     <img src="/lending/bread_min.png" alt="" className={`${styles.bread} ${styles.breadMin}`} loading="lazy" width={180} height={165} />
-    </picture>
-    <picture>
-     <source srcSet="/lending/bread_micro.avif" type="image/avif" />
-     <img src="/lending/bread_micro.png" alt="" className={`${styles.bread} ${styles.breadMicro}`} loading="lazy" width={120} height={110} />
-    </picture>
-   </div>
-
-   {/* Декоративные колосья */}
-   <div className={`${styles.wheatDecor} ${styles.wheatLeft}`}>
-
-   </div>
-   <div className={`${styles.wheatDecor} ${styles.wheatRight}`}>
-
-   </div>
 
    {/* Основной контент */}
    <div className={styles.content}>

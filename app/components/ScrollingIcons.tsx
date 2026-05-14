@@ -1,104 +1,104 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import styles from "./ScrollingIcons.module.css";
 
 export default function ScrollingIcons() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const row1Ref = useRef<HTMLDivElement>(null);
-  const row2Ref = useRef<HTMLDivElement>(null);
-  const row3Ref = useRef<HTMLDivElement>(null);
-  const [isActive, setIsActive] = useState(true);
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const pos1 = useRef(0);
-  const pos2 = useRef(0);
-  const pos3 = useRef(0);
-  const target1 = useRef(0);
-  const target2 = useRef(0);
-  const target3 = useRef(0);
-  const offset1 = useRef(0);
-  const offset2 = useRef(0);
-  const offset3 = useRef(0);
-  const rafId = useRef<number | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
+    setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        setIsActive(entry.isIntersecting);
-      },
-      { root: null, threshold: 0.05 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  const { scrollY } = useScroll();
 
-  useEffect(() => {
-    if (!isActive) return;
+  // Config for buttery smooth inertia physics
+  const springConfig = { damping: 50, stiffness: 180, mass: 0.5 };
+  const smoothScrollY = useSpring(scrollY, springConfig);
 
-    const updateTargets = () => {
-      const y = window.scrollY;
-      const isMobile = window.innerWidth < 768;
-      const base = reduceMotion ? 0.1 : 1;
-      const boost = 1.2;
-      const s1 = (isMobile ? 0.35 : 0.55) * base * boost;
-      const s2 = (isMobile ? 0.3 : 0.5) * base * boost;
-      const s3 = (isMobile ? 0.4 : 0.6) * base * boost;
-      target1.current = y * s1;
-      target2.current = y * s2;
-      target3.current = y * s3;
+  // Transform absolute scroll position to horizontal offset transforms for parallax response
+  // Row 1 and 3 speed up leftward as you scroll, Row 2 accelerates rightward
+  const transformX1 = useTransform(smoothScrollY, [0, 3000], [0, -400]);
+  const transformX2 = useTransform(smoothScrollY, [0, 3000], [0, 400]);
+  const transformX3 = useTransform(smoothScrollY, [0, 3000], [0, -320]);
 
-      const w1 = row1Ref.current?.offsetWidth || 0;
-      const w2 = row2Ref.current?.offsetWidth || 0;
-      const w3 = row3Ref.current?.offsetWidth || 0;
-      offset1.current = isMobile ? w1 * 0.1 : w1 * 0.2;
-      offset2.current = isMobile ? 0 : w2 * 0.1;
-      offset3.current = w3 * 0.1;
-    };
+  if (!isMounted) {
+    return <div className="h-64 bg-[#93a88f] pointer-events-none" />;
+  }
 
-    const smooth = () => {
-      const k = 0.12;
-      pos1.current += (target1.current - pos1.current) * k;
-      pos2.current += (target2.current - pos2.current) * k;
-      pos3.current += (target3.current - pos3.current) * k;
-      if (row1Ref.current) row1Ref.current.style.backgroundPosition = `${offset1.current - pos1.current}px 50%`;
-      if (row2Ref.current) row2Ref.current.style.backgroundPosition = `${offset2.current + pos2.current}px 50%`;
-      if (row3Ref.current) row3Ref.current.style.backgroundPosition = `${offset3.current - pos3.current}px 50%`;
-      rafId.current = requestAnimationFrame(smooth);
-    };
-
-    updateTargets();
-    smooth();
-    window.addEventListener("scroll", updateTargets, { passive: true });
-    window.addEventListener("resize", updateTargets, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", updateTargets);
-      window.removeEventListener("resize", updateTargets);
-      if (rafId.current) cancelAnimationFrame(rafId.current);
-      rafId.current = null;
-    };
-  }, [reduceMotion, isActive]);
-
-  const paused = !isActive;
+  const row1Content = Array(6).fill(null);
+  const row2Content = Array(6).fill(null);
+  const row3Content = Array(6).fill(null);
 
   return (
-    <section ref={sectionRef} className={styles.section} aria-hidden="true">
+    <section className={styles.section} aria-label="Декоративная бегущая строка">
       <div className={styles.rows}>
-        <div ref={row1Ref} className={`${styles.row} ${styles.row1} ${paused ? styles.paused : ""}`} />
-        <div ref={row2Ref} className={`${styles.row} ${styles.row2} ${paused ? styles.paused : ""}`} />
-        <div ref={row3Ref} className={`${styles.row} ${styles.row3} ${paused ? styles.paused : ""}`} />
+        {/* РЯД 1: СОЗДАЁМ счастливый и добрый МИР */}
+        <div className={styles.row}>
+          <motion.div style={{ x: transformX1 }} className={styles.parallaxWrapper}>
+            <div className={`${styles.track} ${styles.animateLeft}`}>
+              {row1Content.map((_, idx) => (
+                <div key={`row1-${idx}`} className={styles.item}>
+                  <span className={styles.sansWord}>СОЗДАЁМ</span>
+                  <span className={styles.scriptWord}>счастливый и добрый</span>
+                  <span className={styles.sansWord}>МИР</span>
+                </div>
+              ))}
+              {row1Content.map((_, idx) => (
+                <div key={`row1-dup-${idx}`} className={styles.item}>
+                  <span className={styles.sansWord}>СОЗДАЁМ</span>
+                  <span className={styles.scriptWord}>счастливый и добрый</span>
+                  <span className={styles.sansWord}>МИР</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* РЯД 2: НАПОЛНЕННЫЙ тёплыми МОМЕНТАМИ */}
+        <div className={styles.row}>
+          <motion.div style={{ x: transformX2 }} className={styles.parallaxWrapper}>
+            <div className={`${styles.track} ${styles.animateRight}`}>
+              {row2Content.map((_, idx) => (
+                <div key={`row2-${idx}`} className={styles.item}>
+                  <span className={styles.sansWord}>НАПОЛНЕННЫЙ</span>
+                  <span className={styles.scriptWord}>тёплыми</span>
+                  <span className={styles.sansWord}>МОМЕНТАМИ</span>
+                </div>
+              ))}
+              {row2Content.map((_, idx) => (
+                <div key={`row2-dup-${idx}`} className={styles.item}>
+                  <span className={styles.sansWord}>НАПОЛНЕННЫЙ</span>
+                  <span className={styles.scriptWord}>тёплыми</span>
+                  <span className={styles.sansWord}>МОМЕНТАМИ</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* РЯД 3: любимыми ВКУСАМИ И */}
+        <div className={styles.row}>
+          <motion.div style={{ x: transformX3 }} className={styles.parallaxWrapper}>
+            <div className={`${styles.track} ${styles.animateLeft}`}>
+              {row3Content.map((_, idx) => (
+                <div key={`row3-${idx}`} className={styles.item}>
+                  <span className={styles.scriptWord}>любимыми</span>
+                  <span className={styles.sansWord}>ВКУСАМИ</span>
+                  <span className={styles.sansWord}>И</span>
+                </div>
+              ))}
+              {row3Content.map((_, idx) => (
+                <div key={`row3-dup-${idx}`} className={styles.item}>
+                  <span className={styles.scriptWord}>любимыми</span>
+                  <span className={styles.sansWord}>ВКУСАМИ</span>
+                  <span className={styles.sansWord}>И</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );

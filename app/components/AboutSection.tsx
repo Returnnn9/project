@@ -48,7 +48,6 @@ export default function AboutSection() {
    });
  }, []);
 
- const svgTitle = "/svg/logo_white.svg";
  const fallbackImages = {
   main: '/lending/staf1.png',
   topRight: '/lending/staf2.png',
@@ -72,35 +71,13 @@ export default function AboutSection() {
  };
 
  return (
-  <section id="about" className="w-full relative" style={{ paddingBottom: '100px', zIndex: 10 }}>
-   {/* Фоновый узор с градиентом прозрачности (сверху 30%, к низу 90%) */}
-   <div
-    className="absolute left-0 w-full pointer-events-none"
-    style={{
-     top: '-400px',
-     bottom: 0,
-     maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9))',
-     WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9))',
-     zIndex: 5,
-    }}
-   >
-    <Image
-     src="/svg/uzr_bg.svg"
-     alt=""
-     width={1920}
-     height={1080}
-     className="w-full h-full"
-     style={{ objectFit: 'fill' }}
-     draggable={false}
-    />
-   </div>
-
+  <section id="about" className="w-full relative" style={{ paddingBottom: '100px', zIndex: 10, overflow: 'hidden' }}>
    {/* Заголовок на зелёном фоне */}
    <div className="container mx-auto px-4 py-12 relative z-10">
     <div className="flex items-center justify-center gap-4 mb-8">
      <div className="flex-1 h-[2px]" style={{ backgroundColor: 'rgba(255,255,255,0.3)' }} />
-     <div className="flex-shrink-0">
-      <Image src={svgTitle} alt="Смысл есть" width={260} height={65} className="object-contain" />
+     <div className="flex-shrink-0" style={{ fontFamily: 'var(--font-great-vibes)', fontSize: '2.8rem', color: '#fff', letterSpacing: '0.05em', lineHeight: 1 }}>
+      Смысл есть
      </div>
      <div className="flex-1 h-[2px]" style={{ backgroundColor: 'rgba(255,255,255,0.3)' }} />
     </div>
@@ -240,8 +217,8 @@ export default function AboutSection() {
     <div className="lg:hidden flex flex-col gap-8 max-w-xl mx-auto">
      {/* we_are.svg над главным фото */}
      <div className="relative">
-      <div className="mb-4">
-       <img src="/svg/we_are.svg" alt="Мы" style={{ width: '200px', height: 'auto' }} className="mx-auto" />
+      <div className="mb-4" style={{ fontFamily: 'var(--font-great-vibes)', fontSize: '5rem', color: '#fff', textAlign: 'center', lineHeight: 1 }}>
+       Мы...
       </div>
       <div className="rounded-3xl overflow-hidden">
        <Image src={images.main} alt="Главное фото" width={600} height={600} className="w-full object-cover" />

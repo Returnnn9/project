@@ -130,25 +130,7 @@ export default function NewsSection({ initialNews = [] }: NewsSectionProps) {
   }, []);
 
   return (
-    <section id="news" className="w-full py-16 md:py-20 relative overflow-hidden" style={{ backgroundColor: '#675b53' }}>
-      {/* Фоновый узор */}
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0))',
-          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0))',
-        }}
-      >
-        <Image
-          src="/svg/uzr_bg.svg"
-          alt=""
-          width={1920}
-          height={1080}
-          className="w-full h-full"
-          style={{ objectFit: 'fill' }}
-          draggable={false}
-        />
-      </div>
+    <section id="news" className="w-full py-16 md:py-20 relative overflow-hidden" style={{ backgroundColor: '#716356' }}>
 
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         {/* Стрелки управления */}
@@ -160,7 +142,7 @@ export default function NewsSection({ initialNews = [] }: NewsSectionProps) {
             backgroundColor: '#fdebc1',
             zIndex: 10,
           }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#675b53'}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#716356'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fdebc1'}
           aria-label="Предыдущая новость"
         >
@@ -177,7 +159,7 @@ export default function NewsSection({ initialNews = [] }: NewsSectionProps) {
             backgroundColor: '#fdebc1',
             zIndex: 10,
           }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#675b53'}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#716356'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fdebc1'}
           aria-label="Следующая новость"
         >
@@ -188,7 +170,6 @@ export default function NewsSection({ initialNews = [] }: NewsSectionProps) {
 
         {/* Заголовок */}
         <div className="mb-8 md:mb-12 flex flex-col items-center justify-center">
-          <Image src="/svg/symbol.svg" alt="" width={80} height={80} className="w-15 h-15 md:w-20 md:h-20 mb-2" loading="lazy" />
           <h2 className="text-3xl md:text-5xl font-normal text-white uppercase text-center">
             НАШИ НОВОСТИ
           </h2>
@@ -216,7 +197,7 @@ export default function NewsSection({ initialNews = [] }: NewsSectionProps) {
                   </div>
                   <div className="flex-1 p-5 flex flex-col">
                     <div className="flex-1 space-y-3">
-                      <h3 className="text-lg font-bold leading-tight line-clamp-2" style={{ color: '#675b53' }}>
+                      <h3 className="text-lg font-bold leading-tight line-clamp-2" style={{ color: '#716356' }}>
                         {item.title}
                       </h3>
                       <p className="text-base leading-relaxed line-clamp-4" style={{ color: '#8b7f77' }}>
@@ -224,7 +205,7 @@ export default function NewsSection({ initialNews = [] }: NewsSectionProps) {
                       </p>
                     </div>
                     <div className="pt-6 mt-auto">
-                      <span className="font-medium hover:opacity-70 transition-opacity inline-flex items-center gap-1 text-base" style={{ color: '#675b53' }}>
+                      <span className="font-medium hover:opacity-70 transition-opacity inline-flex items-center gap-1 text-base" style={{ color: '#716356' }}>
                         Читать далее →
                       </span>
                     </div>
@@ -268,13 +249,13 @@ export default function NewsSection({ initialNews = [] }: NewsSectionProps) {
                     </div>
                   </div>
                   <div className="p-5 md:p-6 space-y-3">
-                    <h3 className="text-base md:text-lg font-bold leading-tight line-clamp-2" style={{ color: '#675b53' }}>
+                    <h3 className="text-base md:text-lg font-bold leading-tight line-clamp-2" style={{ color: '#716356' }}>
                       {item.title}
                     </h3>
                     <p className="text-sm md:text-base leading-relaxed line-clamp-3" style={{ color: '#8b7f77' }}>
                       {item.excerpt}
                     </p>
-                    <div className="font-medium hover:opacity-70 transition-opacity inline-flex items-center gap-1" style={{ color: '#675b53' }}>
+                    <div className="font-medium hover:opacity-70 transition-opacity inline-flex items-center gap-1" style={{ color: '#716356' }}>
                       Читать далее →
                     </div>
                   </div>

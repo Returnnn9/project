@@ -78,7 +78,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isMobile = false, onClose }) 
           <div
            className="bg-[#FCF5EF] border border-[#4A403A]/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-[2.5rem] p-3 flex gap-3 overflow-hidden relative z-10 w-full items-center active:bg-[#FDF8F4] transition-colors"
           >
-           <div className="relative flex-shrink-0 w-[90px] h-[90px] rounded-[1.8rem] overflow-hidden bg-[#F5E6DA]/50 border border-[#4A403A]/5">
+           <div className="relative flex-shrink-0 w-[76px] h-[76px] sm:w-[90px] sm:h-[90px] rounded-[1.8rem] overflow-hidden bg-[#F5E6DA]/50 border border-[#4A403A]/5">
            {item.image && (
             <Image
              src={item.image}

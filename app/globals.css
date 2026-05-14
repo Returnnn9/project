@@ -78,6 +78,7 @@
 
  html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
   @apply font-manrope;
  }
 
@@ -86,14 +87,17 @@
   letter-spacing: -0.01em;
   line-height: 1.5;
   position: relative;
-  /* Prevent iOS horizontal overscroll */
   overflow-x: hidden;
-  /* iOS momentum scrolling */
   -webkit-overflow-scrolling: touch;
  }
 
- /* Remove tap highlight on all interactive elements in iOS Safari */
- a, button, [role="button"], input, select, textarea, label {
+ a,
+ button,
+ [role="button"],
+ input,
+ select,
+ textarea,
+ label {
   -webkit-tap-highlight-color: transparent;
   /* Prevent double-tap zoom on buttons/links */
   touch-action: manipulation;
@@ -143,14 +147,12 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(
-   to bottom right,
-   rgba(255, 255, 255, 0) 0%,
-   rgba(255, 255, 255, 0) 40%,
-   rgba(255, 255, 255, 0.4) 50%,
-   rgba(255, 255, 255, 0) 60%,
-   rgba(255, 255, 255, 0) 100%
-  );
+  background: linear-gradient(to bottom right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0) 100%);
   transform: rotate(45deg);
   animation: shimmer 3s infinite;
  }
@@ -169,8 +171,15 @@
  }
 
  /* dvh fallback for older Safari (pre-15.4) */
- .min-h-dvh { min-height: 100vh; min-height: 100dvh; }
- .h-dvh { height: 100vh; height: 100dvh; }
+ .min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+ }
+
+ .h-dvh {
+  height: 100vh;
+  height: 100dvh;
+ }
 
  .anim-soft-enter {
   animation: softEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -178,8 +187,13 @@
 }
 
 @keyframes shimmer {
- 0% { transform: translate(-100%, -100%) rotate(45deg); }
- 100% { transform: translate(100%, 100%) rotate(45deg); }
+ 0% {
+  transform: translate(-100%, -100%) rotate(45deg);
+ }
+
+ 100% {
+  transform: translate(100%, 100%) rotate(45deg);
+ }
 }
 
 @keyframes softEnter {
@@ -187,6 +201,7 @@
   opacity: 0;
   transform: translateY(15px);
  }
+
  to {
   opacity: 1;
   transform: translateY(0);
@@ -194,23 +209,55 @@
 }
 
 @keyframes pulseSlow {
- 0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.15; }
- 50% { transform: scale(1.1) translate(20px, -10px); opacity: 0.25; }
+
+ 0%,
+ 100% {
+  transform: scale(1) translate(0, 0);
+  opacity: 0.15;
+ }
+
+ 50% {
+  transform: scale(1.1) translate(20px, -10px);
+  opacity: 0.25;
+ }
 }
 
 @keyframes pulseSlower {
- 0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.1; }
- 50% { transform: scale(1.15) translate(-30px, 20px); opacity: 0.2; }
+
+ 0%,
+ 100% {
+  transform: scale(1) translate(0, 0);
+  opacity: 0.1;
+ }
+
+ 50% {
+  transform: scale(1.15) translate(-30px, 20px);
+  opacity: 0.2;
+ }
 }
 
 @keyframes floatScript {
- 0%, 100% { transform: translateY(16px) rotate(-1deg); }
- 50% { transform: translateY(0px) rotate(1deg); }
+
+ 0%,
+ 100% {
+  transform: translateY(16px) rotate(-1deg);
+ }
+
+ 50% {
+  transform: translateY(0px) rotate(1deg);
+ }
 }
 
 @keyframes floatScriptDelayed {
- 0%, 100% { transform: translateY(20px) scale(1); }
- 50% { transform: translateY(0px) scale(1.05); }
+
+ 0%,
+ 100% {
+  transform: translateY(20px) scale(1);
+ }
+
+ 50% {
+  transform: translateY(0px) scale(1.05);
+ }
 }
 
 .animate-pulse-slow {
@@ -241,16 +288,44 @@
 
 /* Cross-browser Prefix Fixes for Safari/Legacy Webkit support */
 /* NOTE: Do NOT use a [class*="backdrop-blur"] override — it breaks Tailwind's own values */
-.backdrop-blur-sm  { -webkit-backdrop-filter: blur(4px);  backdrop-filter: blur(4px); }
-.backdrop-blur    { -webkit-backdrop-filter: blur(8px);  backdrop-filter: blur(8px); }
-.backdrop-blur-md  { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
-.backdrop-blur-lg  { -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
-.backdrop-blur-xl  { -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
-.backdrop-blur-2xl { -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); }
-.backdrop-blur-3xl { -webkit-backdrop-filter: blur(64px); backdrop-filter: blur(64px); }
+.backdrop-blur-sm {
+ -webkit-backdrop-filter: blur(4px);
+ backdrop-filter: blur(4px);
+}
+
+.backdrop-blur {
+ -webkit-backdrop-filter: blur(8px);
+ backdrop-filter: blur(8px);
+}
+
+.backdrop-blur-md {
+ -webkit-backdrop-filter: blur(12px);
+ backdrop-filter: blur(12px);
+}
+
+.backdrop-blur-lg {
+ -webkit-backdrop-filter: blur(16px);
+ backdrop-filter: blur(16px);
+}
+
+.backdrop-blur-xl {
+ -webkit-backdrop-filter: blur(24px);
+ backdrop-filter: blur(24px);
+}
+
+.backdrop-blur-2xl {
+ -webkit-backdrop-filter: blur(40px);
+ backdrop-filter: blur(40px);
+}
+
+.backdrop-blur-3xl {
+ -webkit-backdrop-filter: blur(64px);
+ backdrop-filter: blur(64px);
+}
 
 /* Utility Class Fallbacks */
-.glass-card, .glass-panel {
+.glass-card,
+.glass-panel {
  -webkit-backdrop-filter: blur(24px);
  backdrop-filter: blur(24px);
 }

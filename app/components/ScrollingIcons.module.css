@@ -1,62 +1,116 @@
 .section {
-  --row-height-mobile: 32px;
-  --row-height-desktop: 100px;
   width: 100%;
-  padding: 0;
-  background: transparent;
+  max-width: 100%;
+  padding: 2.5rem 0;
+  background: transparent; /* Parent <main> supplies green #93a88f */
   overflow: hidden;
-  line-height: 0;
+  position: relative;
+  user-select: none;
 }
 
 .rows {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  line-height: 0;
-}
-
-.row {
+  gap: 0.75rem;
   width: 100%;
-  height: var(--row-height-mobile);
-  background-repeat: repeat-x;
-  background-position: 0 50%;
-  background-size: auto 100%;
-  will-change: background-position;
-}
-
-.row1 {
-  background-image: url('/svg/t1.svg');
-}
-
-.row2 {
-  background-image: url('/svg/t2.svg');
-  background-size: auto 48%;
-}
-
-.row3 {
-  background-image: url('/svg/t3.svg');
-}
-
-.paused {
-  background-position: 0 50% !important;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
-  .section {
-    padding: 2rem 0;
+  .rows {
+    gap: 1.25rem;
   }
-  .row {
-    height: var(--row-height-desktop);
-    transform: scale(1);
-    transform-origin: center;
+}
+
+.row {
+  display: block; /* Block ensures overflow: hidden works 100% correctly to clip wide tracks */
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  min-width: 100%;
+}
+
+/* Keyframe for left-to-right scrolling loop (translate to 0) */
+@keyframes marqueeLeft {
+  0% {
+    transform: translate3d(0, 0, 0);
   }
-  .row1 {
-    animation-duration: 0s;
+  100% {
+    transform: translate3d(-50%, 0, 0);
   }
-  .row2 {
-    animation-duration: 0s;
+}
+
+/* Keyframe for right-to-left scrolling loop (translate to -50%) */
+@keyframes marqueeRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
   }
-  .row3 {
-    animation-duration: 0s;
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animateLeft {
+  display: flex;
+  animation: marqueeLeft 45s linear infinite;
+  will-change: transform;
+}
+
+.animateRight {
+  display: flex;
+  animation: marqueeRight 45s linear infinite;
+  will-change: transform;
+}
+
+/* Slightly varying speeds to create natural organic visual rhythm */
+.row:nth-child(1) .animateLeft {
+  animation-duration: 35s;
+}
+
+.row:nth-child(2) .animateRight {
+  animation-duration: 42s;
+}
+
+.row:nth-child(3) .animateLeft {
+  animation-duration: 38s;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  font-size: clamp(1.8rem, 3.5vw, 4rem);
+  line-height: 1;
+  padding-right: 3rem; /* Gap between repeated segments */
+}
+
+.sansWord {
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin: 0 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.scriptWord {
+  font-family: var(--font-great-vibes), 'Great Vibes', cursive;
+  font-weight: 400;
+  color: #f5e9d3; /* Beautiful cream beige var(--smusl-cream) */
+  margin: 0 0.5rem;
+  font-size: clamp(2.2rem, 4.5vw, 5.2rem);
+  transform: translateY(0.05em);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animateLeft,
+  .animateRight {
+    animation-play-state: paused !important;
   }
 }

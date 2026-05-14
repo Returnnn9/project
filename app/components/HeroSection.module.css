@@ -32,9 +32,9 @@
     min-height: calc(100vh - var(--header-height-mobile));
   }
 
-  /* Поднимаем мобильный блок ближе к шапке — корректируй процент при необходимости */
+  /* Небольшой отступ сверху для мобильного контента */
   .mobileLayout {
-    transform: translateY(-12%);
+    padding-top: 1rem;
   }
 }
 
@@ -103,139 +103,6 @@
   transform: translateY(-10px);
 }
 
-/* Декоративные хлебы */
-.breadsBg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 2;
-  overflow: hidden;
-}
-
-@media (max-width: 767px) {
-  .breadsBg {
-    overflow: hidden;
-  }
-}
-
-.bread {
-  position: absolute;
-  opacity: 0;
-  z-index: 0;
-  object-fit: contain;
-  animation: breadFly 5s linear infinite;
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-}
-
-.breadMain {
-  left: clamp(30%, 40vw, 40%);
-  top: clamp(30%, 40vh, 40%);
-  width: clamp(200px, 40vw, 520px);
-  animation-delay: 0s;
-}
-
-.bread1 {
-  left: clamp(55%, 65vw, 65%);
-  top: clamp(55%, 65vh, 65%);
-  width: clamp(100px, 20vw, 260px);
-  animation-delay: 1s;
-}
-
-.breadMin {
-  left: clamp(10%, 15vw, 15%);
-  top: clamp(55%, 65vh, 65%);
-  width: clamp(80px, 15vw, 180px);
-  animation-delay: 2s;
-}
-
-.breadMicro {
-  left: clamp(2%, 5vw, 5%);
-  top: clamp(35%, 45vh, 45%);
-  width: clamp(60px, 10vw, 120px);
-  animation-delay: 3s;
-}
-
-/* Увеличиваем хлеб в 2 раза на мобилке */
-@media (max-width: 767px) {
-  .bread {
-    animation: none;
-    opacity: 0.3;
-    z-index: 0;
-    max-width: 120vw;
-  }
-
-  .breadMain {
-    width: clamp(260px, 70vw, 720px);
-    left: clamp(15%, 20vw, 25%);
-    top: clamp(20%, 25vh, 30%);
-  }
-
-  .bread1 {
-    width: clamp(200px, 55vw, 520px);
-    left: clamp(40%, 50vw, 55%);
-    top: clamp(25%, 30vh, 35%);
-  }
-
-  .breadMin {
-    width: clamp(140px, 40vw, 360px);
-    left: clamp(5%, 10vw, 10%);
-    top: clamp(30%, 35vh, 40%);
-  }
-
-  .breadMicro {
-    width: clamp(120px, 30vw, 240px);
-    left: clamp(0%, 2vw, 2%);
-    top: clamp(15%, 20vh, 25%);
-  }
-}
-
-@keyframes breadFly {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) scale(1.2);
-  }
-  10% {
-    opacity: 0.7;
-  }
-  80% {
-    opacity: 0.7;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-120px) scale(1.2);
-  }
-}
-
-
-
-/* Декоративные колосья */
-.wheatDecor {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  z-index: 10;
-  display: none;
-  width: clamp(120px, 15vw, 250px);
-}
-
-@media (min-width: 768px) {
-  .wheatDecor {
-    display: block;
-  }
-}
-
-.wheatLeft {
-  left: 0;
-}
-
-.wheatRight {
-  right: 0;
-}
 
 /* Основной контент */
 .content {
@@ -246,15 +113,15 @@
   max-width: 100%;
   margin: 0 auto;
   padding: 0 1.5rem;
-  padding-top: var(--spacing-sm);
+  padding-top: 1rem;
   display: flex;
 }
 
 @media (min-width: 768px) {
   .content {
     padding: 0 2rem;
-    flex: 0 1 auto;
-    width: auto;
+    flex: 1;
+    width: 100%;
   }
 }
 
@@ -270,7 +137,7 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  gap: var(--spacing-lg);
+  gap: 2rem;
 }
 
 @media (min-width: 768px) {
@@ -312,7 +179,7 @@
   align-items: center;
   text-align: center;
   width: 100%;
-  gap: var(--spacing-md);
+  gap: 1.5rem;
   padding-inline: 0;
 }
 
@@ -335,13 +202,14 @@
 
 /* Заголовок */
 .title {
-  color: #4a3e3e; /* Darker color from screenshot */
+  color: #fff;
   font-family: var(--font-montserrat);
   font-weight: 700;
   line-height: 1.1;
   font-size: clamp(2.4rem, 7vw, 4.2rem);
   margin: 0;
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.12);
 }
 
 @media (min-width: 768px) {
@@ -352,7 +220,7 @@
 
 /* Подзаголовок */
 .subtitle {
-  color: #6d5d5d; /* Muted color from screenshot */
+  color: rgba(255,255,255,0.88);
   font-family: var(--font-montserrat);
   font-weight: 400;
   line-height: 1.6;
@@ -374,23 +242,26 @@
   align-items: center;
   justify-content: center;
   padding: 0.75rem 2.5rem;
-  border: 1px solid #4a3e3e;
+  border: 2px solid rgba(255,255,255,0.9);
   border-radius: 9999px;
   background: transparent;
-  color: #4a3e3e;
+  color: #fff;
   font-family: var(--font-montserrat);
   font-size: 1.1rem;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   transition: all 0.3s ease;
   cursor: pointer;
   margin-top: 1rem;
+  letter-spacing: 0.02em;
 }
 
 .button:hover {
-  background: #4a3e3e;
-  color: #fff;
+  background: #fff;
+  color: #66633a;
+  border-color: #fff;
   transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 
 @media (min-width: 768px) {
@@ -413,13 +284,7 @@
 @media (min-width: 768px) {
   .imageContainer {
     width: 100%;
-    max-width: 1800px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .imageContainer {
-    max-width: 2400px;
+    max-width: 680px;
   }
 }
 
@@ -485,11 +350,6 @@
 @media (prefers-reduced-motion: reduce) {
   .heartbeat {
     animation: none !important;
-    will-change: auto;
-  }
-  .bread {
-    animation: none !important;
-    opacity: 0.3;
     will-change: auto;
   }
 }

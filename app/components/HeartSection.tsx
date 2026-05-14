@@ -56,19 +56,12 @@ export default function HeartSection() {
  }
 
  return (
-  <section ref={sectionRef} className="w-full py-20 relative overflow-hidden" style={{ backgroundColor: '#675b53' }}>
+  <section ref={sectionRef} className="w-full py-20 relative overflow-hidden" style={{ backgroundColor: '#716356' }}>
    <div className="max-w-7xl mx-auto px-4">
     <div className="grid md:grid-cols-2 gap-12 items-center">
      {/* Левая колонка - текст */}
      <div className="space-y-6 text-center md:text-left flex flex-col items-center md:items-start">
       <h2 className="text-7xl md:text-9xl great-vibes italic" style={{ color: '#fdebc1', lineHeight: '1.1' }}>
-       <style jsx>{`
-                @media (min-width: 768px) {
-                  h2 {
-                    line-height: 0.95;
-                  }
-                }
-              `}</style>
        В ритме <br />
        миллионов сердец
       </h2>

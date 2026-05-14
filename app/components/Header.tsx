@@ -19,7 +19,7 @@ function TextBrandLogo({ compact }: { compact?: boolean }) {
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [header, setHeader] = useState<HeaderData | null>(null);
-  const menuGlyphSrc = "/lending/favicon.png";
+  const menuGlyphSrc = "/images/Logoo.png";
   const pathname = usePathname();
   const data = header ?? DEFAULT_HEADER_DATA;
 
@@ -95,7 +95,7 @@ export default function Header() {
               aria-label={isMenuOpen ? "Закрыть меню" : "Открыть меню"}
             >
               <span className={styles.menuIconBox}>
-                <img src={menuGlyphSrc} alt="" width={28} height={28} className={styles.menuGlyphImg} />
+                <img src={menuGlyphSrc} alt="" width={32} height={32} className={styles.menuGlyphImg} />
               </span>
               <span className={styles.mobileMenuLabel}>МЕНЮ</span>
             </button>
@@ -111,6 +111,13 @@ export default function Header() {
 
       {/* ДЕСКТОПНАЯ ВЕРСИЯ */}
       <div className={styles.desktopContainer}>
+        {/* Floating Ribbon overlaying the top right of viewport */}
+        {!isMenuOpen && (
+          <div className={styles.desktopRibbonFloating}>
+            <Open2026 className={styles.open2026RibbonFloatingImg} />
+          </div>
+        )}
+
         <div className={styles.desktopEllipse}>
           <div className={styles.desktopBar}>
             <button 
@@ -124,7 +131,7 @@ export default function Header() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 ) : (
-                  <img src={menuGlyphSrc} alt="" width={28} height={28} className={styles.menuGlyphImg} />
+                  <img src={menuGlyphSrc} alt="" width={44} height={44} className={styles.menuGlyphImg} />
                 )}
               </span>
               <span className={styles.desktopMenuText}>МЕНЮ</span>
@@ -134,9 +141,8 @@ export default function Header() {
               <TextBrandLogo />
             </Link>
 
-            <div className={styles.desktopRibbonSlot}>
-              <Open2026 className={styles.open2026Ribbon} />
-            </div>
+            {/* Spacer to maintain grid columns without being clipped */}
+            <div className={styles.desktopBarSpacer} aria-hidden="true" />
           </div>
         </div>
       </div>
@@ -158,10 +164,6 @@ export default function Header() {
 
               <div className={styles.menuLogo}>
                 <TextBrandLogo />
-              </div>
-
-              <div className={styles.menuRibbonWrap}>
-                <Open2026 className={styles.menuRibbonImg} />
               </div>
             </div>
 

@@ -56,7 +56,7 @@ export default function MarketPage() {
     <div className="min-h-screen min-h-[100dvh] bg-smusl-beige font-montserrat flex flex-col">
       <Header />
 
-      <main className="flex-1 w-full px-4 sm:px-6 lg:px-10 pb-32 pt-4 lg:pt-6">
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-10 pb-20 lg:pb-32 pt-4 lg:pt-6">
 
         <div className="mb-8">
           <p className="text-[16px] font-medium text-[#4A403A]/60">
@@ -92,7 +92,7 @@ export default function MarketPage() {
             </AnimatePresence>
           </section>
 
-          <aside className="hidden md:block md:sticky md:top-8">
+          <aside className="hidden lg:block lg:sticky lg:top-8">
             <CartSidebar />
           </aside>
         </div>
@@ -114,7 +114,7 @@ export default function MarketPage() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0.5 }}
               transition={{ type: "spring", damping: 32, stiffness: 300 }}
-              className="absolute bottom-0 w-full h-[88dvh] bg-[#F5E6DA] rounded-t-[2.5rem] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)] overflow-hidden"
+              className="absolute bottom-0 w-full h-[88dvh] bg-[#F5E6DA] rounded-t-[2.5rem] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)] overflow-hidden lg:hidden"
             >
               <div
                 className="w-full pt-5 pb-3 flex items-center justify-center shrink-0 cursor-pointer group relative z-10"
@@ -132,7 +132,7 @@ export default function MarketPage() {
                   />
                 </div>
               </div>
-              <div className="flex-1 overflow-hidden w-full px-2 sm:px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+              <div className="flex-1 overflow-hidden w-full px-4 sm:px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
                 <CartSidebar isMobile={true} onClose={() => setCartOpen(false)} />
               </div>
             </motion.div>
