@@ -5,7 +5,7 @@ const PromoBanners = () => (
  <div className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-6">
 
   {/* ── Story 1: Handwork (Bottom Curve) ── */}
-  <div className="group anim-slide-up relative flex h-[240px] flex-col overflow-hidden rounded-[2rem] bg-[#111] p-7 transition-all duration-700 hover:shadow-wow hover:scale-[1.01] border border-white/[0.05]">
+  <div className="group anim-slide-up relative flex h-[240px] flex-col overflow-hidden rounded-[2rem] bg-[#111] p-7 transition-all duration-300 hover:shadow-wow hover:scale-[1.01] border border-white/[0.05]">
    <div className="relative z-10">
     <p className="mb-2 text-[10px] font-black tracking-[0.2em] text-white/20 uppercase">
      эксклюзив
@@ -18,7 +18,7 @@ const PromoBanners = () => (
    {/* Bottom Curve Image */}
    <div className="absolute inset-0 top-[40%] flex justify-center pointer-events-none">
     <div
-     className="w-[120%] h-[150%] transition-all duration-1000 ease-premium group-hover:scale-110"
+     className="w-[120%] h-[150%] transition-all duration-500 ease-premium group-hover:scale-110"
      style={{
       backgroundImage: "url('https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&q=80')",
       backgroundPosition: "center 60%",
@@ -29,7 +29,7 @@ const PromoBanners = () => (
     />
    </div>
 
-   <button className="absolute bottom-5 right-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white backdrop-blur-md transition-all duration-500 hover:bg-white hover:text-meren-black cursor-pointer">
+   <button className="absolute bottom-5 right-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white backdrop-blur-md transition-all duration-200 hover:bg-white hover:text-[#111] cursor-pointer active:scale-90">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
      <path d="M7 17L17 7M17 7H7M17 7V17" />
     </svg>
@@ -37,7 +37,7 @@ const PromoBanners = () => (
   </div>
 
   {/* ── Story 2: Promo (Centered Ellipse Window) ── */}
-  <div className="group anim-slide-up anim-delay-1 relative flex h-[240px] flex-col overflow-hidden rounded-[2rem] bg-[#111] p-7 transition-all duration-700 hover:shadow-wow hover:scale-[1.01] border border-white/[0.05]">
+  <div className="group anim-slide-up anim-delay-1 relative flex h-[240px] flex-col overflow-hidden rounded-[2rem] bg-[#111] p-7 transition-all duration-300 hover:shadow-wow hover:scale-[1.01] border border-white/[0.05]">
    <div className="relative z-10 text-center">
     <p className="mb-2 text-[10px] font-black tracking-[0.2em] text-white/20 uppercase text-center">
      акция
@@ -50,7 +50,7 @@ const PromoBanners = () => (
    {/* Centered Ellipse "Window" */}
    <div className="absolute inset-0 flex items-center justify-center top-[15%] pointer-events-none">
     <div
-     className="w-[90%] h-[120%] transition-all duration-1000 ease-premium group-hover:scale-110"
+     className="w-[90%] h-[120%] transition-all duration-500 ease-premium group-hover:scale-110"
      style={{
       backgroundImage: "url('https://images.unsplash.com/photo-1530610476181-d83430b64dcd?w=800&q=80')",
       backgroundPosition: "center",
@@ -61,7 +61,7 @@ const PromoBanners = () => (
     />
    </div>
 
-   <button className="absolute bottom-5 right-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white backdrop-blur-md transition-all duration-500 hover:bg-white hover:text-meren-black cursor-pointer">
+   <button className="absolute bottom-5 right-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white backdrop-blur-md transition-all duration-200 hover:bg-white hover:text-[#111] cursor-pointer active:scale-90">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
      <path d="M7 17L17 7M17 7H7M17 7V17" />
     </svg>
@@ -69,7 +69,7 @@ const PromoBanners = () => (
   </div>
 
   {/* ── Story 3: New Menu (Bottom Curve) ── */}
-  <div className="group anim-slide-up anim-delay-2 relative flex h-[240px] flex-col overflow-hidden rounded-[2rem] bg-[#111] p-7 transition-all duration-700 hover:shadow-wow hover:scale-[1.01] border border-white/[0.05]">
+  <div className="group anim-slide-up anim-delay-2 relative flex h-[240px] flex-col overflow-hidden rounded-[2rem] bg-[#111] p-7 transition-all duration-300 hover:shadow-wow hover:scale-[1.01] border border-white/[0.05]">
    <div className="relative z-10">
     <p className="mb-2 text-[10px] font-black tracking-[0.2em] text-white/20 uppercase">
      новинка меню
@@ -82,7 +82,7 @@ const PromoBanners = () => (
    {/* Bottom Curve Image */}
    <div className="absolute inset-0 top-[40%] flex justify-center pointer-events-none">
     <div
-     className="w-[120%] h-[150%] transition-all duration-1000 ease-premium group-hover:scale-110"
+     className="w-[120%] h-[150%] transition-all duration-500 ease-premium group-hover:scale-110"
      style={{
       backgroundImage: "url('https://images.unsplash.com/photo-1519340333755-9620575d2726?w=800&q=80')",
       backgroundPosition: "center",
@@ -93,7 +93,7 @@ const PromoBanners = () => (
     />
    </div>
 
-   <button className="absolute bottom-5 right-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white backdrop-blur-md transition-all duration-500 hover:bg-white hover:text-meren-black cursor-pointer">
+   <button className="absolute bottom-5 right-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white backdrop-blur-md transition-all duration-200 hover:bg-white hover:text-[#111] cursor-pointer active:scale-90">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
      <path d="M7 17L17 7M17 7H7M17 7V17" />
     </svg>

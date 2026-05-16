@@ -14,9 +14,9 @@ export default function DeliveryTypeSelector({ onSelect, selectedType }: Deliver
    <button
     onClick={() => onSelect("delivery")}
     className={cn(
-     "w-full h-[88px] px-7 rounded-[1.5rem] border transition-all flex items-center justify-between group shadow-sm",
-     selectedType === "delivery" 
-       ? "border-[#CF8F73] bg-[#CF8F73]/5 ring-1 ring-[#CF8F73]/20" 
+     "w-full h-[88px] px-7 rounded-[1.5rem] border transition-all duration-200 flex items-center justify-between group shadow-sm active:scale-[0.98]",
+     selectedType === "delivery"
+       ? "border-[#CF8F73] bg-[#CF8F73]/5 ring-1 ring-[#CF8F73]/20"
        : "border-gray-200 hover:border-[#CF8F73] bg-[#F8F8F8] hover:bg-white hover:shadow-md"
     )}
    >
@@ -35,9 +35,9 @@ export default function DeliveryTypeSelector({ onSelect, selectedType }: Deliver
    <button
     onClick={() => onSelect("pickup")}
     className={cn(
-     "w-full h-[88px] px-7 rounded-[1.5rem] border transition-all flex items-center justify-between group shadow-sm",
-     selectedType === "pickup" 
-       ? "border-[#CF8F73] bg-[#CF8F73]/5 ring-1 ring-[#CF8F73]/20" 
+     "w-full h-[88px] px-7 rounded-[1.5rem] border transition-all duration-200 flex items-center justify-between group shadow-sm active:scale-[0.98]",
+     selectedType === "pickup"
+       ? "border-[#CF8F73] bg-[#CF8F73]/5 ring-1 ring-[#CF8F73]/20"
        : "border-gray-200 hover:border-[#CF8F73] bg-[#F8F8F8] hover:bg-white hover:shadow-md"
     )}
    >

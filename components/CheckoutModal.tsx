@@ -2,16 +2,17 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useUIStore, useCartStore, useUserStore } from "@/store/hooks"
-import { X, ChevronDown, ArrowLeft, Loader2, Edit3, Navigation } from "lucide-react"
+import { X, ChevronDown, ArrowLeft, Edit3 } from "lucide-react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import MapPicker from "./MapPicker"
+import AddressSearchBox from "./AddressSearchBox"
 import { cn } from "@/lib/utils"
 import { useAddressSearch } from "@/hooks/useAddressSearch"
-import { PickupPoint, CityKey } from "@/lib/types/address"
+import { AddressEntity, PickupPoint, CityKey } from "@/lib/types/address"
 import { PICKUP_POINTS, CITY_COORDS, CITIES } from "@/lib/constants/delivery"
 import DeliveryTypeSelector from "./DeliveryTypeSelector"
-import { parseAddress, formatAddress, extractFromQuery } from "@/lib/address"
+import { entityFromSuggestion, formatAddress, parseRussianAddress } from "@/lib/address"
 import { containerVariants, itemVariants, stepVariants } from "@/lib/motion-variants"
 import CheckoutStep1Contact from "./checkout/CheckoutStep1Contact"
 import CheckoutStep5Payment from "./checkout/CheckoutStep5Payment"
@@ -26,6 +27,7 @@ export default function CheckoutModal() {
   const setAuthModalOpen = useUIStore(s => s.setAuthModalOpen)
 
   const address = useUserStore(s => s.address)
+  const currentAddressEntity = useUserStore(s => s.currentAddressEntity)
   const userName = useUserStore(s => s.userName)
   const userPhone = useUserStore(s => s.userPhone)
   const savedAddresses = useUserStore(s => s.savedAddresses)
@@ -63,14 +65,6 @@ export default function CheckoutModal() {
  const [acceptNews, setAcceptNews] = useState(true)
 
  const [isEditingAddress, setIsEditingAddress] = useState(false)
- const [isMobile, setIsMobile] = useState(false)
-
- useEffect(() => {
-  const check = () => setIsMobile(window.innerWidth < 640)
-  check()
-  window.addEventListener('resize', check)
-  return () => window.removeEventListener('resize', check)
- }, [])
 
  const [house, setHouse] = useState('')
  const [corpus, setCorpus] = useState('')
@@ -90,27 +84,34 @@ export default function CheckoutModal() {
 
   const {
    suggestions,
-   setSuggestions,
+   clearSuggestions,
    isLoading: isLoadingSuggestions,
-   skipNextFetch,
+   history,
+   onHistoryCleared,
    debouncedSearch,
   } = useAddressSearch(selectedCity);
 
  const reset = useCallback(() => {
-   setStep(1)
-   setDeliveryType(null)
-   setPaymentMethod(null)
-   setCardNumber('')
-   setCardExpiry('')
-   setCardCVC('')
-  if (address) {
-   const d = parseAddress(address)
-   setTempAddress(d.street || address)
-   setHouse(d.house || '')
-   setCorpus(d.corpus || '')
-   setEntrance(d.entrance || '')
-   setFloor(d.floor || '')
-   setApartment(d.apartment || '')
+  setStep(1)
+  setDeliveryType(null)
+  setPaymentMethod(null)
+  setCardNumber('')
+  setCardExpiry('')
+  setCardCVC('')
+  if (currentAddressEntity) {
+   setTempAddress(currentAddressEntity.road)
+   setHouse(currentAddressEntity.house || '')
+   setCorpus(currentAddressEntity.corpus || '')
+   setEntrance(currentAddressEntity.entrance || '')
+   setFloor(currentAddressEntity.floor || '')
+   setApartment(currentAddressEntity.apartment || '')
+  } else if (address) {
+   setTempAddress(address)
+   setHouse('')
+   setCorpus('')
+   setEntrance('')
+   setFloor('')
+   setApartment('')
   } else {
    setTempAddress('')
    setHouse('')
@@ -120,12 +121,11 @@ export default function CheckoutModal() {
    setApartment('')
   }
   setSelectedPickup(null)
-  
   setSelectedCity('Москва')
   setShowCityDropdown(false)
   setSelectedCoords(null)
   setIsEditingAddress(false)
- }, [address])
+ }, [address, currentAddressEntity])
 
   const handleClose = () => {
   setCheckoutOpen(false)
@@ -133,24 +133,39 @@ export default function CheckoutModal() {
  }
 
  const handleNextFromDelivery = () => {
-  if (tempAddress) {
-   const fullAddress = formatAddress({
-    street: tempAddress,
+  if (tempAddress && house) {
+   const entity: AddressEntity = {
+    road: tempAddress,
     house,
     corpus,
     entrance,
     floor,
-    apartment
-   })
-
-   updateAddress(fullAddress, "delivery")
+    apartment,
+    city: selectedCity,
+    coords: selectedCoords,
+    displayLine: [tempAddress, house].filter(Boolean).join(', '),
+    full: formatAddress({ road: tempAddress, house, corpus, entrance, floor, apartment }),
+   }
+   updateAddress(entity, 'delivery')
    setStep(5)
   }
  }
 
  const handleNextFromPickup = () => {
   if (selectedPickup) {
-   updateAddress(`${selectedPickup.city}, ${selectedPickup.address}`, "pickup")
+   const entity: AddressEntity = {
+    road: selectedPickup.address,
+    house: '',
+    corpus: '',
+    entrance: '',
+    floor: '',
+    apartment: '',
+    city: selectedPickup.city,
+    coords: selectedPickup.coords as [number, number],
+    displayLine: selectedPickup.address,
+    full: `${selectedPickup.city}, ${selectedPickup.address}`,
+   }
+   updateAddress(entity, 'pickup')
    setStep(5)
   }
  }
@@ -170,47 +185,19 @@ export default function CheckoutModal() {
  }
 
  const onAddressSelect = useCallback((val: string) => {
-  skipNextFetch.current = true;
   setTempAddress(val);
- }, [skipNextFetch]);
+ }, []);
 
-  const onAddressDetailsSelect = useCallback((details: import('./MapPicker').AddressDetails) => {
-  skipNextFetch.current = true;
-
-  if (details.city) {
-   const matchedCity = details.city.includes('Санкт-Петербург') ? 'Санкт-Петербург' :
-    details.city.includes('Москва') ? 'Москва' : null;
-   if (matchedCity) setSelectedCity(matchedCity);
+ const onAddressDetailsSelect = useCallback((entity: AddressEntity) => {
+  if (entity.city) {
+   const matched = entity.city.includes('Санкт-Петербург') ? 'Санкт-Петербург'
+    : entity.city.includes('Москва') ? 'Москва' : null;
+   if (matched) setSelectedCity(matched as CityKey);
   }
-
-  let road = details.road || details.full.split(',')[0];
-  const houseFromApi = details.house || '';
-  if (road === selectedCity || road === 'Москва' || road === 'Санкт-Петербург') {
-   const parts = details.full.split(',').map((p: string) => p.trim());
-   const streetPart = parts.find((p: string) => p !== selectedCity && p !== 'Москва' && p !== 'Санкт-Петербург');
-   if (streetPart) road = streetPart;
-  }
-
-  const displayAddr = houseFromApi ? `${road}, ${houseFromApi}` : road;
-  const cleanAddr = displayAddr
-   .replace(new RegExp(`^${selectedCity},?\\s*`, 'i'), '')
-   .replace(/^Москва,?\s*/i, '')
-   .replace(/^Санкт-Петербург,?\s*/i, '')
-   .trim();
-
-  const extracted = extractFromQuery(tempAddress, houseFromApi);
-
-  setTempAddress(cleanAddr);
-  setHouse(extracted.house);
-  setCorpus(extracted.corpus);
-  if (extracted.entrance) setEntrance(extracted.entrance);
-  if (extracted.floor) setFloor(extracted.floor);
-  if (extracted.apartment) setApartment(extracted.apartment);
-
-  if (details.coords) {
-    setSelectedCoords(details.coords);
-   }
-  }, [selectedCity, skipNextFetch, tempAddress]);
+  setTempAddress(entity.road);
+  if (entity.house) setHouse(entity.house);
+  if (entity.coords) setSelectedCoords(entity.coords);
+ }, []);
 
  if (!isCheckoutOpen) return null
 
@@ -338,38 +325,37 @@ export default function CheckoutModal() {
          <AnimatePresence mode="popLayout">
           {savedAddresses.map((addr) => (
            <motion.button
-            key={addr}
+            key={addr.displayLine}
             variants={itemVariants}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={() => {
-             const details = parseAddress(addr);
-             setTempAddress(details.street);
-             setHouse(details.house);
-             setCorpus(details.corpus || '');
-             setEntrance(details.entrance);
-             setFloor(details.floor);
-             setApartment(details.apartment);
+             setTempAddress(addr.road);
+             setHouse(addr.house || '');
+             setCorpus(addr.corpus || '');
+             setEntrance(addr.entrance || '');
+             setFloor(addr.floor || '');
+             setApartment(addr.apartment || '');
              updateAddress(addr, "delivery");
              setStep(5)
             }}
             className={cn(
              "w-full px-6 py-5 rounded-[1.5rem] border transition-all flex items-center justify-between group",
-             address === addr ? "border-[#CF8F73] bg-[#CF8F73]/5 shadow-sm" : "border-gray-100 bg-white hover:border-gray-200"
+             address === addr.full ? "border-[#CF8F73] bg-[#CF8F73]/5 shadow-sm" : "border-gray-100 bg-white hover:border-gray-200"
             )}
            >
             <div className="flex flex-col items-start gap-1 flex-1 min-w-0 mr-4">
              <span className={cn(
               "text-[16px] font-[800] transition-colors text-left truncate w-full",
-              address === addr ? "text-[#CF8F73]" : "text-[#3A332E]"
-             )}>{addr}</span>
-             <span className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">{selectedCity}</span>
+              address === addr.full ? "text-[#CF8F73]" : "text-[#3A332E]"
+             )}>{addr.displayLine}</span>
+             <span className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">{addr.city || selectedCity}</span>
             </div>
             <div className={cn(
              "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
-             address === addr ? "border-[#CF8F73] bg-[#CF8F73]" : "border-gray-200"
+             address === addr.full ? "border-[#CF8F73] bg-[#CF8F73]" : "border-gray-200"
             )}>
-             {address === addr && <div className="w-2 h-2 rounded-full bg-white" />}
+             {address === addr.full && <div className="w-2 h-2 rounded-full bg-white" />}
             </div>
            </motion.button>
           ))}
@@ -471,7 +457,7 @@ export default function CheckoutModal() {
           </motion.div>
           <button
            onClick={handleNextFromDelivery}
-           disabled={!tempAddress || !house || !entrance || !apartment}
+           disabled={!tempAddress || !house}
            className="w-full h-[68px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mt-1"
           >
            Всё верно
@@ -495,7 +481,7 @@ export default function CheckoutModal() {
             <ArrowLeft className="w-6 h-6" />
            </button>
            <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#3A332E] tracking-tight">
-             {isEditingAddress && isMobile ? 'Детали адреса' : 'Введите адрес'}
+             {isEditingAddress ? 'Детали адреса' : 'Введите адрес'}
            </h2>
           </div>
 
@@ -516,7 +502,7 @@ export default function CheckoutModal() {
               {CITIES.map(c => (
                <button
                 key={c}
-                onClick={() => { setSelectedCity(c); setTempAddress(''); setSuggestions([]); setSelectedCoords(null); setShowCityDropdown(false) }}
+                onClick={() => { setSelectedCity(c); setTempAddress(''); clearSuggestions(); setSelectedCoords(null); setShowCityDropdown(false) }}
                 className={cn(
                  'w-full text-left px-5 py-3.5 text-[15px] font-bold transition-colors border-b last:border-0 border-gray-50',
                  selectedCity === c ? 'text-[#3A332E] bg-gray-50' : 'text-[#3A332E] hover:bg-gray-50'
@@ -529,77 +515,34 @@ export default function CheckoutModal() {
             )}
            </div>
 
-           <div className="relative">
-            <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-4 flex flex-col justify-center border border-transparent focus-within:border-gray-300 transition-all">
-             <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-1">Улица и дом</span>
-             <div className="flex items-center gap-2">
-              <input
-               type="text"
-               value={tempAddress}
-               onChange={(e) => {
-                setTempAddress(e.target.value)
-                debouncedSearch(e.target.value)
-               }}
-               placeholder="Введите адрес"
-               className="w-full bg-transparent border-none outline-none text-[17px] font-extrabold text-[#3A332E] placeholder:text-[#3A332E]/30"
-              />
-              {isLoadingSuggestions && <Loader2 className="w-4 h-4 animate-spin text-[#3A332E] flex-shrink-0" />}
-              {tempAddress && !isLoadingSuggestions && (
-               <button
-                onClick={() => { setTempAddress(''); setSuggestions([]); setHouse(''); }}
-                className="p-1 hover:bg-black/5 rounded-full transition-colors flex-shrink-0 -mr-1"
-               >
-                <X className="w-4 h-4 text-[#4A3F39]" />
-               </button>
-              )}
-             </div>
-            </div>
-            {suggestions.length > 0 && (
-             <motion.div
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-2 bg-white rounded-[1.2rem] shadow-[0_16px_48px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden max-h-[340px] overflow-y-auto no-scrollbar relative sm:absolute w-full left-0 py-1.5 z-50"
-             >
-              {suggestions.map((s, idx) => {
-               const title = s.address?.title || s.display_name;
-               const subtitle = s.address?.subtitle || selectedCity;
-               const road = s.address?.road || title;
-               const houseNum = s.address?.house_number || "";
-
-               return (
-                <button
-                 key={idx}
-                 onClick={() => {
-                  skipNextFetch.current = true;
-                  const extracted = extractFromQuery(tempAddress, houseNum);
-
-                  setTempAddress(road);
-                  setHouse(extracted.house);
-                  setCorpus(extracted.corpus);
-                  if (extracted.entrance) setEntrance(extracted.entrance);
-                  if (extracted.floor) setFloor(extracted.floor);
-                  if (extracted.apartment) setApartment(extracted.apartment);
-
-                  if (s.lat && s.lon) {
-                   setSelectedCoords([parseFloat(s.lat), parseFloat(s.lon)]);
-                  }
-                  setSuggestions([]);
-                  setIsEditingAddress(false);
-                 }}
-                 className="w-full text-left px-5 py-4 flex flex-row items-center gap-4 group hover:bg-[#F8F9FA] transition-colors border-b border-gray-50 last:border-0"
-                >
-                 <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-[#CF8F73]/10 group-hover:text-[#CF8F73] transition-colors shrink-0">
-                  <Navigation className="w-5 h-5" />
-                 </div>
-                 <div className="flex flex-col min-w-0">
-                  <span className="text-[15px] sm:text-[17px] font-[800] text-[#333333] leading-tight group-hover:text-[#3A332E] transition-colors truncate">{title}</span>
-                  <span className="text-[12px] font-[600] text-[#999999] mt-0.5 uppercase tracking-wider">{subtitle}</span>
-                 </div>
-                </button>
-               );
-              })}
-             </motion.div>
-            )}
+           <div className="relative z-40">
+            <AddressSearchBox
+             query={tempAddress}
+             onQueryChange={(q) => {
+              setTempAddress(q);
+              if (q.trim().length >= 2) debouncedSearch(q);
+              else clearSuggestions();
+             }}
+             onSelect={(item) => {
+              const entity = entityFromSuggestion(item);
+              const typed = parseRussianAddress(tempAddress);
+              setTempAddress(entity.road || typed.road || '');
+              setHouse(entity.house || typed.house || '');
+              if (typed.corpus && !corpus) setCorpus(typed.corpus);
+              if (typed.entrance && !entrance) setEntrance(typed.entrance);
+              if (typed.floor && !floor) setFloor(typed.floor);
+              if (typed.apartment && !apartment) setApartment(typed.apartment);
+              if (entity.coords) setSelectedCoords(entity.coords);
+              clearSuggestions();
+              setIsEditingAddress(false);
+             }}
+             onClear={() => { setTempAddress(''); clearSuggestions(); }}
+             suggestions={suggestions}
+             history={history}
+             onClearHistory={onHistoryCleared}
+             isLoading={isLoadingSuggestions}
+             placeholder="Улица и дом"
+            />
            </div>
 
            <div className="flex flex-col gap-4 mt-2 mb-2 pb-4">
@@ -615,7 +558,7 @@ export default function CheckoutModal() {
             </div>
             <div className="flex gap-3">
              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent transition-all">
-              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Подъезд *</span>
+              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Подъезд</span>
               <input type="text" value={entrance} onChange={(e) => setEntrance(e.target.value)} placeholder="1" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
              </div>
              <div className="flex-[0.8] bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent transition-all">
@@ -623,7 +566,7 @@ export default function CheckoutModal() {
               <input type="text" value={floor} onChange={(e) => setFloor(e.target.value)} placeholder="0" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
              </div>
              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent transition-all">
-              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Кв. *</span>
+              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Кв.</span>
               <input type="text" value={apartment} onChange={(e) => setApartment(e.target.value)} placeholder="10" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
              </div>
             </div>
@@ -639,10 +582,10 @@ export default function CheckoutModal() {
              handleNextFromDelivery();
             }
            }}
-           disabled={!tempAddress || !house || !entrance || !apartment}
+           disabled={!tempAddress || !house}
            className="mt-4 sm:mt-auto w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.2rem] font-[800] text-[18px] sm:text-[20px] hover:bg-[#b87a60] transition-all shadow-xl shadow-[#CF8F73]/20 active:scale-95 mb-[calc(1rem+env(safe-area-inset-bottom))] sm:mb-0"
           >
-           {isEditingAddress && isMobile ? 'Готово' : 'Всё верно'}
+           {isEditingAddress ? 'Готово' : 'Всё верно'}
           </button>
          </div>
         </motion.div>
@@ -847,7 +790,7 @@ export default function CheckoutModal() {
            disabled={!selectedPickup}
            className="mt-6 w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-[900] text-[18px] sm:text-[20px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 shrink-0 mb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:mb-0"
           >
-           {isEditingAddress && isMobile ? 'Готово' : 'Всё верно'}
+           {isEditingAddress ? 'Готово' : 'Всё верно'}
           </button>
          </div>
         </motion.div>

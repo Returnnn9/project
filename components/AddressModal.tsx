@@ -2,15 +2,16 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useUIStore, useUserStore } from "@/store/hooks"
-import { X, ChevronDown, ArrowLeft, Loader2, Edit3, Navigation, Phone, User as UserIcon } from "lucide-react"
+import { X, ChevronDown, ArrowLeft, Edit3, Phone, User as UserIcon } from "lucide-react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import MapPicker from "./MapPicker"
+import AddressSearchBox from "./AddressSearchBox"
 import { cn } from "@/lib/utils"
 import { useAddressSearch } from "@/hooks/useAddressSearch"
-import { PickupPoint, CityKey } from "@/lib/types/address"
+import { AddressEntity, PickupPoint, CityKey } from "@/lib/types/address"
 import { PICKUP_POINTS, CITY_COORDS, CITIES } from "@/lib/constants/delivery"
 import DeliveryTypeSelector from "./DeliveryTypeSelector"
-import { parseAddress, formatAddress } from "@/lib/address"
+import { entityFromSuggestion, formatAddress, parseRussianAddress } from "@/lib/address"
 import { normalizePhone } from "@/lib/phone"
 import { containerVariants, itemVariants, stepVariants } from "@/lib/motion-variants"
 import { useSession } from "next-auth/react"
@@ -24,6 +25,7 @@ export default function AddressModal() {
  const setAuthModalOpen = useUIStore(s => s.setAuthModalOpen)
 
  const address = useUserStore(s => s.address)
+ const currentAddressEntity = useUserStore(s => s.currentAddressEntity)
  const updateAddress = useUserStore(s => s.updateAddress)
  const userName = useUserStore(s => s.userName)
  const userPhone = useUserStore(s => s.userPhone)
@@ -41,14 +43,6 @@ export default function AddressModal() {
  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(null)
 
  const [isEditingAddress, setIsEditingAddress] = useState(false)
- const [isMobile, setIsMobile] = useState(false)
-
- useEffect(() => {
-  const check = () => setIsMobile(window.innerWidth < 640)
-  check()
-  window.addEventListener('resize', check)
-  return () => window.removeEventListener('resize', check)
- }, [])
 
  const [house, setHouse] = useState('')
  const [corpus, setCorpus] = useState('')
@@ -60,21 +54,28 @@ export default function AddressModal() {
   suggestions,
   clearSuggestions,
   isLoading: isLoadingSuggestions,
-  skipNextFetch,
+  history,
+  onHistoryCleared,
   debouncedSearch,
  } = useAddressSearch(selectedCity);
 
  const reset = useCallback(() => {
   setStep(1)
   setDeliveryType(null)
-  if (address) {
-   const d = parseAddress(address)
-   setTempAddress(d.street || address)
-   setHouse(d.house || '')
-   setCorpus(d.corpus || '')
-   setEntrance(d.entrance || '')
-   setFloor(d.floor || '')
-   setApartment(d.apartment || '')
+  if (currentAddressEntity) {
+   setTempAddress(currentAddressEntity.road)
+   setHouse(currentAddressEntity.house || '')
+   setCorpus(currentAddressEntity.corpus || '')
+   setEntrance(currentAddressEntity.entrance || '')
+   setFloor(currentAddressEntity.floor || '')
+   setApartment(currentAddressEntity.apartment || '')
+  } else if (address) {
+   setTempAddress(address)
+   setHouse('')
+   setCorpus('')
+   setEntrance('')
+   setFloor('')
+   setApartment('')
   } else {
    setTempAddress('')
    setHouse('')
@@ -88,17 +89,17 @@ export default function AddressModal() {
   setShowCityDropdown(false)
   setSelectedCoords(null)
   setIsEditingAddress(false)
- }, [address])
+ }, [address, currentAddressEntity])
 
-   const phoneInputRef = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-   if (isAddressModalOpen && step === 1) {
-    const timer = setTimeout(() => {
-     phoneInputRef.current?.focus()
-    }, 400)
-    return () => clearTimeout(timer)
-   }
-  }, [isAddressModalOpen, step])
+ const phoneInputRef = useRef<HTMLInputElement>(null)
+ useEffect(() => {
+  if (isAddressModalOpen && step === 1) {
+   const timer = setTimeout(() => {
+    phoneInputRef.current?.focus()
+   }, 400)
+   return () => clearTimeout(timer)
+  }
+ }, [isAddressModalOpen, step])
 
  useEffect(() => {
   if (isAddressModalOpen) {
@@ -106,72 +107,64 @@ export default function AddressModal() {
   }
  }, [isAddressModalOpen, reset])
 
-
-
  const handleClose = () => {
   setAddressModalOpen(false)
   setTimeout(reset, 400)
  }
 
  const handleSaveDelivery = () => {
-  if (tempAddress) {
-   const fullAddress = formatAddress({
-    street: tempAddress,
+  if (tempAddress && house) {
+   const entity: AddressEntity = {
+    road: tempAddress,
     house,
     corpus,
     entrance,
     floor,
-    apartment
-   })
-
-   updateAddress(fullAddress, "delivery")
+    apartment,
+    city: selectedCity,
+    coords: selectedCoords,
+    displayLine: [tempAddress, house].filter(Boolean).join(', '),
+    full: formatAddress({ road: tempAddress, house, corpus, entrance, floor, apartment }),
+   }
+   updateAddress(entity, 'delivery')
    handleClose()
   }
  }
 
  const handleSavePickup = () => {
   if (selectedPickup) {
-   updateAddress(`${selectedPickup.city}, ${selectedPickup.address}`, "pickup")
+   const entity: AddressEntity = {
+    road: selectedPickup.address,
+    house: '',
+    corpus: '',
+    entrance: '',
+    floor: '',
+    apartment: '',
+    city: selectedPickup.city,
+    coords: selectedPickup.coords as [number, number],
+    displayLine: selectedPickup.address,
+    full: `${selectedPickup.city}, ${selectedPickup.address}`,
+   }
+   updateAddress(entity, 'pickup')
    handleClose()
   }
  }
 
  const onAddressSelect = useCallback((val: string) => {
-  skipNextFetch.current = true;
   setTempAddress(val);
- }, [skipNextFetch]);
+ }, []);
 
- const onAddressDetailsSelect = useCallback((details: import('./MapPicker').AddressDetails) => {
-  skipNextFetch.current = true;
-
-  if (details.city) {
-   const matchedCity = details.city.includes('Санкт-Петербург') ? 'Санкт-Петербург' :
-    details.city.includes('Москва') ? 'Москва' : null;
-   if (matchedCity) setSelectedCity(matchedCity);
+ const onAddressDetailsSelect = useCallback((entity: AddressEntity) => {
+  if (entity.city) {
+   const matched = entity.city.includes('Санкт-Петербург') ? 'Санкт-Петербург'
+    : entity.city.includes('Москва') ? 'Москва' : null;
+   if (matched) setSelectedCity(matched as CityKey);
   }
-
-  let road = details.road || details.full.split(',')[0];
-  const houseFromApi = details.house || '';
-
-  if (road === selectedCity || road === 'Москва' || road === 'Санкт-Петербург') {
-   const parts = details.full.split(',').map((p: string) => p.trim());
-   const streetPart = parts.find((p: string) => p !== selectedCity && p !== 'Москва' && p !== 'Санкт-Петербург');
-   if (streetPart) road = streetPart;
-  }
-
-  const cleanAddr = road
-   .replace(new RegExp(`^${selectedCity},?\\s*`, 'i'), '')
-   .replace(/^\u041c\u043e\u0441\u043a\u0432\u0430,?\s*/i, '')
-   .replace(/^\u0421\u0430\u043d\u043a\u0442-\u041f\u0435\u0442\u0435\u0440\u0431\u0443\u0440\u0433,?\s*/i, '')
-   .trim();
-
-  setTempAddress(cleanAddr);
-  if (houseFromApi) setHouse(houseFromApi);
-  setCorpus('');
-  if (details.coords) {
-   setSelectedCoords(details.coords);
-  }
- }, [selectedCity, skipNextFetch]);
+  setTempAddress(entity.road);
+  // Always update — clears stale house when new pin has no house number
+  setHouse(entity.house || '');
+  if (entity.coords) setSelectedCoords(entity.coords);
+ }, []);
 
  if (!isAddressModalOpen) return null
 
@@ -200,24 +193,24 @@ export default function AddressModal() {
       <X className="w-5 h-5" />
      </button>
 
-      {step > 1 && (
-       <button
-        onClick={() => {
-         if (isEditingAddress) {
-          setIsEditingAddress(false);
-          return;
-         }
-         if (step === 4 && savedAddresses.length > 0) {
-          setStep(3);
-         } else {
-          setStep((step - 1) as 1 | 2 | 3 | 4 | 5);
-         }
-        }}
-        className="absolute top-6 left-6 z-50 p-2.5 bg-gray-50/80 backdrop-blur-md rounded-full text-[#3A332E] hover:bg-gray-100 transition-all sm:hidden shadow-sm"
-       >
-        <ArrowLeft className="w-5 h-5" />
-       </button>
-      )}
+     {step > 1 && (
+      <button
+       onClick={() => {
+        if (isEditingAddress) {
+         setIsEditingAddress(false);
+         return;
+        }
+        if (step === 4 && savedAddresses.length > 0) {
+         setStep(3);
+        } else {
+         setStep((step - 1) as 1 | 2 | 3 | 4 | 5);
+        }
+       }}
+       className="absolute top-6 left-6 z-50 p-2.5 bg-gray-50/80 backdrop-blur-md rounded-full text-[#3A332E] hover:bg-gray-100 transition-all sm:hidden shadow-sm"
+      >
+       <ArrowLeft className="w-5 h-5" />
+      </button>
+     )}
 
      <AnimatePresence mode="wait">
 
@@ -331,112 +324,110 @@ export default function AddressModal() {
          </div>
 
          <div className="space-y-4">
-          <DeliveryTypeSelector 
-            selectedType={deliveryType}
-            onSelect={(type) => {
-           setDeliveryType(type);
-           if (type === "delivery" && savedAddresses.length > 0) {
-            setStep(3);
-           } else {
-            setStep(type === "delivery" ? 4 : 3);
-           }
-          }} />
+          <DeliveryTypeSelector
+           selectedType={deliveryType}
+           onSelect={(type) => {
+            setDeliveryType(type);
+            if (type === "delivery" && savedAddresses.length > 0) {
+             setStep(3);
+            } else {
+             setStep(type === "delivery" ? 4 : 3);
+            }
+           }} />
          </div>
         </div>
        </motion.div>
       )}
 
-       {step === 3 && deliveryType === "delivery" && (
-        <motion.div
-         key="step3-saved"
-         variants={stepVariants}
-         initial="initial"
-         animate="animate"
-         exit="exit"
-         className="flex flex-col h-full w-full p-6 sm:p-12"
-        >
-         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-           <button onClick={() => setStep(2)} className="p-1 text-[#3A332E]">
-            <ArrowLeft className="w-6 h-6" />
-           </button>
-           <h2 className="text-[24px] sm:text-[28px] font-extrabold text-[#3A332E] tracking-tight">Выбрать адрес</h2>
-          </div>
-          <button onClick={handleClose} className="p-1 text-gray-300 hover:text-[#3A332E] transition-colors hidden sm:block">
-           <X className="w-6 h-6" />
+      {step === 3 && deliveryType === "delivery" && (
+       <motion.div
+        key="step3-saved"
+        variants={stepVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="flex flex-col h-full w-full p-6 sm:p-12"
+       >
+        <div className="flex items-center justify-between mb-8">
+         <div className="flex items-center gap-4">
+          <button onClick={() => setStep(2)} className="p-1 text-[#3A332E]">
+           <ArrowLeft className="w-6 h-6" />
           </button>
+          <h2 className="text-[24px] sm:text-[28px] font-extrabold text-[#3A332E] tracking-tight">Выбрать адрес</h2>
          </div>
+         <button onClick={handleClose} className="p-1 text-gray-300 hover:text-[#3A332E] transition-colors hidden sm:block">
+          <X className="w-6 h-6" />
+         </button>
+        </div>
 
-         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex-1 overflow-y-auto px-1 no-scrollbar space-y-3"
-         >
-          <AnimatePresence mode="popLayout">
-           {savedAddresses.map((addr) => (
-            <motion.button
-             key={addr}
-             variants={itemVariants}
-             whileHover={{ scale: 1.01 }}
-             whileTap={{ scale: 0.99 }}
-             onClick={() => {
-              const details = parseAddress(addr);
-              setTempAddress(details.street);
-              setHouse(details.house);
-              setCorpus(details.corpus || '');
-              setEntrance(details.entrance);
-              setFloor(details.floor);
-              setApartment(details.apartment);
-              updateAddress(addr, "delivery");
-              handleClose();
-             }}
-             className={cn(
-              "w-full px-6 py-5 rounded-[1.5rem] border transition-all flex items-center justify-between group",
-              address === addr ? "border-[#CF8F73] bg-[#CF8F73]/5 shadow-sm" : "border-gray-100 bg-white hover:border-gray-200"
-             )}
-            >
-             <div className="flex flex-col items-start gap-1 flex-1 min-w-0 mr-4">
-              <span className={cn(
-               "text-[16px] font-[800] transition-colors text-left truncate w-full",
-               address === addr ? "text-[#CF8F73]" : "text-[#3A332E]"
-              )}>{addr}</span>
-              <span className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">{selectedCity}</span>
-             </div>
-             <div className={cn(
-              "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
-              address === addr ? "border-[#CF8F73] bg-[#CF8F73]" : "border-gray-200"
-             )}>
-              {address === addr && <div className="w-2 h-2 rounded-full bg-white" />}
-             </div>
-            </motion.button>
-           ))}
-          </AnimatePresence>
-         </motion.div>
-
-         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-           setTempAddress('');
-           setHouse('');
-           setCorpus('');
-           setEntrance('');
-           setFloor('');
-           setApartment('');
-           setStep(4);
-          }}
-          className="mt-6 w-full h-[64px] bg-[#CF8F73] text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 shrink-0"
-         >
-          Новый адрес
-         </motion.button>
-        </motion.div>
-       )}
-
-
-       {step === 3 && deliveryType === "pickup" && (
         <motion.div
-         key="step3-pickup"
+         variants={containerVariants}
+         initial="hidden"
+         animate="visible"
+         className="flex-1 overflow-y-auto px-1 no-scrollbar space-y-3"
+        >
+         <AnimatePresence mode="popLayout">
+          {savedAddresses.map((addr) => (
+           <motion.button
+            key={addr.displayLine}
+            variants={itemVariants}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => {
+             setTempAddress(addr.road);
+             setHouse(addr.house || '');
+             setCorpus(addr.corpus || '');
+             setEntrance(addr.entrance || '');
+             setFloor(addr.floor || '');
+             setApartment(addr.apartment || '');
+             updateAddress(addr, "delivery");
+             handleClose();
+            }}
+            className={cn(
+             "w-full px-6 py-5 rounded-[1.5rem] border transition-all flex items-center justify-between group",
+             address === addr.full ? "border-[#CF8F73] bg-[#CF8F73]/5 shadow-sm" : "border-gray-100 bg-white hover:border-gray-200"
+            )}
+           >
+            <div className="flex flex-col items-start gap-1 flex-1 min-w-0 mr-4">
+             <span className={cn(
+              "text-[16px] font-[800] transition-colors text-left truncate w-full",
+              address === addr.full ? "text-[#CF8F73]" : "text-[#3A332E]"
+             )}>{addr.displayLine}</span>
+             <span className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">{addr.city || selectedCity}</span>
+            </div>
+            <div className={cn(
+             "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
+             address === addr.full ? "border-[#CF8F73] bg-[#CF8F73]" : "border-gray-200"
+            )}>
+             {address === addr.full && <div className="w-2 h-2 rounded-full bg-white" />}
+            </div>
+           </motion.button>
+          ))}
+         </AnimatePresence>
+        </motion.div>
+
+        <motion.button
+         whileHover={{ scale: 1.02 }}
+         whileTap={{ scale: 0.98 }}
+         onClick={() => {
+          setTempAddress('');
+          setHouse('');
+          setCorpus('');
+          setEntrance('');
+          setFloor('');
+          setApartment('');
+          setStep(4);
+         }}
+         className="mt-6 w-full h-[64px] bg-[#CF8F73] text-white rounded-[1.2rem] font-[800] text-[18px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 shrink-0"
+        >
+         Новый адрес
+        </motion.button>
+       </motion.div>
+      )}
+
+      {step === 3 && deliveryType === "pickup" && (
+       <motion.div
+        key="step3-pickup"
         variants={stepVariants}
         initial="initial"
         animate="animate"
@@ -452,7 +443,6 @@ export default function AddressModal() {
            interactive={true}
            initialAddress={selectedPickup ? `${selectedPickup.city}, ${selectedPickup.address}` : ""}
            onAddressSelect={() => { }}
-           
            externalCoords={selectedPickup ? (selectedPickup.coords as [number, number]) : CITY_COORDS[selectedCity]}
           />
          </div>
@@ -464,9 +454,7 @@ export default function AddressModal() {
          dragElastic={0.06}
          onDragEnd={(e, { offset, velocity }) => {
           if (offset.y > 100 || velocity.y > 400) {
-           if (isEditingAddress) {
-            setIsEditingAddress(false);
-           }
+           if (isEditingAddress) setIsEditingAddress(false);
           } else if (offset.y < -100 || velocity.y < -400) {
            setIsEditingAddress(true);
           }
@@ -555,12 +543,12 @@ export default function AddressModal() {
            </AnimatePresence>
           </motion.div>
           <div className="mt-auto shrink-0 sticky bottom-0 bg-white pt-4 pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-0 z-50 border-t border-gray-100/80 -mx-6 px-6 sm:mx-0 sm:px-0 shadow-[0_-20px_50px_rgba(0,0,0,0.06)]">
-           <button 
-            onClick={handleSavePickup} 
-            disabled={!selectedPickup} 
+           <button
+            onClick={handleSavePickup}
+            disabled={!selectedPickup}
             className="w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.8rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20"
            >
-            {isEditingAddress && isMobile ? 'Готово' : 'Всё верно'}
+            {isEditingAddress ? 'Готово' : 'Всё верно'}
            </button>
           </div>
          </div>
@@ -568,10 +556,9 @@ export default function AddressModal() {
        </motion.div>
       )}
 
-
-       {step === 4 && deliveryType === "delivery" && (
-        <motion.div
-         key="step4-delivery"
+      {step === 4 && deliveryType === "delivery" && (
+       <motion.div
+        key="step4-delivery"
         variants={stepVariants}
         initial="initial"
         animate="animate"
@@ -587,7 +574,6 @@ export default function AddressModal() {
            initialAddress={tempAddress}
            onAddressSelect={onAddressSelect}
            onAddressDetailsSelect={onAddressDetailsSelect}
-           
            externalCoords={selectedCoords}
           />
          </div>
@@ -599,9 +585,7 @@ export default function AddressModal() {
          dragElastic={0.06}
          onDragEnd={(e, { offset, velocity }) => {
           if (offset.y > 100 || velocity.y > 400) {
-           if (isEditingAddress) {
-            setIsEditingAddress(false);
-           }
+           if (isEditingAddress) setIsEditingAddress(false);
           } else if (offset.y < -100 || velocity.y < -400) {
            setIsEditingAddress(true);
           }
@@ -643,7 +627,7 @@ export default function AddressModal() {
           </motion.div>
           <button
            onClick={handleSaveDelivery}
-           disabled={!tempAddress || !house || !entrance || !apartment}
+           disabled={!tempAddress || !house}
            className="w-full h-[68px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.5rem] font-[900] text-[19px] hover:bg-[#b87a60] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20 mt-1"
           >
            Всё верно
@@ -653,7 +637,7 @@ export default function AddressModal() {
          <div className={cn("flex-col h-full", isEditingAddress ? "flex" : "hidden sm:flex")}>
           <div className="flex items-center justify-between mb-6 sm:mb-8 shrink-0">
            <div className="flex items-center gap-4">
-             <button onClick={() => { if (isEditingAddress && window.innerWidth < 640) { setIsEditingAddress(false) } else { setStep(2) } }} className="p-1 text-[#3A332E]">
+            <button onClick={() => { if (isEditingAddress && window.innerWidth < 640) { setIsEditingAddress(false) } else { setStep(2) } }} className="p-1 text-[#3A332E]">
              <ArrowLeft className="w-6 h-6" />
             </button>
             <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#3A332E] tracking-tight">Введите адрес</h2>
@@ -671,96 +655,197 @@ export default function AddressModal() {
             </div>
             {showCityDropdown && (
              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-[1.2rem] shadow-xl border border-gray-100 overflow-hidden">
-               {CITIES.map(c => (
-                <button key={c} onClick={() => { setSelectedCity(c); setTempAddress(''); clearSuggestions(); setSelectedCoords(null); setShowCityDropdown(false) }} className={cn('w-full text-left px-5 py-3.5 text-[15px] font-bold border-b last:border-0 border-gray-50', selectedCity === c ? 'bg-gray-50' : 'hover:bg-gray-50')}>{c}</button>
+              {CITIES.map(c => (
+               <button key={c} onClick={() => { setSelectedCity(c); setTempAddress(''); clearSuggestions(); setSelectedCoords(null); setShowCityDropdown(false) }} className={cn('w-full text-left px-5 py-3.5 text-[15px] font-bold border-b last:border-0 border-gray-50', selectedCity === c ? 'bg-gray-50' : 'hover:bg-gray-50')}>{c}</button>
               ))}
              </div>
             )}
            </div>
 
            <div className="relative z-40">
-            <div className="bg-[#F8F8F8] rounded-[1.2rem] px-5 py-4 focus-within:border-gray-300 border border-transparent">
-             <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Улица и дом</span>
-             <div className="flex items-center gap-2">
-              <input
-              type="text"
-              value={tempAddress}
-              onChange={(e) => {
-               setTempAddress(e.target.value);
-               debouncedSearch(e.target.value);
-              }}
-              placeholder="Введите улицу или адрес"
-              autoComplete="off"
-              spellCheck={false}
-              className="w-full bg-transparent border-none outline-none text-[17px] font-extrabold text-[#3A332E] placeholder:text-gray-300"
-             />
-              {isLoadingSuggestions && <Loader2 className="w-4 h-4 animate-spin text-[#CF8F73]" />}
+            {/* Smart-parse hint moved ABOVE search box so it is never covered by dropdown */}
+            {(house || corpus || apartment) && (
+             <div className="mb-2 flex flex-wrap gap-1.5 px-1">
+              {house && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#CF8F73]/10 text-[#CF8F73] text-[11px] font-bold rounded-full border border-[#CF8F73]/20">
+                <span className="opacity-60">дом</span> {house}
+               </span>
+              )}
+              {corpus && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#CF8F73]/10 text-[#CF8F73] text-[11px] font-bold rounded-full border border-[#CF8F73]/20">
+                <span className="opacity-60">корп.</span> {corpus}
+               </span>
+              )}
+              {apartment && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#CF8F73]/10 text-[#CF8F73] text-[11px] font-bold rounded-full border border-[#CF8F73]/20">
+                <span className="opacity-60">кв.</span> {apartment}
+               </span>
+              )}
+              {entrance && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#CF8F73]/10 text-[#CF8F73] text-[11px] font-bold rounded-full border border-[#CF8F73]/20">
+                <span className="opacity-60">подъезд</span> {entrance}
+               </span>
+              )}
+              {floor && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#CF8F73]/10 text-[#CF8F73] text-[11px] font-bold rounded-full border border-[#CF8F73]/20">
+                <span className="opacity-60">эт.</span> {floor}
+               </span>
+              )}
              </div>
-            </div>
-            <AnimatePresence>
-             {suggestions.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-2 bg-white rounded-[1.2rem] shadow-2xl border border-gray-100 overflow-hidden max-h-[320px] overflow-y-auto relative sm:absolute w-full left-0 z-50 py-1">
-               {suggestions.map((s, idx) => (
-                 <button key={idx} onClick={() => {
-                  skipNextFetch.current = true;
-                  const road = s.address?.road || s.address?.title?.split(',')[0] || s.display_name;
-                  const houseFromApi = s.address?.house_number || '';
-                  setTempAddress(road);
-                  if (houseFromApi) setHouse(houseFromApi);
-                  clearSuggestions();
-                  if (s.lat && s.lon) setSelectedCoords([parseFloat(s.lat), parseFloat(s.lon)]);
-                  setIsEditingAddress(false);
-                 }} className="w-full text-left px-5 py-4 hover:bg-gray-50 transition-colors border-b last:border-0 border-gray-50 flex flex-row items-center gap-4 group">
-                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-[#CF8F73]/10 group-hover:text-[#CF8F73] transition-colors shrink-0">
-                   <Navigation className="w-5 h-5" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                   <span className="text-[15px] sm:text-[17px] font-extrabold text-[#333] leading-tight truncate">{s.address?.title || s.display_name}</span>
-                   <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">{s.address?.subtitle || selectedCity}</span>
-                  </div>
-                 </button>
-               ))}
-              </motion.div>
-             )}
-             </AnimatePresence>
-            </div>
+            )}
 
-            <div className="flex flex-col gap-4 mt-2 pb-4">
-             <div className="flex gap-4">
-              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3 focus-within:border-gray-300 border border-transparent">
-               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Дом *</span>
-               <input type="text" value={house} onChange={(e) => setHouse(e.target.value)} placeholder="1" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
-              </div>
-              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-5 py-3 focus-within:border-gray-300 border border-transparent">
-               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Корпус</span>
-               <input type="text" value={corpus} onChange={(e) => setCorpus(e.target.value)} placeholder="А" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
-              </div>
-             </div>
-             <div className="flex gap-3">
-              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent">
-               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Подъезд *</span>
-               <input type="text" value={entrance} onChange={(e) => setEntrance(e.target.value)} placeholder="1" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
-              </div>
-              <div className="flex-[0.8] bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent">
-               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Этаж</span>
-               <input type="text" value={floor} onChange={(e) => setFloor(e.target.value)} placeholder="0" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
-              </div>
-              <div className="flex-1 bg-[#F8F8F8] rounded-[1.2rem] px-4 py-3 focus-within:border-gray-300 border border-transparent">
-               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Кв. *</span>
-               <input type="text" value={apartment} onChange={(e) => setApartment(e.target.value)} placeholder="10" className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300" />
-              </div>
-             </div>
-            </div>
+            <AddressSearchBox
+             query={tempAddress}
+             onQueryChange={(q) => {
+              setTempAddress(q);
 
+              // Always parse — this syncs fields both ways:
+              // typing adds values, backspacing clears them
+              const parsed = parseRussianAddress(q);
+              setHouse(parsed.house || '');
+              setCorpus(parsed.corpus || '');
+              setEntrance(parsed.entrance || '');
+              setFloor(parsed.floor || '');
+              setApartment(parsed.apartment || '');
+
+              // Send a clean query to geocoder (street + house only, no кв/под/эт)
+              const cleanQ = parsed.road
+               ? parsed.house ? `${parsed.road}, ${parsed.house}` : parsed.road
+               : q;
+              if (cleanQ.trim().length >= 2) debouncedSearch(cleanQ);
+              else clearSuggestions();
+             }}
+             onSelect={(item) => {
+              const entity = entityFromSuggestion(item);
+              // Parse what user typed BEFORE we overwrite (using q captured in closure)
+              const typed = parseRussianAddress(tempAddress);
+              setTempAddress(entity.road || typed.road || '');
+              // Geocoder house wins; fall back to what user typed
+              setHouse(entity.house || typed.house || '');
+              setCorpus(typed.corpus || '');
+              setEntrance(typed.entrance || '');
+              setFloor(typed.floor || '');
+              setApartment(typed.apartment || '');
+              if (entity.coords) setSelectedCoords(entity.coords);
+              clearSuggestions();
+              setIsEditingAddress(false);
+             }}
+             onClear={() => { setTempAddress(''); setHouse(''); setCorpus(''); setEntrance(''); setFloor(''); setApartment(''); clearSuggestions(); }}
+             suggestions={suggestions}
+             history={history}
+             onClearHistory={onHistoryCleared}
+             isLoading={isLoadingSuggestions}
+             placeholder="Улица и дом"
+            />
            </div>
 
+           <div className="flex flex-col gap-3 mt-1 pb-4">
+            {/* Row 1: Дом + Корпус */}
+            <div className="flex gap-3">
+             <div className={cn(
+              "flex-1 rounded-[1.2rem] px-5 py-3.5 border transition-all duration-200",
+              house
+               ? "bg-[#CF8F73]/5 border-[#CF8F73]/30 focus-within:border-[#CF8F73]/50"
+               : "bg-[#F8F8F8] border-transparent focus-within:border-gray-300"
+             )}>
+              <span className={cn(
+               "block text-[10px] font-bold uppercase tracking-widest mb-1",
+               house ? "text-[#CF8F73]/70" : "text-gray-400"
+              )}>Дом *</span>
+              <input
+               type="text"
+               value={house}
+               onChange={(e) => setHouse(e.target.value)}
+               placeholder="1"
+               className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300"
+              />
+             </div>
+             <div className={cn(
+              "flex-1 rounded-[1.2rem] px-5 py-3.5 border transition-all duration-200",
+              corpus
+               ? "bg-[#CF8F73]/5 border-[#CF8F73]/30 focus-within:border-[#CF8F73]/50"
+               : "bg-[#F8F8F8] border-transparent focus-within:border-gray-300"
+             )}>
+              <span className={cn(
+               "block text-[10px] font-bold uppercase tracking-widest mb-1",
+               corpus ? "text-[#CF8F73]/70" : "text-gray-400"
+              )}>Корпус</span>
+              <input
+               type="text"
+               value={corpus}
+               onChange={(e) => setCorpus(e.target.value)}
+               placeholder="А"
+               className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300"
+              />
+             </div>
+            </div>
+            {/* Row 2: Подъезд + Этаж + Кв */}
+            <div className="flex gap-3">
+             <div className={cn(
+              "flex-1 rounded-[1.2rem] px-4 py-3.5 border transition-all duration-200",
+              entrance
+               ? "bg-[#CF8F73]/5 border-[#CF8F73]/30 focus-within:border-[#CF8F73]/50"
+               : "bg-[#F8F8F8] border-transparent focus-within:border-gray-300"
+             )}>
+              <span className={cn(
+               "block text-[10px] font-bold uppercase tracking-widest mb-1",
+               entrance ? "text-[#CF8F73]/70" : "text-gray-400"
+              )}>Подъезд</span>
+              <input
+               type="text"
+               value={entrance}
+               onChange={(e) => setEntrance(e.target.value)}
+               placeholder="1"
+               className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300"
+              />
+             </div>
+             <div className={cn(
+              "flex-[0.8] rounded-[1.2rem] px-4 py-3.5 border transition-all duration-200",
+              floor
+               ? "bg-[#CF8F73]/5 border-[#CF8F73]/30 focus-within:border-[#CF8F73]/50"
+               : "bg-[#F8F8F8] border-transparent focus-within:border-gray-300"
+             )}>
+              <span className={cn(
+               "block text-[10px] font-bold uppercase tracking-widest mb-1",
+               floor ? "text-[#CF8F73]/70" : "text-gray-400"
+              )}>Этаж</span>
+              <input
+               type="text"
+               value={floor}
+               onChange={(e) => setFloor(e.target.value)}
+               placeholder="0"
+               className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300"
+              />
+             </div>
+             <div className={cn(
+              "flex-1 rounded-[1.2rem] px-4 py-3.5 border transition-all duration-200",
+              apartment
+               ? "bg-[#CF8F73]/5 border-[#CF8F73]/30 focus-within:border-[#CF8F73]/50"
+               : "bg-[#F8F8F8] border-transparent focus-within:border-gray-300"
+             )}>
+              <span className={cn(
+               "block text-[10px] font-bold uppercase tracking-widest mb-1",
+               apartment ? "text-[#CF8F73]/70" : "text-gray-400"
+              )}>Кв.</span>
+              <input
+               type="text"
+               value={apartment}
+               onChange={(e) => setApartment(e.target.value)}
+               placeholder="10"
+               className="w-full bg-transparent border-none outline-none text-[16px] font-extrabold text-[#3A332E] placeholder:text-gray-300"
+              />
+             </div>
+            </div>
+           </div>
+          </div>
+
           <div className="mt-auto shrink-0 sticky bottom-0 bg-white pt-4 pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-0 z-50 border-t border-gray-100/80 -mx-6 px-6 sm:mx-0 sm:px-0 shadow-[0_-20px_50px_rgba(0,0,0,0.06)]">
-           <button 
-            onClick={handleSaveDelivery} 
-            disabled={!tempAddress || !house || !entrance || !apartment} 
+           <button
+            onClick={handleSaveDelivery}
+            disabled={!tempAddress || !house}
             className="w-full h-[64px] sm:h-[72px] bg-[#CF8F73] disabled:bg-[#CF8F73]/40 text-white rounded-[1.8rem] font-black text-[18px] sm:text-[20px] transition-all active:scale-95 shadow-xl shadow-[#CF8F73]/20"
            >
-            {isEditingAddress && isMobile ? 'Готово' : 'Всё верно'}
+            {isEditingAddress ? 'Готово' : 'Всё верно'}
            </button>
           </div>
          </div>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeText, normalizeRoad, parseRussianAddress } from '@/lib/address';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,26 +38,6 @@ interface ParsedResult {
  type: string;
 }
 
-
-function normalizeText(s: string): string {
- return s.toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
-}
-
-function normalizeRoad(name: string): string {
- if (!name) return '';
- return name
-  .replace(/^ул\.\s*/i, 'улица ')
-  .replace(/^пр-т\s*/i, 'проспект ')
-  .replace(/^пр\.\s*/i, 'проспект ')
-  .replace(/^пер\.\s*/i, 'переулок ')
-  .replace(/^ш\.\s*/i, 'шоссе ')
-  .replace(/^б-р\s*/i, 'бульвар ')
-  .replace(/^пл\.\s*/i, 'площадь ')
-  .replace(/^наб\.\s*/i, 'набережная ')
-  .replace(/^тупик\s*/i, 'тупик ')
-  .replace(/^проезд\s*/i, 'проезд ')
-  .trim();
-}
 
 function isRelevant(title: string, query: string): boolean {
  const normalQ = normalizeText(query);
@@ -144,6 +125,12 @@ export async function GET(req: NextRequest) {
 
  if (!rawQ || rawQ.length < 2) return NextResponse.json([]);
 
+ // Strip apartment/entrance/floor from query — geocoders don't understand them
+ const parsedQ = parseRussianAddress(rawQ);
+ const cleanQ = parsedQ.road
+  ? parsedQ.house ? `${parsedQ.road}, ${parsedQ.house}` : parsedQ.road
+  : rawQ;
+
  const config = CITY_CONFIG[city] ?? CITY_CONFIG['Москва'];
  const reqOrigin =
   req.nextUrl.origin;
@@ -160,7 +147,7 @@ export async function GET(req: NextRequest) {
  if (DGIS_KEY) {
   try {
    const params = new URLSearchParams({
-    q: rawQ,
+    q: cleanQ,
     key: DGIS_KEY,
     location: config.dgisPoint,
     radius: '30000',
@@ -195,9 +182,9 @@ export async function GET(req: NextRequest) {
  // ─── 2. Yandex Geocoder fallback ───────────────────────────────────────────
  if (results.length < 4 && YANDEX_KEY) {
   try {
-   const query = rawQ.toLowerCase().includes(city.toLowerCase())
-    ? rawQ
-    : `${city}, ${rawQ}`;
+   const query = cleanQ.toLowerCase().includes(city.toLowerCase())
+    ? cleanQ
+    : `${city}, ${cleanQ}`;
    const params = new URLSearchParams({
     apikey: YANDEX_KEY,
     geocode: query,
@@ -275,7 +262,7 @@ export async function GET(req: NextRequest) {
  if (results.length === 0) {
   try {
    const p = new URLSearchParams({
-    q: `${city} ${rawQ}`,
+    q: `${city} ${cleanQ}`,
     format: 'jsonv2',
     addressdetails: '1',
     limit: '15',
